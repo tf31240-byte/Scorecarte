@@ -1,16 +1,5 @@
-:root{
-  --bg:#f2f2f7; --text:#000; --card:#fff; --button:#007aff; --danger:#ff3b30;
-}
-body.dark{--bg:#1c1c1e;--text:#f2f2f7;--card:#2c2c2e;--button:#0a84ff;--danger:#ff453a;}
-
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);margin:0;}
-header{padding:15px;font-weight:600;font-size:20px;display:flex;justify-content:space-between;background:var(--card);}
-main{padding:15px;}
-button{width:100%;padding:12px;margin:6px 0;border-radius:25px;border:none;background:var(--button);color:white;font-size:18px;cursor:pointer;transition:all 0.2s;}
-button:hover{transform:scale(1.05);}
-button.danger{background:var(--danger);}
-input{width:48%;padding:10px;margin:4px 1%;border-radius:12px;border:1px solid #ccc;font-size:16px;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{border:1px solid #ccc;padding:8px;text-align:center;}
-th{background:#eee;}
-.dark th{background:#333;}
+#historyGraph{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;align-items:flex-end;}
+.bar{display:flex;flex-direction:column-reverse;align-items:center;width:25px;border-radius:6px;transition:height 0.3s, transform 0.3s;}
+.bar span{font-size:10px;margin-top:2px;}
+.pulse{animation:pulse 0.4s ease;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
