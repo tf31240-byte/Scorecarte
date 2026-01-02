@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Score Cartes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+<header>
+  Score Cartes
+  <button id="toggleTheme" onclick="toggleTheme()">🌙</button>
+</header>
+
+<main>
+
+<!-- ÉTAPE 1 -->
+<section id="setup">
+  <h2>Choisir un jeu</h2>
+  <button onclick="selectGame('Belote')">Belote</button>
+  <button onclick="selectGame('Skyjo')">Skyjo</button>
+  <button onclick="selectGame('Flip 7')">Flip 7</button>
+
+  <h2>Nombre de joueurs</h2>
+  <input type="number" id="playerCount" min="2" max="8" value="4">
+
+  <button onclick="startGame()">Démarrer</button>
+</section>
+
+<!-- ÉTAPE 2 -->
+<section id="game" class="hidden">
+  <h2 id="gameTitle"></h2>
+
+  <div id="scores"></div>
+
+  <h3>Nouvelle manche</h3>
+  <div id="inputs"></div>
+
+  <button onclick="addRound()">Ajouter la manche</button>
+  <button class="danger" onclick="undoRound()">Annuler dernière manche</button>
+
+  <h3>Historique</h3>
+  <ul id="history"></ul>
+
+  <button class="danger" onclick="resetGame()">Nouvelle partie</button>
+  <button onclick="exportScores()">Exporter scores</button>
+</section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

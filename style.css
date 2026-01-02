@@ -1,0 +1,81 @@
+:root {
+  --bg: #f2f2f7;
+  --text: #000;
+  --card: #fff;
+  --button: #007aff;
+  --danger: #ff3b30;
+}
+
+body.dark {
+  --bg: #1c1c1e;
+  --text: #f2f2f7;
+  --card: #2c2c2e;
+  --button: #0a84ff;
+  --danger: #ff453a;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+header {
+  background: var(--card);
+  text-align: center;
+  padding: 15px;
+  font-weight: 600;
+  font-size: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+main {
+  padding: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin: 6px 0;
+  border-radius: 12px;
+  border: none;
+  background: var(--button);
+  color: white;
+  font-size: 17px;
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+.score-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+
+ul {
+  padding-left: 15px;
+}
