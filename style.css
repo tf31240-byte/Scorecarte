@@ -17,9 +17,12 @@ input{width:48%;padding:8px;margin:4px 1%;border-radius:12px;border:1px solid #c
 .playerRow{display:flex;align-items:center;justify-content:space-between;padding:8px;margin:6px 0;border-radius:12px;background:var(--card);}
 .playerName{flex:1;font-weight:600;}
 .playerTotal{width:60px;text-align:right;font-weight:700;}
-.playerLast{width:50px;text-align:right;color:#555;font-size:14px;}
 .playerInput input{width:50px;text-align:center;}
-.playerGraph{height:24px;width:80px;margin-left:10px;border-radius:6px;background:#eee;position:relative;overflow:hidden;}
-.bar{height:100%;position:absolute;bottom:0;left:0;}
+.playerBar{height:16px;flex:2;margin-left:10px;background:#eee;border-radius:8px;overflow:hidden;position:relative;}
+.barFill{height:100%;width:0%;border-radius:8px;transition:width 0.5s ease;}
 .pulse{animation:pulse 0.4s ease;}
-@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
+
+#historyContainer{overflow-x:auto;margin-top:10px;padding:5px;border:1px solid #ccc;border-radius:10px;background:var(--card);}
+.historyRow{display:flex;margin-bottom:4px;}
+.historyCell{padding:4px 6px;margin-right:4px;border-radius:6px;color:white;font-weight:600;}
