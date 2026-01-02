@@ -2,46 +2,41 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Score Cartes iPhone-Friendly</title>
+<title>Score Cartes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header>
-  Score Cartes
+  <div>
+    <strong>Score Cartes</strong>
+    <div id="roundLabel">Manche 1</div>
+  </div>
   <button id="toggleTheme">🌙</button>
 </header>
 
 <main>
-<section id="step1">
-  <h2>Ajouter joueurs / équipes</h2>
-  <label>
-    Nombre de joueurs/équipes (2-8):
-    <input type="number" id="numPlayers" value="2" min="2" max="8">
-  </label>
-  <button id="setupPlayersBtn">Configurer</button>
-  <div id="playerInputs"></div>
-  <button id="startGameBtn" class="hidden">Démarrer la partie</button>
-</section>
+  <section id="setup">
+    <h2>Joueurs / équipes</h2>
+    <input id="numPlayers" type="number" min="2" max="6" value="2">
+    <button id="createPlayers">Configurer</button>
+    <div id="playerNames"></div>
+    <button id="startGame" class="hidden">Démarrer</button>
+  </section>
 
-<section id="step2" class="hidden">
-  <h2>Score Cartes</h2>
-  <div id="scoreContainer"></div>
+  <section id="game" class="hidden">
+    <div id="players"></div>
 
-  <div class="buttons">
-    <button id="addRoundBtn">✅ Ajouter manche</button>
-    <button id="undoRoundBtn">↩️ Annuler dernière manche</button>
-    <button id="resetBtn" class="danger">Nouvelle partie</button>
-  </div>
+    <button id="validateRound" class="mainBtn">✅ Valider la manche</button>
 
-  <h3>Graphique cumulatif</h3>
-  <canvas id="scoreChart" height="200"></canvas>
+    <button id="undoRound" class="secondary">↩️ Annuler dernière manche</button>
 
-  <h3>Historique des manches</h3>
-  <div id="historyContainer"></div>
-</section>
+    <canvas id="chart" height="220"></canvas>
+  </section>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="app.js" defer></script>
+<script src="app.js"></script>
 </body>
 </html>
