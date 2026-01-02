@@ -63,30 +63,99 @@ function render(){
 
   players.forEach((p,i)=>{
     scores.innerHTML+=`<div class="card score-line" id="line${i}"><span>${p}</span><strong id="score${i}">${totals[i]}</strong></div>`;
-    inputs.innerHTML+=`<input type="number" placeholder="Score ${p}" id="input${i}" oninput="updateScore(${i})">`;
+    const inputEl = document.createElement("input");
+    inputEl.type="number";
+    inputEl.placeholder="Score "+p;
+    inputEl.value=totals[i];
+    inputEl.oninput=()=>updateScore(i);
+    inputs.appendChild(inputEl);
   });
-
-  if(game==="Belote" && teams.length){
-    scores.innerHTML+=`<h3>Scores équipes</h3>`;
-    teams.forEach((team,idx)=>{
-      const teamScore=totals[team[0]]+totals[team[1]];
-      scores.innerHTML+=`<div class="card score-line" style="background:${getLeadingTeamColor(idx,teamScore)}"><span>${idx===0?"Nous":"Eux"} (${players[team[0]]}+${players[team[1]]})</span><strong>${teamScore}</strong></div>`;
-    });
-  }
 
   renderGraph();
   save();
 }
 
-/* Couleur équipe qui mène */
-function getLeadingTeamColor(idx,score){
-  const teamScores = [totals[0]+totals[1], totals[2]+totals[3]];
-  const maxScore = Math.max(...teamScores);
-  return score===maxScore?"var(--lead)":"var(--card)";
+/* Temps réel avec feedback pulse */
+function updateScore(i){
+  const val=parseInt(document.querySelectorAll("#inputs input")[i].value)||0;
+  totals[i]=val;
+  document.getElementById("score"+i).textContent=totals[i];
+
+  const line=document.getElementById("line"+i);
+  line.classList.add("pulse");
+  setTimeout(()=>line.classList.remove("pulse"),500);
+
+  renderGraph();
+  save();
 }
 
-/* Mise à jour score temps réel */
-function updateScore(i){
-  const val=parseInt(document.getElementById("input"+i).value)||0;
-  totals[i]=val;
-  document.getElementById("sco
+/* Ajouter manche */
+function addRound(){
+  const round=[]; players.forEach((_,i)=>round.push(totals[i]));
+  history.push([...round]);
+  render();
+}
+
+/* Reset */
+function resetGame(){ if(confirm("Réinitialiser la partie ?")) location.reload(); }
+
+/* Sauvegarde locale */
+function save(){ localStorage.setItem("scoreApp",JSON.stringify({game,players,totals,history,teams,playerColors})); }
+
+/* Chargement */
+function load(){
+  const data=JSON.parse(localStorage.getItem("scoreApp"));
+  if(!data) return;
+  ({game,players,totals,history,teams,playerColors}=data);
+  if(game){
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+    document.getElementById("gameTitle").textContent=game;
+    render();
+  }
+}
+load();
+
+/* Dark mode */
+function toggleTheme(){ document.body.classList.toggle("dark"); }
+
+/* Export CSV */
+function exportScores(){
+  let csv="Joueur,"+players.join(",")+"\n";
+  csv+="Total,"+totals.join(",")+"\n";
+  history.forEach((round,idx)=> csv+=`Manche ${idx+1},${round.join(",")}\n`);
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="scores.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* Rendu graphique historique avec labels manche */
+function renderGraph(){
+  const container=document.getElementById("historyGraph");
+  container.innerHTML="";
+  if(!history.length) return;
+
+  let maxScore=Math.max(...totals.concat(...history.flat()));
+
+  history.forEach((round,r)=>{
+    const mancheLabel=document.createElement("div");
+    mancheLabel.style.width="100%";
+    mancheLabel.style.textAlign="center";
+    mancheLabel.style.fontSize="12px";
+    mancheLabel.textContent="Manche "+(r+1);
+    container.appendChild(mancheLabel);
+
+    round.forEach((val,i)=>{
+      const bar=document.createElement("div");
+      bar.className="bar";
+      bar.style.height=(val/maxScore*100)+"px";
+      bar.style.background=playerColors[i];
+      const label=document.createElement("span");
+      label.textContent=val;
+      bar.appendChild(label);
+      container.appendChild(bar);
+    });
+  });
+}
