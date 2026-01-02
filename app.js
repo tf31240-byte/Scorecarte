@@ -1,54 +1,43 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-  let game="", players=[], history=[], playerColors=[];
+  let players=[], history=[], playerColors=[];
 
-  // assigner couleurs aux joueurs
+  // assigner couleurs
   function assignPlayerColors(){
     const colors=["#ff4d4d","#4da6ff","#4dff88","#ffa64d","#b84dff","#ffd24d","#4dffd1","#ff4dd2"];
     playerColors = players.map((_,i)=>colors[i%colors.length]);
   }
 
-  // Boutons jeu étape 1
-  document.querySelectorAll(".gameBtn").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      game = btn.textContent;
-      document.getElementById("step1").classList.add("hidden");
-      document.getElementById("step2").classList.remove("hidden");
-      renderPlayerInputs();
-    });
-  });
-
-  // Créer inputs joueurs
-  function renderPlayerInputs(){
+  // Configurer les joueurs
+  const setupBtn = document.getElementById("setupPlayersBtn");
+  const startBtn = document.getElementById("startGameBtn");
+  setupBtn.addEventListener("click", ()=>{
+    const num = parseInt(document.getElementById("numPlayers").value)||2;
     const container = document.getElementById("playerInputs");
     container.innerHTML="";
-    for(let i=0;i<4;i++){
+    for(let i=0;i<num;i++){
       const input = document.createElement("input");
-      input.type="text"; input.placeholder="Nom joueur "+(i+1); input.id="player"+i;
+      input.type="text"; input.placeholder="Nom joueur "+(i+1);
+      input.id="player"+i;
       container.appendChild(input);
     }
-  }
+    startBtn.classList.remove("hidden");
+  });
 
-  // Démarrer partie étape 2
-  document.getElementById("startGameBtn").addEventListener("click", ()=>{
+  // Démarrer partie
+  startBtn.addEventListener("click", ()=>{
     players=[];
-    for(let i=0;i<4;i++){
+    const num = parseInt(document.getElementById("numPlayers").value)||2;
+    for(let i=0;i<num;i++){
       const name = document.getElementById("player"+i).value || "Joueur "+(i+1);
       players.push(name);
     }
     history=[]; assignPlayerColors();
-    document.getElementById("step2").classList.add("hidden");
-    document.getElementById("step3").classList.remove("hidden");
-    document.getElementById("gameTitle").textContent=game;
+    document.getElementById("step1").classList.add("hidden");
+    document.getElementById("step2").classList.remove("hidden");
     renderScoreTable();
     renderGraph();
   });
-
-  // Boutons Step3
-  document.getElementById("addRoundBtn").addEventListener("click", addRound);
-  document.getElementById("undoRoundBtn").addEventListener("click", undoRound);
-  document.getElementById("resetBtn").addEventListener("click", resetGame);
-  document.getElementById("backBtn").addEventListener("click", backToMenu);
 
   // Tableau interactif
   function renderScoreTable(){
@@ -70,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 
   // Ajouter manche
-  function addRound(){
+  document.getElementById("addRoundBtn").addEventListener("click", ()=>{
     const round=players.map((_,i)=>{
       const val=parseInt(document.getElementById("input"+i).value)||0;
       const line=document.getElementById("total"+i);
@@ -82,10 +71,14 @@ document.addEventListener("DOMContentLoaded", function(){
     renderScoreTable();
     renderGraph();
     players.forEach((_,i)=>document.getElementById("input"+i).value=0);
-  }
+  });
 
   // Annuler dernière manche
-  function undoRound(){ if(history.length>0) history.pop(); renderScoreTable(); renderGraph(); }
+  document.getElementById("undoRoundBtn").addEventListener("click", ()=>{
+    if(history.length>0) history.pop();
+    renderScoreTable();
+    renderGraph();
+  });
 
   // Historique graphique
   function renderGraph(){
@@ -108,10 +101,16 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 
   // Reset / menu
-  function resetGame(){ if(confirm("Réinitialiser la partie ?")) location.reload(); }
-  function backToMenu(){ location.reload(); }
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    if(confirm("Réinitialiser la partie ?")) location.reload();
+  });
+  document.getElementById("backBtn").addEventListener("click", ()=>{
+    location.reload();
+  });
 
   // Dark mode
-  document.getElementById("toggleTheme").addEventListener("click", ()=>document.body.classList.toggle("dark"));
+  document.getElementById("toggleTheme").addEventListener("click", ()=>{
+    document.body.classList.toggle("dark");
+  });
 
 });
