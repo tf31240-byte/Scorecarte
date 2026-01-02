@@ -1,73 +1,81 @@
-let game="", players=[], totals=[], history=[], teams=[], playerColors=[];
+let game="", players=[], history=[], totals=[], teams=[], playerColors=[];
 
-/* Couleurs fixes par joueur */
+/* Couleurs fixes */
 function assignPlayerColors(){
   const colors=["#ff4d4d","#4da6ff","#4dff88","#ffa64d","#b84dff","#ffd24d","#4dffd1","#ff4dd2"];
-  playerColors=players.map((_,i)=>colors[i%colors.length]);
+  playerColors = players.map((_,i)=>colors[i%colors.length]);
 }
 
 /* Sélection du jeu */
 function selectGame(name){
-  game=name;
-  const options=document.getElementById("options");
+  game = name;
+  const playerSetup = document.getElementById("playerSetup");
+
   if(game==="Belote"){
-    players=["Nous Joueur 1","Nous Joueur 2","Eux Joueur 1","Eux Joueur 2"];
+    players=["Nous 1","Nous 2","Eux 1","Eux 2"];
     totals=[0,0,0,0]; history=[]; teams=[[0,1],[2,3]];
-    options.classList.add("hidden");
-  }else{
-    options.classList.remove("hidden");
-    const count=parseInt(document.getElementById("playerCount").value);
-    const container=document.getElementById("playerNames");
-    container.innerHTML="";
-    for(let i=0;i<count;i++) container.innerHTML+=`<input type="text" placeholder="Nom Joueur ${i+1}" id="name${i}">`;
+    playerSetup.classList.add("hidden");
+    startGame();
+  } else {
+    playerSetup.classList.remove("hidden");
+    renderPlayerInputs();
   }
 }
 
-/* Mise à jour noms si nombre de joueurs change */
-document.getElementById("playerCount").addEventListener("input",()=>{
-  const count=parseInt(document.getElementById("playerCount").value);
-  const container=document.getElementById("playerNames"); container.innerHTML="";
-  for(let i=0;i<count;i++) container.innerHTML+=`<input type="text" placeholder="Nom Joueur ${i+1}" id="name${i}">`;
-});
+/* Créer les inputs pour noms joueurs */
+function renderPlayerInputs(){
+  const container = document.getElementById("playerNames");
+  container.innerHTML = "";
+  const count = parseInt(document.getElementById("playerCount").value);
+  for(let i=0;i<count;i++){
+    const input = document.createElement("input");
+    input.type="text"; input.placeholder="Nom joueur "+(i+1); input.id="name"+i;
+    container.appendChild(input);
+  }
+}
 
 /* Démarrer le jeu */
 function startGame(){
   if(game!=="Belote"){
-    const count=parseInt(document.getElementById("playerCount").value);
-    players=[]; totals=Array(count).fill(0); history=[]; teams=[];
+    const count = parseInt(document.getElementById("playerCount").value);
+    players=[]; history=[]; teams=[]; totals=[];
     for(let i=0;i<count;i++){
-      const nameInput=document.getElementById(`name${i}`);
-      players.push(nameInput.value||"Joueur "+(i+1));
+      const name = document.getElementById("name"+i).value || "Joueur "+(i+1);
+      players.push(name);
     }
   }
   assignPlayerColors();
   document.getElementById("setup").classList.add("hidden");
   document.getElementById("game").classList.remove("hidden");
   document.getElementById("gameTitle").textContent=game;
+  calculateTotals();
   render();
 }
 
-/* Retour au menu principal */
+/* Retour menu principal */
 function backToMenu(){
   document.getElementById("game").classList.add("hidden");
   document.getElementById("setup").classList.remove("hidden");
-  document.getElementById("options").classList.add("hidden");
-  game=""; players=[]; totals=[]; history=[]; teams=[]; playerColors=[];
+  document.getElementById("playerSetup").classList.add("hidden");
+  game="", players=[], totals=[], history=[], teams=[], playerColors=[];
 }
 
-/* Rendu principal */
+/* Calcul totals à partir de l'historique */
+function calculateTotals(){
+  totals = players.map((_,i)=> history.reduce((sum,round)=>sum+round[i],0));
+}
+
+/* Affichage scores et inputs */
 function render(){
-  const scores=document.getElementById("scores");
-  const inputs=document.getElementById("inputs");
-  scores.innerHTML=""; inputs.innerHTML="";
+  const scores = document.getElementById("scores");
+  const inputs = document.getElementById("inputs");
+  scores.innerHTML = ""; inputs.innerHTML = "";
 
   players.forEach((p,i)=>{
-    scores.innerHTML+=`<div class="card score-line" id="line${i}"><span>${p}</span><strong id="score${i}">${totals[i]}</strong></div>`;
+    scores.innerHTML += `<div class="card score-line" id="line${i}"><span>${p}</span><strong id="score${i}">${totals[i] || 0}</strong></div>`;
     const inputEl = document.createElement("input");
-    inputEl.type="number";
-    inputEl.placeholder="Score "+p;
-    inputEl.value=totals[i];
-    inputEl.oninput=()=>updateScore(i);
+    inputEl.type="number"; inputEl.placeholder="Score "+p; inputEl.value=0;
+    inputEl.addEventListener("input",()=>updateScore(i));
     inputs.appendChild(inputEl);
   });
 
@@ -75,46 +83,34 @@ function render(){
   save();
 }
 
-/* Temps réel avec feedback pulse */
+/* Mise à jour temporaire d’un score */
 function updateScore(i){
-  const val=parseInt(document.querySelectorAll("#inputs input")[i].value)||0;
-  totals[i]=val;
-  document.getElementById("score"+i).textContent=totals[i];
-
-  const line=document.getElementById("line"+i);
+  const val = parseInt(document.querySelectorAll("#inputs input")[i].value)||0;
+  const line = document.getElementById("line"+i);
   line.classList.add("pulse");
-  setTimeout(()=>line.classList.remove("pulse"),500);
-
-  renderGraph();
-  save();
+  setTimeout(()=>line.classList.remove("pulse"),400);
 }
 
-/* Ajouter manche */
+/* Valider manche */
 function addRound(){
-  const round=[]; players.forEach((_,i)=>round.push(totals[i]));
-  history.push([...round]);
+  const round = players.map((_,i)=> parseInt(document.querySelectorAll("#inputs input")[i].value)||0 );
+  history.push(round);
+  calculateTotals();
+  // reset inputs à 0
+  document.querySelectorAll("#inputs input").forEach(input=>input.value=0);
   render();
 }
 
-/* Reset */
-function resetGame(){ if(confirm("Réinitialiser la partie ?")) location.reload(); }
-
-/* Sauvegarde locale */
-function save(){ localStorage.setItem("scoreApp",JSON.stringify({game,players,totals,history,teams,playerColors})); }
-
-/* Chargement */
-function load(){
-  const data=JSON.parse(localStorage.getItem("scoreApp"));
-  if(!data) return;
-  ({game,players,totals,history,teams,playerColors}=data);
-  if(game){
-    document.getElementById("setup").classList.add("hidden");
-    document.getElementById("game").classList.remove("hidden");
-    document.getElementById("gameTitle").textContent=game;
-    render();
-  }
+/* Annuler dernière manche */
+function undoRound(){
+  if(!history.length) return;
+  history.pop();
+  calculateTotals();
+  render();
 }
-load();
+
+/* Reset jeu */
+function resetGame(){ if(confirm("Réinitialiser la partie ?")) location.reload(); }
 
 /* Dark mode */
 function toggleTheme(){ document.body.classList.toggle("dark"); }
@@ -126,21 +122,19 @@ function exportScores(){
   history.forEach((round,idx)=> csv+=`Manche ${idx+1},${round.join(",")}\n`);
   const blob=new Blob([csv],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download="scores.csv"; a.click();
+  const a=document.createElement("a"); a.href=url; a.download="scores.csv"; a.click();
   URL.revokeObjectURL(url);
 }
 
-/* Rendu graphique historique avec labels manche */
+/* Historique graphique */
 function renderGraph(){
   const container=document.getElementById("historyGraph");
   container.innerHTML="";
   if(!history.length) return;
-
-  let maxScore=Math.max(...totals.concat(...history.flat()));
+  const maxScore = Math.max(...history.flat(),1);
 
   history.forEach((round,r)=>{
-    const mancheLabel=document.createElement("div");
+    const mancheLabel = document.createElement("div");
     mancheLabel.style.width="100%";
     mancheLabel.style.textAlign="center";
     mancheLabel.style.fontSize="12px";
@@ -148,14 +142,31 @@ function renderGraph(){
     container.appendChild(mancheLabel);
 
     round.forEach((val,i)=>{
-      const bar=document.createElement("div");
+      const bar = document.createElement("div");
       bar.className="bar";
-      bar.style.height=(val/maxScore*100)+"px";
-      bar.style.background=playerColors[i];
-      const label=document.createElement("span");
-      label.textContent=val;
+      bar.style.height = (val/maxScore*100)+"px";
+      bar.style.background = playerColors[i];
+      const label = document.createElement("span");
+      label.textContent = val;
       bar.appendChild(label);
       container.appendChild(bar);
     });
   });
 }
+
+/* Sauvegarde locale */
+function save(){ localStorage.setItem("scoreApp",JSON.stringify({game,players,history,teams,playerColors})); }
+
+/* Chargement */
+function load(){
+  const data = JSON.parse(localStorage.getItem("scoreApp"));
+  if(!data) return;
+  ({game,players,history,teams,playerColors}=data);
+  if(game){ document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+    document.getElementById("gameTitle").textContent=game;
+    calculateTotals();
+    render();
+  }
+}
+load();
