@@ -5,7 +5,6 @@
 <title>Score Cartes Premium</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <header>
@@ -33,21 +32,18 @@
 <!-- JEU -->
 <section id="game" class="hidden">
   <h2 id="gameTitle"></h2>
-
   <button class="smallBtn" onclick="backToMenu()">⬅ Menu principal</button>
 
   <div id="scores"></div>
   <h3>Ajouter points</h3>
   <div id="inputs"></div>
 
-  <h3>Historique</h3>
-  <ul id="history"></ul>
+  <h3>Historique / Récap graphique</h3>
+  <div id="historyGraph"></div>
 
   <button class="danger" onclick="resetGame()">Nouvelle partie</button>
   <button onclick="exportScores()">Exporter scores</button>
 </section>
-
-</main>
 
 <script src="app.js"></script>
 </body>
