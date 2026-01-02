@@ -1,44 +1,14 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Score Cartes Simplifié</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header>
-  Score Cartes
-  <button id="toggleTheme" onclick="toggleTheme()">🌙</button>
-</header>
-
-<main>
-
-<!-- Étape 1 : Sélection du jeu -->
-<section id="step1">
-  <h2>1️⃣ Choisir un jeu</h2>
-  <button onclick="selectGame('Belote')">Belote</button>
-  <button onclick="selectGame('Skyjo')">Skyjo</button>
-  <button onclick="selectGame('Flip 7')">Flip 7</button>
-</section>
-
-<!-- Étape 2 : Ajouter joueurs -->
-<section id="step2" class="hidden">
-  <h2>2️⃣ Ajouter joueurs</h2>
-  <div id="playerInputs"></div>
-  <button onclick="startGame()">Démarrer la partie</button>
-</section>
-
-<!-- Étape 3 : Tableau des scores -->
 <section id="step3" class="hidden">
   <h2 id="gameTitle"></h2>
   <button onclick="backToMenu()">⬅ Menu principal</button>
+  
+  <!-- Tableau interactif -->
   <div id="scoreTable"></div>
   <button onclick="addRound()">✅ Ajouter manche</button>
   <button onclick="undoRound()">↩️ Annuler dernière manche</button>
   <button onclick="resetGame()" class="danger">Nouvelle partie</button>
-</section>
 
-<script src="app.js" defer></script>
-</body>
-</html>
+  <!-- Historique graphique -->
+  <h3>Historique graphique</h3>
+  <div id="historyGraph"></div>
+</section>
