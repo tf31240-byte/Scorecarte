@@ -15,27 +15,28 @@
 
 <main>
 
-<!-- SETUP -->
+<!-- MENU PRINCIPAL -->
 <section id="setup">
   <h2>Choisir un jeu</h2>
   <button class="gameBtn" onclick="selectGame('Belote')">Belote</button>
   <button class="gameBtn" onclick="selectGame('Skyjo')">Skyjo</button>
   <button class="gameBtn" onclick="selectGame('Flip 7')">Flip 7</button>
 
-  <h2>Nombre de joueurs</h2>
-  <input type="number" id="playerCount" min="2" max="8" value="4">
-
-  <div id="playerNames"></div>
-
-  <button class="startBtn" onclick="startGame()">Démarrer</button>
+  <div id="options" class="hidden">
+    <h2>Nombre de joueurs</h2>
+    <input type="number" id="playerCount" min="2" max="8" value="4">
+    <div id="playerNames"></div>
+    <button class="startBtn" onclick="startGame()">Démarrer</button>
+  </div>
 </section>
 
-<!-- GAME -->
+<!-- JEU -->
 <section id="game" class="hidden">
   <h2 id="gameTitle"></h2>
 
-  <div id="scores"></div>
+  <button class="smallBtn" onclick="backToMenu()">⬅ Menu principal</button>
 
+  <div id="scores"></div>
   <h3>Ajouter points</h3>
   <div id="inputs"></div>
 
