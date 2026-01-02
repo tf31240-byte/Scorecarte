@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Score Cartes Mobile</title>
+<title>Score Cartes Simplifié</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -14,24 +14,21 @@
 
 <main>
 
-<!-- Étape 1 : Choisir un jeu -->
+<!-- Étape 1 : Ajouter joueurs ou équipes -->
 <section id="step1">
-  <h2>1️⃣ Choisir un jeu</h2>
-  <button class="gameBtn">Belote</button>
-  <button class="gameBtn">Skyjo</button>
-  <button class="gameBtn">Flip 7</button>
-</section>
-
-<!-- Étape 2 : Ajouter joueurs -->
-<section id="step2" class="hidden">
-  <h2>2️⃣ Ajouter joueurs</h2>
+  <h2>Ajouter joueurs / équipes</h2>
+  <label>
+    Nombre de joueurs/équipes (2-8):
+    <input type="number" id="numPlayers" value="2" min="2" max="8">
+  </label>
+  <button id="setupPlayersBtn">Configurer</button>
   <div id="playerInputs"></div>
-  <button id="startGameBtn">Démarrer la partie</button>
+  <button id="startGameBtn" class="hidden">Démarrer la partie</button>
 </section>
 
-<!-- Étape 3 : Tableau scores + graphique -->
-<section id="step3" class="hidden">
-  <h2 id="gameTitle"></h2>
+<!-- Étape 2 : Tableau scores + graphique -->
+<section id="step2" class="hidden">
+  <h2 id="gameTitle">Score Cartes</h2>
   <button id="backBtn">⬅ Menu principal</button>
   <div id="scoreTable"></div>
   <button id="addRoundBtn">✅ Ajouter manche</button>
