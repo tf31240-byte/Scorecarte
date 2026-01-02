@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Score Cartes Refonte</title>
+<title>Score Cartes Simplifié</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -14,38 +14,29 @@
 
 <main>
 
-<!-- MENU PRINCIPAL -->
-<section id="setup">
-  <h2>Choisir un jeu</h2>
-  <div class="game-buttons">
-    <button onclick="selectGame('Belote')">Belote</button>
-    <button onclick="selectGame('Skyjo')">Skyjo</button>
-    <button onclick="selectGame('Flip 7')">Flip 7</button>
-  </div>
-
-  <div id="playerSetup" class="hidden">
-    <h3>Nombre de joueurs</h3>
-    <input type="number" id="playerCount" min="2" max="8" value="4">
-    <div id="playerNames"></div>
-    <button onclick="startGame()">Démarrer</button>
-  </div>
+<!-- Étape 1 : Sélection du jeu -->
+<section id="step1">
+  <h2>1️⃣ Choisir un jeu</h2>
+  <button onclick="selectGame('Belote')">Belote</button>
+  <button onclick="selectGame('Skyjo')">Skyjo</button>
+  <button onclick="selectGame('Flip 7')">Flip 7</button>
 </section>
 
-<!-- ÉCRAN DE JEU -->
-<section id="game" class="hidden">
+<!-- Étape 2 : Ajouter joueurs -->
+<section id="step2" class="hidden">
+  <h2>2️⃣ Ajouter joueurs</h2>
+  <div id="playerInputs"></div>
+  <button onclick="startGame()">Démarrer la partie</button>
+</section>
+
+<!-- Étape 3 : Tableau des scores -->
+<section id="step3" class="hidden">
   <h2 id="gameTitle"></h2>
-  <button class="smallBtn" onclick="backToMenu()">⬅ Menu principal</button>
-
-  <div id="scores"></div>
-  <div id="inputs"></div>
-  <button onclick="addRound()">✅ Valider manche</button>
+  <button onclick="backToMenu()">⬅ Menu principal</button>
+  <div id="scoreTable"></div>
+  <button onclick="addRound()">✅ Ajouter manche</button>
   <button onclick="undoRound()">↩️ Annuler dernière manche</button>
-
-  <h3>Historique / Graphique</h3>
-  <div id="historyGraph"></div>
-
-  <button class="danger" onclick="resetGame()">Nouvelle partie</button>
-  <button onclick="exportScores()">Exporter CSV</button>
+  <button onclick="resetGame()" class="danger">Nouvelle partie</button>
 </section>
 
 <script src="app.js" defer></script>
