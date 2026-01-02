@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Score Cartes Simplifié</title>
+<title>Score Cartes + Graphique</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -13,8 +13,6 @@
 </header>
 
 <main>
-
-<!-- Étape 1 : Ajouter joueurs ou équipes -->
 <section id="step1">
   <h2>Ajouter joueurs / équipes</h2>
   <label>
@@ -26,16 +24,14 @@
   <button id="startGameBtn" class="hidden">Démarrer la partie</button>
 </section>
 
-<!-- Étape 2 : Tableau scores + graphique -->
 <section id="step2" class="hidden">
-  <h2 id="gameTitle">Score Cartes</h2>
-  <button id="backBtn">⬅ Menu principal</button>
-  <div id="scoreTable"></div>
-  <button id="addRoundBtn">✅ Ajouter manche</button>
-  <button id="undoRoundBtn">↩️ Annuler dernière manche</button>
-  <button id="resetBtn" class="danger">Nouvelle partie</button>
-  <h3>Historique graphique</h3>
-  <div id="historyGraph"></div>
+  <h2>Score Cartes</h2>
+  <div id="scoreContainer"></div>
+  <div class="buttons">
+    <button id="addRoundBtn">✅ Ajouter manche</button>
+    <button id="undoRoundBtn">↩️ Annuler dernière manche</button>
+    <button id="resetBtn" class="danger">Nouvelle partie</button>
+  </div>
 </section>
 
 <script src="app.js" defer></script>
