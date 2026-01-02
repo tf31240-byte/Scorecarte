@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Score Cartes + Graphique</title>
+<title>Score Cartes iPhone-Friendly</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -27,13 +27,21 @@
 <section id="step2" class="hidden">
   <h2>Score Cartes</h2>
   <div id="scoreContainer"></div>
+
   <div class="buttons">
     <button id="addRoundBtn">✅ Ajouter manche</button>
     <button id="undoRoundBtn">↩️ Annuler dernière manche</button>
     <button id="resetBtn" class="danger">Nouvelle partie</button>
   </div>
+
+  <h3>Graphique cumulatif</h3>
+  <canvas id="scoreChart" height="200"></canvas>
+
+  <h3>Historique des manches</h3>
+  <div id="historyContainer"></div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="app.js" defer></script>
 </body>
 </html>
