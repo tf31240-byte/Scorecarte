@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster Pro</title>
+    <title>ScoreMaster Ultimate</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,6 +20,7 @@
             --border: #C6C6C8;
             --btn-bg: #FFFFFF;
             --btn-active: #E5E5EA;
+            --danger: #FF3B30;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -35,112 +36,88 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 120px; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 120px; transition: background 0.3s; }
         
-        /* Layout */
         .container { max-width: 600px; margin: 0 auto; padding: 16px; }
         .hidden { display: none !important; }
         
-        /* Header */
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; }
         h1 { margin: 0; font-size: 24px; font-weight: 800; }
         .btn-reset { background: none; border: none; font-size: 20px; cursor: pointer; }
 
-        /* Setup Screen */
-        .mode-card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; cursor: pointer; transition: transform 0.1s; }
-        .mode-card:active { transform: scale(0.98); }
+        .mode-card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; cursor: pointer; }
         .mode-title { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
         .mode-desc { font-size: 14px; color: #888; }
 
-        /* Game Grid */
         .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .p-card { background: var(--card); padding: 15px; border-radius: 16px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; }
+        .p-card { background: var(--card); padding: 15px; border-radius: 16px; text-align: center; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .p-card.leader { border-color: #FFD60A; }
-        .p-name { font-size: 16px; font-weight: 600; margin-bottom: 5px; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .p-score { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-        .p-temp { font-size: 14px; color: var(--primary); font-weight: 600; min-height: 20px; }
+        
+        /* Nom cliquable pour changement */
+        .p-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; text-decoration: underline dotted; }
+        .p-score { font-size: 32px; font-weight: 800; letter-spacing: -1px; cursor: pointer; }
+        .p-temp { font-size: 14px; color: var(--primary); font-weight: 600; min-height: 20px; cursor: pointer; }
 
-        /* Chart */
         .chart-box { background: var(--card); border-radius: 16px; padding: 10px; height: 180px; margin-bottom: 20px; }
 
-        /* History */
         .history-list { display: flex; flex-direction: column; gap: 8px; }
-        .h-row { background: var(--card); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; cursor: pointer; }
-        .h-row:active { background: var(--btn-active); }
-        .h-idx { color: #888; width: 30px; }
-        .h-scores { display: flex; gap: 15px; }
+        .h-row { background: var(--card); padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; font-size: 13px; cursor: pointer; }
+        .h-idx { color: #888; width: 25px; font-weight: bold; }
+        .h-scores { display: flex; flex-wrap: wrap; gap: 10px; flex: 1; }
 
-        /* Action Bar */
         .action-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; display: flex; gap: 10px; z-index: 50; }
-        .main-btn { flex: 1; border: none; padding: 16px; border-radius: 16px; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.15); backdrop-filter: blur(10px); }
+        .main-btn { flex: 1; border: none; padding: 16px; border-radius: 16px; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         .btn-validate { background: var(--primary); color: white; flex: 2; }
         .btn-undo { background: rgba(128,128,128,0.8); color: white; }
 
-        /* --- SHEET MODAL (Numpad) --- */
+        /* NUMPAD SHEET */
         .sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; display: flex; align-items: flex-end; justify-content: center; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        
-        .sheet-content { background: var(--bg); width: 100%; max-width: 600px; border-radius: 24px 24px 0 0; padding: 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .sheet-content { background: var(--bg); width: 100%; max-width: 600px; border-radius: 24px 24px 0 0; padding: 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .sheet-title { font-weight: 700; font-size: 18px; }
-        .sheet-close { background: #E5E5EA; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; color: #888; cursor: pointer; }
+        .input-switcher { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .switch-opt { min-width: 80px; flex: 1; padding: 8px; text-align: center; border-radius: 12px; background: var(--card); border: 2px solid transparent; }
+        .switch-opt.active { border-color: var(--primary); }
+        .so-val { font-size: 20px; font-weight: 800; display: block; }
+        .so-val.negative { color: var(--danger); }
 
-        /* Belote Input Switcher */
-        .input-switcher { display: flex; gap: 10px; margin-bottom: 20px; background: var(--card); padding: 5px; border-radius: 14px; }
-        .switch-opt { flex: 1; padding: 10px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        .switch-opt.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .so-name { font-size: 12px; opacity: 0.9; display: block; }
-        .so-val { font-size: 24px; font-weight: 800; display: block; }
-
-        /* Numpad Grid */
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .nb { background: var(--btn-bg); border: none; height: 55px; border-radius: 10px; font-size: 22px; color: var(--text); font-weight: 500; cursor: pointer; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .nb:active { background: var(--btn-active); transform: scale(0.96); }
-        
-        .nb.special { background: var(--btn-active); font-size: 18px; }
-        .nb.submit { background: var(--primary); color: white; font-weight: 700; }
-        
-        /* Belote Tools */
-        .belote-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .b-tool { background: var(--primary); opacity: 0.1; color: var(--primary); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-        .b-tool.active-tool { opacity: 1; color: white; }
-        .b-calc { grid-column: span 2; background: #34C759; color: white; opacity: 1; font-size: 18px; }
+        .nb { background: var(--btn-bg); border: none; height: 50px; border-radius: 10px; font-size: 20px; color: var(--text); font-weight: 600; }
+        .nb:active { background: var(--btn-active); }
+        .nb.special { background: var(--btn-active); font-size: 16px; }
+        .nb.neg-toggle { color: var(--danger); font-weight: 800; }
+        .nb.submit { background: var(--primary); color: white; }
 
+        .belote-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .b-tool { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px; }
+        .b-calc { grid-column: span 3; background: #34C759; margin-bottom: 5px; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
-        <h1 style="text-align:center; margin-bottom:30px; margin-top:20px;">ScoreMaster <span style="color:var(--primary)">v3</span></h1>
-        
+        <h1 style="text-align:center; margin-top:40px; margin-bottom:40px;">ScoreMaster <span style="color:var(--primary)">v3.1</span></h1>
         <div class="mode-card" onclick="app.initGame('belote')">
             <div class="mode-title">🃏 Belote</div>
-            <div class="mode-desc">2 Équipes • Calcul Auto 162</div>
+            <div class="mode-desc">2 Équipes • Reste auto 162</div>
         </div>
-
         <div class="mode-card" onclick="app.initGame('standard')">
             <div class="mode-title">🎲 Standard</div>
-            <div class="mode-desc">2 à 12 Joueurs</div>
+            <div class="mode-desc">Score libre (Positif ou Négatif)</div>
         </div>
-        
-        <p style="text-align:center; margin-top:40px; color:#888; font-size:12px;">Appuyez sur "Partager" > "Sur l'écran d'accueil" pour installer.</p>
     </div>
 
     <div id="game" class="container hidden">
         <header>
-            <h1 id="game-title">Belote</h1>
+            <h1 id="game-title">Partie en cours</h1>
             <button class="btn-reset" onclick="app.reset()">⚙️</button>
         </header>
 
-        <div class="chart-box">
-            <canvas id="chart"></canvas>
-        </div>
-
+        <div class="chart-box"><canvas id="chart"></canvas></div>
         <div id="grid" class="players-grid"></div>
 
-        <h3 style="margin: 20px 0 10px 0; font-size:14px; text-transform:uppercase; color:#888;">Historique</h3>
+        <h3 style="margin: 20px 0 10px 0; font-size:12px; text-transform:uppercase; color:#888;">Historique (Cliquer pour corriger)</h3>
         <div id="history" class="history-list"></div>
     </div>
 
@@ -151,17 +128,13 @@
 
     <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
         <div class="sheet-content">
-            <div class="sheet-header">
-                <div class="sheet-title" id="sheet-title">Saisie</div>
-                <button class="sheet-close" onclick="app.closeSheet()">✕</button>
-            </div>
-
             <div id="input-switcher" class="input-switcher"></div>
 
             <div id="belote-tools" class="belote-actions hidden">
-                <button class="b-tool active-tool b-calc" onclick="app.calcBeloteRest()">🔮 Reste (162)</button>
-                <button class="b-tool active-tool" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="app.addVal(10)">+10</button>
-                <button class="b-tool active-tool" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="app.addVal(20)">+20</button>
+                <button class="b-tool b-calc" onclick="app.calcBeloteRest()">🔮 Reste (162)</button>
+                <button class="b-tool" onclick="app.addVal(10)">+10</button>
+                <button class="b-tool" onclick="app.addVal(20)">+20</button>
+                <button class="b-tool" onclick="app.addVal(50)">+50</button>
             </div>
 
             <div class="numpad">
@@ -174,7 +147,7 @@
                 <button class="nb" onclick="app.typeNum(7)">7</button>
                 <button class="nb" onclick="app.typeNum(8)">8</button>
                 <button class="nb" onclick="app.typeNum(9)">9</button>
-                <button class="nb special" onclick="app.clearInput()">C</button>
+                <button class="nb special neg-toggle" onclick="app.toggleNegative()">+/−</button>
                 <button class="nb" onclick="app.typeNum(0)">0</button>
                 <button class="nb special" onclick="app.backspace()">⌫</button>
                 <button class="nb submit" style="grid-column: span 3; margin-top:10px;" onclick="app.closeSheet()">OK</button>
@@ -183,23 +156,16 @@
     </div>
 
     <script>
-        /** LOGIC CORE V3 */
-        const COLORS = ['#007AFF', '#FF3B30', '#34C759', '#FF9500', '#5856D6', '#AF52DE'];
+        const COLORS = ['#007AFF', '#FF3B30', '#34C759', '#FF9500', '#5856D6', '#AF52DE', '#FF2D55', '#00C7BE', '#A2845E'];
         
         const app = {
-            data: {
-                mode: null,
-                players: [],
-                history: [],
-                tempScores: {} // { playerId: value } for current round or edit
-            },
-            editingRoundIndex: null, // null = new round, number = edit old round
+            data: { mode: null, players: [], history: [], tempScores: {} },
+            editingRoundIndex: null,
             activePlayerId: null,
             chart: null,
 
-            // --- INIT & STORAGE ---
             init() {
-                const saved = localStorage.getItem('sm_v3');
+                const saved = localStorage.getItem('sm_v3.1');
                 if(saved) {
                     this.data = JSON.parse(saved);
                     this.showGame();
@@ -218,10 +184,10 @@
                     ];
                 } else {
                     const count = prompt("Nombre de joueurs (2-12) ?", "4");
-                    const n = parseInt(count) || 4;
+                    const n = Math.min(parseInt(count) || 4, 12);
                     this.data.players = [];
                     for(let i=0; i<n; i++) {
-                        this.data.players.push({id: i+1, name: `J${i+1}`, color: COLORS[i%6], total:0});
+                        this.data.players.push({id: i+1, name: `J${i+1}`, color: COLORS[i%COLORS.length], total:0});
                     }
                 }
                 this.save();
@@ -235,24 +201,26 @@
                 this.render();
             },
 
-            reset() {
-                if(confirm("Tout effacer et recommencer ?")) {
-                    localStorage.removeItem('sm_v3');
-                    location.reload();
+            save() { localStorage.setItem('sm_v3.1', JSON.stringify(this.data)); },
+
+            reset() { if(confirm("Réinitialiser la partie ?")) { localStorage.removeItem('sm_v3.1'); location.reload(); } },
+
+            // --- NOMS ---
+            renamePlayer(pid, event) {
+                event.stopPropagation(); // Évite d'ouvrir le numpad
+                const p = this.data.players.find(x => x.id === pid);
+                const newName = prompt("Nom du joueur / équipe :", p.name);
+                if(newName) {
+                    p.name = newName.substring(0, 12).toUpperCase();
+                    this.save();
+                    this.render();
                 }
             },
 
-            save() {
-                localStorage.setItem('sm_v3', JSON.stringify(this.data));
-            },
-
-            // --- RENDER ---
+            // --- RENDU ---
             render() {
-                // 1. Grid
                 const grid = document.getElementById('grid');
                 grid.innerHTML = '';
-                
-                // Calcul Leader
                 const max = Math.max(...this.data.players.map(p => p.total));
 
                 this.data.players.forEach(p => {
@@ -262,16 +230,16 @@
 
                     const el = document.createElement('div');
                     el.className = `p-card ${isLeader ? 'leader' : ''}`;
-                    el.onclick = () => this.openSheet(p.id);
                     el.innerHTML = `
-                        <div class="p-name" style="color:${p.color}">${p.name} ${isLeader?'🥇':''}</div>
-                        <div class="p-score">${displayTotal}</div>
-                        <div class="p-temp">${temp > 0 ? '+'+temp : ''}</div>
+                        <div class="p-name" onclick="app.renamePlayer(${p.id}, event)">${p.name}</div>
+                        <div onclick="app.openSheet(${p.id})">
+                            <div class="p-score">${displayTotal}</div>
+                            <div class="p-temp">${temp !== 0 ? (temp > 0 ? '+'+temp : temp) : ''}</div>
+                        </div>
                     `;
                     grid.appendChild(el);
                 });
 
-                // 2. History
                 const histList = document.getElementById('history');
                 histList.innerHTML = '';
                 this.data.history.slice().reverse().forEach((round, revIdx) => {
@@ -279,46 +247,30 @@
                     const row = document.createElement('div');
                     row.className = 'h-row';
                     row.onclick = () => this.editRound(realIdx);
-                    
                     let scoresHtml = '';
                     this.data.players.forEach(p => {
                         scoresHtml += `<span style="color:${p.color}">${p.name.substring(0,3)}: <b>${round[p.id]}</b></span>`;
                     });
-
                     row.innerHTML = `<div class="h-idx">#${realIdx+1}</div><div class="h-scores">${scoresHtml}</div>`;
                     histList.appendChild(row);
                 });
-
-                // 3. Chart
                 this.renderChart();
             },
 
             renderChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
                 const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                
                 const datasets = this.data.players.map(p => {
                     let acc = 0;
-                    const data = [0, ...this.data.history.map(h => {
-                        acc += h[p.id];
-                        return acc;
-                    })];
-                    return {
-                        label: p.name,
-                        data: data,
-                        borderColor: p.color,
-                        borderWidth: 2,
-                        pointRadius: 0
-                    };
+                    const data = [0, ...this.data.history.map(h => { acc += h[p.id]; return acc; })];
+                    return { label: p.name, data: data, borderColor: p.color, borderWidth: 2, pointRadius: 0 };
                 });
-
                 if(this.chart) this.chart.destroy();
                 this.chart = new Chart(ctx, {
                     type: 'line',
-                    data: { labels: new Array(datasets[0].data.length).fill(''), datasets },
+                    data: { labels: new Array(datasets[0]?.data.length || 0).fill(''), datasets },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { display: false },
@@ -328,116 +280,94 @@
                 });
             },
 
-            // --- INPUT SHEET LOGIC ---
+            // --- NUMPAD & NEGATIF ---
             openSheet(pid) {
                 this.activePlayerId = pid;
                 this.renderSheetSwitcher();
-                
-                // Belote tools visibility
                 const tools = document.getElementById('belote-tools');
                 if(this.data.mode === 'belote') tools.classList.remove('hidden');
                 else tools.classList.add('hidden');
-
                 document.getElementById('sheet').classList.add('active');
             },
 
             closeSheet() {
                 document.getElementById('sheet').classList.remove('active');
-                this.activePlayerId = null;
-                // If we were editing, we save the temp changes to state, but don't commit to history yet
-                // Wait, if editing history, we should save immediately?
-                if(this.editingRoundIndex !== null) {
-                    this.commitEdit();
-                } else {
-                    this.render();
-                }
+                if(this.editingRoundIndex !== null) this.commitEdit();
+                else this.render();
             },
 
             renderSheetSwitcher() {
                 const container = document.getElementById('input-switcher');
                 container.innerHTML = '';
-                
-                // Show all players in switcher so we can tap to switch
                 this.data.players.forEach(p => {
                     const div = document.createElement('div');
                     const isActive = p.id === this.activePlayerId;
                     const val = this.data.tempScores[p.id] || 0;
-                    
                     div.className = `switch-opt ${isActive ? 'active' : ''}`;
                     div.onclick = () => { this.activePlayerId = p.id; this.renderSheetSwitcher(); };
-                    div.innerHTML = `<span class="so-name">${p.name}</span><span class="so-val">${val}</span>`;
+                    div.innerHTML = `<span style="font-size:10px; color:#888">${p.name}</span><span class="so-val ${val<0?'negative':''}">${val}</span>`;
                     container.appendChild(div);
                 });
-                
-                // Update Title
-                document.getElementById('sheet-title').innerText = this.editingRoundIndex !== null 
-                    ? `Modifier Manche ${this.editingRoundIndex+1}` 
-                    : "Saisie Manche en cours";
             },
 
-            // --- NUMPAD ACTIONS ---
             typeNum(n) {
-                if(!this.activePlayerId) return;
                 let cur = (this.data.tempScores[this.activePlayerId] || 0).toString();
-                if(cur === '0') cur = '';
-                cur += n;
-                this.data.tempScores[this.activePlayerId] = parseInt(cur) || 0;
+                let isNeg = cur.startsWith('-');
+                let absCur = isNeg ? cur.substring(1) : cur;
+                
+                if(absCur === '0') absCur = '';
+                absCur += n;
+                
+                this.data.tempScores[this.activePlayerId] = parseInt((isNeg?'-':'') + absCur) || 0;
+                this.renderSheetSwitcher();
+            },
+
+            toggleNegative() {
+                let cur = this.data.tempScores[this.activePlayerId] || 0;
+                this.data.tempScores[this.activePlayerId] = cur * -1;
                 this.renderSheetSwitcher();
             },
 
             backspace() {
-                if(!this.activePlayerId) return;
                 let cur = (this.data.tempScores[this.activePlayerId] || 0).toString();
                 cur = cur.slice(0, -1);
+                if(cur === '' || cur === '-') cur = '0';
                 this.data.tempScores[this.activePlayerId] = parseInt(cur) || 0;
                 this.renderSheetSwitcher();
             },
 
             clearInput() {
-                if(!this.activePlayerId) return;
                 this.data.tempScores[this.activePlayerId] = 0;
                 this.renderSheetSwitcher();
             },
 
             addVal(v) {
-                 if(!this.activePlayerId) return;
                  const cur = this.data.tempScores[this.activePlayerId] || 0;
                  this.data.tempScores[this.activePlayerId] = cur + v;
                  this.renderSheetSwitcher();
             },
 
-            // --- BELOTE MAGIC ---
             calcBeloteRest() {
-                if(!this.activePlayerId) return;
                 const currentVal = this.data.tempScores[this.activePlayerId] || 0;
                 const rest = 162 - currentVal;
-                
-                // Find opponent
                 const opponent = this.data.players.find(p => p.id !== this.activePlayerId);
                 if(opponent) {
                     this.data.tempScores[opponent.id] = rest;
                     this.renderSheetSwitcher();
-                    // Optional: Close sheet automatically? No, user might want to add announcements
                 }
             },
 
-            // --- GAME ACTIONS ---
+            // --- ACTIONS ---
             validateRound() {
-                if(this.editingRoundIndex !== null) return; // Should not happen
-
-                // Check empty
-                const allZero = this.data.players.every(p => !this.data.tempScores[p.id]);
-                if(allZero && !confirm("Valider une manche vide ?")) return;
-
+                if(this.editingRoundIndex !== null) return;
                 const round = {};
                 this.data.players.forEach(p => {
                     const s = this.data.tempScores[p.id] || 0;
                     round[p.id] = s;
                     p.total += s;
                 });
-                
                 this.data.history.push(round);
-                this.data.tempScores = {}; // reset inputs
+                this.data.tempScores = {};
                 this.save();
                 this.render();
             },
@@ -445,45 +375,28 @@
             undo() {
                 if(this.data.history.length === 0) return;
                 if(!confirm("Annuler la dernière manche ?")) return;
-                
                 const last = this.data.history.pop();
-                this.data.players.forEach(p => {
-                    p.total -= (last[p.id] || 0);
-                });
+                this.data.players.forEach(p => { p.total -= (last[p.id] || 0); });
                 this.save();
                 this.render();
             },
 
-            // --- EDIT HISTORY ---
             editRound(index) {
                 this.editingRoundIndex = index;
-                // Load scores into temp
                 this.data.tempScores = {...this.data.history[index]};
-                // Open sheet on first player
                 this.openSheet(this.data.players[0].id);
-                // The dock should probably hide or change, but modal covers it anyway
             },
 
             commitEdit() {
-                if(this.editingRoundIndex === null) return;
-                
-                // 1. Revert old scores from total
                 const oldRound = this.data.history[this.editingRoundIndex];
-                this.data.players.forEach(p => {
-                    p.total -= (oldRound[p.id] || 0);
-                });
-
-                // 2. Update round data
+                this.data.players.forEach(p => { p.total -= (oldRound[p.id] || 0); });
                 const newRound = {};
                 this.data.players.forEach(p => {
                     const val = this.data.tempScores[p.id] || 0;
                     newRound[p.id] = val;
-                    p.total += val; // Add new scores to total
+                    p.total += val;
                 });
-
                 this.data.history[this.editingRoundIndex] = newRound;
-                
-                // 3. Cleanup
                 this.editingRoundIndex = null;
                 this.data.tempScores = {};
                 this.save();
@@ -491,7 +404,6 @@
             }
         };
 
-        // Start
         app.init();
     </script>
 </body>
