@@ -3,72 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ScoreMaster Elite v5</title>
+    <title>ScoreMaster Elite v7</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #000000;
             --border: #D1D1D6; --dealer: #FF9500; --danger: #FF3B30; --success: #34C759;
             --btn-active: #E5E5EA; --shadow: rgba(0,0,0,0.08);
+            --p-color: #007AFF;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #FFFFFF;
-                --border: #38383A; --btn-active: #3A3A3C; --shadow: rgba(0,0,0,0.4);
+                --border: #38383A; --btn-active: #2C2C2E; --shadow: rgba(0,0,0,0.4);
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 100px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 15px; }
         .hidden { display: none !important; }
 
-        /* Graph & Cards */
-        .chart-box { background: var(--card); border-radius: 24px; padding: 12px; height: 220px; margin-bottom: 20px; box-shadow: 0 8px 24px var(--shadow); border: 1px solid var(--border); }
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .p-card { background: var(--card); padding: 18px 10px; border-radius: 22px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 4px 12px var(--shadow); transition: 0.3s; }
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; }
+        .game-mode-title { font-size: 26px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+
+        /* Grille Multi-Lignes */
+        .players-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+            gap: 10px; 
+            margin-bottom: 20px;
+        }
+        .p-card { 
+            background: var(--card); padding: 12px 8px; border-radius: 20px; 
+            text-align: center; position: relative; border: 2px solid transparent; 
+            box-shadow: 0 4px 10px var(--shadow); transition: 0.2s;
+        }
         .p-card.is-dealer { border-color: var(--dealer); }
-        .p-header { cursor: pointer; display: inline-flex; align-items: center; gap: 5px; background: var(--bg); padding: 5px 12px; border-radius: 12px; margin-bottom: 5px; }
-        .p-score { font-size: 40px; font-weight: 900; letter-spacing: -2px; margin: 5px 0; cursor: pointer; }
-        .dealer-dot { position: absolute; top: 12px; right: 12px; background: var(--dealer); width: 10px; height: 10px; border-radius: 50%; }
+        .p-name-btn { 
+            display: inline-flex; align-items: center; gap: 4px; 
+            background: var(--bg); padding: 4px 8px; border-radius: 8px; 
+            cursor: pointer; font-size: 10px; font-weight: 800;
+        }
+        .p-score { font-size: 32px; font-weight: 900; margin: 4px 0; cursor: pointer; }
+        .p-diff { font-size: 12px; font-weight: 700; min-height: 16px; }
 
-        /* History */
-        .h-row { background: var(--card); padding: 12px 16px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); }
-        .h-idx { font-size: 10px; font-weight: 800; opacity: 0.4; width: 30px; }
-        .h-scores { display: flex; flex: 1; justify-content: space-around; cursor: pointer; }
-        .btn-del { color: var(--danger); background: none; border: none; font-size: 18px; padding: 5px 10px; cursor: pointer; opacity: 0.6; }
+        /* Graphique */
+        .chart-container { background: var(--card); border-radius: 24px; padding: 12px; height: 180px; margin-bottom: 20px; border: 1px solid var(--border); }
 
-        /* Modal Player */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .modal.active { opacity: 1; pointer-events: auto; }
-        .modal-content { background: var(--card); width: 100%; max-width: 350px; border-radius: 28px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .input-group { margin: 20px 0; }
-        .input-group label { display: block; font-size: 12px; font-weight: 700; opacity: 0.5; margin-bottom: 8px; text-transform: uppercase; }
-        input[type="text"] { width: 100%; padding: 15px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 18px; font-weight: 600; }
-        .dealer-switch { display: flex; align-items: center; justify-content: space-between; background: var(--bg); padding: 15px; border-radius: 14px; margin-top: 15px; cursor: pointer; }
+        /* Historique */
+        .h-row { 
+            background: var(--card); padding: 10px 15px; border-radius: 16px; 
+            display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); 
+        }
+        .h-scores-list { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); 
+            flex: 1; gap: 5px; margin: 0 10px;
+        }
 
         /* Numpad Sheet */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; opacity: 0; pointer-events: none; display: flex; align-items: flex-end; transition: 0.3s; backdrop-filter: blur(5px); }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 30px 30px 0 0; padding: 25px 20px env(safe-area-inset-bottom); transform: translateY(100%); transition: 0.4s cubic-bezier(0, 0.5, 0.5, 1); }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 30px 30px 0 0; padding: 20px; transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
-        .nb { background: var(--card); border: none; height: 60px; border-radius: 16px; font-size: 22px; font-weight: 600; color: var(--text); box-shadow: 0 3px 0 var(--border); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-        /* Bottom Bar */
-        .dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; display: flex; gap: 12px; z-index: 1000; }
-        .btn-main { flex: 1; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 20px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        /* Sélecteur Joueur dans le clavier */
+        .selector-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+            gap: 8px; margin-bottom: 15px; max-height: 120px; overflow-y: auto;
+        }
+        .sel-btn { 
+            padding: 8px; border-radius: 12px; background: var(--card); 
+            border: 1px solid var(--border); text-align: center; cursor: pointer;
+        }
+        .sel-btn.active { background: var(--p-color) !important; color: white !important; border-color: transparent; }
+
+        /* Boutons Clavier */
+        .nb { background: var(--card); border: none; height: 55px; border-radius: 15px; font-size: 20px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
+        .nb-color { background: var(--p-color); color: white; box-shadow: 0 3px 0 rgba(0,0,0,0.2); transition: 0.3s; }
+
+        /* Modale */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: var(--card); width: 100%; max-width: 320px; border-radius: 24px; padding: 25px; }
     </style>
 </head>
 <body>
 
 <div id="setup" class="container">
-    <h1 style="text-align:center; margin-top:80px;">ScoreMaster</h1>
-    <div style="display:grid; gap:15px; margin-top:50px;">
-        <button onclick="app.initGame('belote')" style="padding:35px; border-radius:28px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
+    <h1 style="text-align:center; margin-top:60px; font-size:38px;">ScoreMaster</h1>
+    <div style="display:grid; gap:12px; margin-top:40px;">
+        <button onclick="app.initGame('belote')" style="padding:25px; border-radius:22px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
             <h2 style="margin:0">🃏 BELOTE</h2>
-            <p style="margin:5px 0 0; color:var(--primary); font-weight:700;">162 pts • Donne Auto</p>
+            <p style="margin:5px 0 0; color:var(--primary); font-weight:700;">162 pts • 2 Équipes</p>
         </button>
-        <button onclick="app.initGame('standard')" style="padding:35px; border-radius:28px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
+        <button onclick="app.initGame('standard')" style="padding:25px; border-radius:22px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
             <h2 style="margin:0">🎲 STANDARD</h2>
             <p style="margin:5px 0 0; color:var(--primary); font-weight:700;">Multi-joueurs • Libre</p>
         </button>
@@ -76,75 +105,72 @@
 </div>
 
 <div id="game" class="container hidden">
-    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h1 id="game-title">Scores</h1>
-        <button onclick="app.reset()" style="background:none; border:none; font-size:24px;">⚙️</button>
-    </header>
+    <div class="header">
+        <div id="game-title" class="game-mode-title"></div>
+        <button onclick="app.reset()" style="background:var(--btn-active); border:none; width:36px; height:36px; border-radius:50%;">⚙️</button>
+    </div>
 
-    <div class="chart-box"><canvas id="chart"></canvas></div>
+    <div class="chart-container"><canvas id="chart"></canvas></div>
+    
     <div id="grid" class="players-grid"></div>
 
-    <div style="font-size:11px; font-weight:800; color:var(--primary); margin: 30px 0 10px; text-transform:uppercase;">Historique des manches</div>
+    <div style="font-size:10px; font-weight:900; color:var(--primary); margin: 20px 0 10px; text-transform:uppercase;">Historique des manches</div>
     <div id="history"></div>
 </div>
 
 <div id="modalPlayer" class="modal" onclick="if(event.target===this) app.closeModal()">
-    <div class="modal-content">
-        <h2 style="margin:0 0 20px 0">Édition Joueur</h2>
-        <div class="input-group">
-            <label>Nom du joueur / équipe</label>
-            <input type="text" id="editName" placeholder="Ex: Team A">
-        </div>
-        <div class="dealer-switch" onclick="app.toggleDealerModal()">
-            <span style="font-weight:700;">Désigner comme Donneur</span>
-            <input type="checkbox" id="editDealer" style="width:20px; height:20px;">
-        </div>
-        <button onclick="app.savePlayer()" style="width:100%; margin-top:25px; padding:18px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:16px;">ENREGISTRER</button>
+    <div class="modal-box">
+        <h3 style="margin:0 0 15px 0">Paramètres Joueur</h3>
+        <input type="text" id="editName" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); font-size:16px;">
+        <label style="display:flex; align-items:center; justify-content:space-between; margin-top:15px; background:var(--bg); padding:10px; border-radius:10px;">
+            <span style="font-weight:700">Donneur</span>
+            <input type="checkbox" id="editDealer">
+        </label>
+        <button onclick="app.savePlayer()" style="width:100%; margin-top:20px; padding:15px; border-radius:12px; border:none; background:var(--text); color:var(--bg); font-weight:800;">ENREGISTRER</button>
     </div>
-</div>
-
-<div id="dock" class="dock hidden">
-    <button id="save-btn" class="btn-main" onclick="app.validateRound()">VALIDER LA MANCHE</button>
 </div>
 
 <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
     <div class="sheet-content">
-        <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; background:var(--btn-active); padding:5px; border-radius:18px;"></div>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:15px;">
-            <button id="btn-162" class="nb hidden" style="grid-column: span 4; background:var(--success); color:white; font-size:15px;" onclick="app.calcRest()">✨ RESTE À 162</button>
-            <button class="nb" style="font-size:14px" onclick="app.addVal(10)">+10</button>
-            <button class="nb" style="font-size:14px" onclick="app.addVal(20)">+20</button>
-            <button class="nb" style="font-size:14px" onclick="app.addVal(50)">+50</button>
-            <button id="btn-smart" class="nb" style="font-size:14px; background:var(--primary); color:white;" onclick="app.handleSmart()">CAPOT</button>
+        <div id="selector-grid" class="selector-grid"></div>
+        
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom:12px;">
+            <button id="btn-162" class="nb hidden" style="grid-column: span 4; background:var(--success); color:white;" onclick="app.calcRest()">✨ RESTE À 162</button>
+            <button class="nb nb-color" onclick="app.addVal(10)">+10</button>
+            <button class="nb nb-color" onclick="app.addVal(20)">+20</button>
+            <button class="nb nb-color" onclick="app.addVal(50)">+50</button>
+            <button id="btn-smart" class="nb nb-color" onclick="app.handleSmart()">+/-</button>
         </div>
-        <div class="numpad">
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
             <button class="nb" onclick="app.typeNum(1)">1</button><button class="nb" onclick="app.typeNum(2)">2</button><button class="nb" onclick="app.typeNum(3)">3</button>
             <button class="nb" onclick="app.typeNum(4)">4</button><button class="nb" onclick="app.typeNum(5)">5</button><button class="nb" onclick="app.typeNum(6)">6</button>
             <button class="nb" onclick="app.typeNum(7)">7</button><button class="nb" onclick="app.typeNum(8)">8</button><button class="nb" onclick="app.typeNum(9)">9</button>
             <button class="nb" style="color:var(--danger)" onclick="app.clearInput()">C</button>
             <button class="nb" onclick="app.typeNum(0)">0</button>
             <button class="nb" onclick="app.backspace()">⌫</button>
-            <button class="nb" style="grid-column: span 3; background:var(--text); color:var(--bg); margin-top:10px;" onclick="app.closeSheet()">OK</button>
+            <button id="save-btn" class="nb nb-color" style="grid-column: span 3; margin-top:8px; height:60px;" onclick="app.validateRound()">VALIDER</button>
         </div>
     </div>
 </div>
 
 <script>
+const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#5856D6', '#FFCC00', '#8E8E93', '#FF3B30'];
 const app = {
     data: { mode: null, players: [], history: [], temp: {}, dealerId: 1 },
     activeId: null, editIdx: null, editingPlayerId: null, chart: null,
 
     init() {
-        const saved = localStorage.getItem('sm_v5');
+        const saved = localStorage.getItem('sm_v7');
         if(saved) { this.data = JSON.parse(saved); this.showGame(); }
     },
-    save() { localStorage.setItem('sm_v5', JSON.stringify(this.data)); },
+    save() { localStorage.setItem('sm_v7', JSON.stringify(this.data)); },
 
     initGame(mode) {
         this.data.mode = mode;
         const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
         this.data.players = Array.from({length: n}, (_, i) => ({
-            id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i+1}`, color: ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA'][i%6], total: 0
+            id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i+1}`, color: COLORS[i % COLORS.length], total: 0
         }));
         this.data.dealerId = 1; this.save(); this.showGame();
     },
@@ -152,7 +178,7 @@ const app = {
     showGame() {
         document.getElementById('setup').classList.add('hidden');
         document.getElementById('game').classList.remove('hidden');
-        document.getElementById('dock').classList.remove('hidden');
+        document.getElementById('game-title').innerText = this.data.mode;
         this.render();
     },
 
@@ -163,13 +189,13 @@ const app = {
             const card = document.createElement('div');
             card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
             card.innerHTML = `
-                <div class="p-header" onclick="app.openModal(${p.id})">
-                    <span class="p-name" style="color:${p.color}; font-weight:800; font-size:12px;">${p.name}</span>
-                    <span style="font-size:10px; opacity:0.3">▼</span>
+                <div class="p-name-btn" onclick="app.openModal(${p.id})">
+                    <span style="color:${p.color}">${p.name}</span>
+                    <span style="opacity:0.3">▼</span>
                 </div>
                 <div class="p-score" onclick="app.openSheet(${p.id})">${p.total + t}</div>
-                <div style="font-size:14px; color:var(--primary); font-weight:700; min-height:20px;">${t ? '+'+t : ''}</div>
-                ${this.data.dealerId === p.id ? '<div class="dealer-dot"></div>' : ''}
+                <div class="p-diff" style="color:${p.color}">${t ? '+'+t : ''}</div>
+                ${this.data.dealerId === p.id ? '<div style="position:absolute; top:8px; right:8px; background:var(--dealer); width:6px; height:6px; border-radius:50%;"></div>' : ''}
             `;
             grid.appendChild(card);
         });
@@ -179,18 +205,13 @@ const app = {
             const idx = this.data.history.length - 1 - i;
             const row = document.createElement('div'); row.className = 'h-row';
             let scoresHtml = '';
-            this.data.players.forEach(p => scoresHtml += `<div style="text-align:center; flex:1;"><div style="font-weight:800;">${r[p.id]||0}</div></div>`);
-            row.innerHTML = `
-                <div class="h-idx">M${idx+1}</div>
-                <div class="h-scores" onclick="app.startEdit(${idx})">${scoresHtml}</div>
-                <button class="btn-del" onclick="app.deleteRound(${idx})">×</button>
-            `;
+            this.data.players.forEach(p => scoresHtml += `<div style="text-align:center"><div style="font-size:8px; color:${p.color}; font-weight:800">${p.name.substring(0,3)}</div><b>${r[p.id]||0}</b></div>`);
+            row.innerHTML = `<div style="opacity:0.3; font-weight:900; width:25px; font-size:10px">M${idx+1}</div><div class="h-scores-list" onclick="app.startEdit(${idx})">${scoresHtml}</div><button style="color:var(--danger); background:none; border:none; font-size:18px;" onclick="app.deleteRound(${idx})">×</button>`;
             hist.appendChild(row);
         });
         this.updateChart();
     },
 
-    // Player Modal Logic
     openModal(pid) {
         const p = this.data.players.find(x => x.id === pid);
         this.editingPlayerId = pid;
@@ -199,7 +220,6 @@ const app = {
         document.getElementById('modalPlayer').classList.add('active');
     },
     closeModal() { document.getElementById('modalPlayer').classList.remove('active'); },
-    toggleDealerModal() { document.getElementById('editDealer').checked = !document.getElementById('editDealer').checked; },
     savePlayer() {
         const p = this.data.players.find(x => x.id === this.editingPlayerId);
         p.name = document.getElementById('editName').value.toUpperCase();
@@ -207,52 +227,50 @@ const app = {
         this.save(); this.render(); this.closeModal();
     },
 
-    // Sheet Logic
     openSheet(pid) {
         this.activeId = pid;
-        this.renderSwitcher();
         document.getElementById('btn-162').classList.toggle('hidden', this.data.mode !== 'belote');
+        this.updateClavier();
         document.getElementById('sheet').classList.add('active');
     },
-    closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
-    renderSwitcher() {
-        const container = document.getElementById('input-switcher'); container.innerHTML = '';
-        this.data.players.forEach(p => {
-            const active = p.id === this.activeId;
-            const div = document.createElement('div');
-            div.style = `flex:1; padding:12px; text-align:center; border-radius:14px; cursor:pointer; background:${active ? 'var(--card)' : 'transparent'}; box-shadow:${active ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'}`;
-            div.onclick = () => { this.activeId = p.id; this.renderSwitcher(); };
-            div.innerHTML = `<div style="font-size:10px; font-weight:800; opacity:0.5">${p.name}</div>
-                             <div style="font-size:22px; font-weight:800; color:var(--primary)">${this.data.temp[p.id] || 0}</div>`;
-            container.appendChild(div);
+
+    updateClavier() {
+        const p = this.data.players.find(x => x.id === this.activeId);
+        document.documentElement.style.setProperty('--p-color', p.color);
+        const container = document.getElementById('selector-grid'); container.innerHTML = '';
+        this.data.players.forEach(player => {
+            const btn = document.createElement('div');
+            btn.className = `sel-btn ${player.id === this.activeId ? 'active' : ''}`;
+            btn.style.color = player.color;
+            btn.onclick = () => { this.activeId = player.id; this.updateClavier(); };
+            btn.innerHTML = `<div style="font-size:9px; opacity:0.6">${player.name}</div><div style="font-weight:800">${this.data.temp[player.id] || 0}</div>`;
+            container.appendChild(btn);
         });
         this.updateChart(); this.render();
     },
 
-    // Score Logic
-    typeNum(n) { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = parseInt((cur === '0' ? '' : cur) + n); this.renderSwitcher(); },
-    addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; this.renderSwitcher(); },
-    clearInput() { this.data.temp[this.activeId] = 0; this.renderSwitcher(); },
-    backspace() { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = cur.length > 1 ? parseInt(cur.slice(0, -1)) : 0; this.renderSwitcher(); },
+    typeNum(n) { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = parseInt((cur === '0' ? '' : cur) + n); this.updateClavier(); },
+    addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; this.updateClavier(); },
+    clearInput() { this.data.temp[this.activeId] = 0; this.updateClavier(); },
+    backspace() { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = cur.length > 1 ? parseInt(cur.slice(0, -1)) : 0; this.updateClavier(); },
     handleSmart() {
         if(this.data.mode === 'belote') this.data.temp[this.activeId] = 252;
         else this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) * -1;
-        this.renderSwitcher();
+        this.updateClavier();
     },
     calcRest() {
         const other = this.data.players.find(p => p.id !== this.activeId);
-        if(other) { this.data.temp[other.id] = Math.max(0, 162 - (this.data.temp[this.activeId] || 0)); this.activeId = other.id; this.renderSwitcher(); }
+        if(other) { this.data.temp[other.id] = Math.max(0, 162 - (this.data.temp[this.activeId] || 0)); this.activeId = other.id; this.updateClavier(); }
     },
 
     validateRound() {
-        if(Object.keys(this.data.temp).length === 0) return;
         if(this.editIdx !== null) {
             const old = this.data.history[this.editIdx];
             this.data.players.forEach(p => p.total -= (old[p.id] || 0));
             this.data.history[this.editIdx] = {...this.data.temp};
             this.data.players.forEach(p => p.total += (this.data.temp[p.id] || 0));
             this.editIdx = null;
-            document.getElementById('save-btn').style.background = "var(--text)";
+            document.getElementById('save-btn').innerText = "VALIDER";
         } else {
             const round = {};
             this.data.players.forEach(p => { round[p.id] = this.data.temp[p.id] || 0; p.total += round[p.id]; });
@@ -260,18 +278,17 @@ const app = {
             const idx = this.data.players.findIndex(p => p.id === this.data.dealerId);
             this.data.dealerId = this.data.players[(idx + 1) % this.data.players.length].id;
         }
-        this.data.temp = {}; this.save(); this.render();
+        this.data.temp = {}; this.save(); document.getElementById('sheet').classList.remove('active'); this.render();
     },
 
     startEdit(idx) {
         this.editIdx = idx; this.data.temp = {...this.data.history[idx]};
-        document.getElementById('save-btn').innerText = "MODIFIER MANCHE " + (idx+1);
-        document.getElementById('save-btn').style.background = "var(--dealer)";
+        document.getElementById('save-btn').innerText = "MODIFIER M" + (idx+1);
         this.openSheet(this.data.players[0].id);
     },
 
     deleteRound(idx) {
-        if(confirm("Supprimer cette manche ?")) {
+        if(confirm("Supprimer M"+(idx+1)+" ?")) {
             const round = this.data.history[idx];
             this.data.players.forEach(p => p.total -= (round[p.id] || 0));
             this.data.history.splice(idx, 1);
@@ -279,7 +296,8 @@ const app = {
         }
     },
 
-    reset() { if(confirm("Réinitialiser la partie ?")) { localStorage.removeItem('sm_v5'); location.reload(); } },
+    closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
+    reset() { if(confirm("Réinitialiser ?")) { localStorage.removeItem('sm_v7'); location.reload(); } },
 
     updateChart() {
         const ctx = document.getElementById('chart').getContext('2d');
@@ -287,24 +305,17 @@ const app = {
         const datasets = this.data.players.map(p => {
             let s = 0;
             const historyData = this.data.history.map(h => s += (h[p.id] || 0));
-            const totalPreview = s + (this.data.temp[p.id] || 0);
-            return { 
-                label: p.name,
-                data: [0, ...historyData, totalPreview], 
-                borderColor: p.color, 
-                backgroundColor: p.color,
-                tension: 0.3, pointRadius: 4, borderWidth: 3 
-            }
+            return { label: p.name, data: [0, ...historyData, s + (this.data.temp[p.id] || 0)], borderColor: p.color, backgroundColor: p.color, tension: 0.3, pointRadius: 3, borderWidth: 2 }
         });
         this.chart = new Chart(ctx, {
             type: 'line',
-            data: { labels: ['Start', ...this.data.history.map((_, i) => (i+1)), 'Live'], datasets },
+            data: { labels: ['0', ...this.data.history.map((_, i) => i+1), 'LIVE'], datasets },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
                 plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
                 scales: { 
-                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }, 
-                    y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } } 
+                    x: { ticks: { font: { size: 9 } }, grid: { display: false } }, 
+                    y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.05)' } } 
                 }
             }
         });
