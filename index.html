@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster Pro v3.5</title>
+    <title>ScoreMaster v3.6</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -46,12 +46,10 @@
         h1 { margin: 0; font-size: 22px; font-weight: 800; }
         .btn-reset { background: none; border: none; font-size: 20px; cursor: pointer; }
 
-        .mode-card { background: var(--card); padding: 25px; border-radius: 22px; margin-bottom: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border); }
-        
         .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .p-card { background: var(--card); padding: 18px; border-radius: 20px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .p-card.is-dealer { border-color: var(--dealer-color); }
-        .dealer-badge { position: absolute; top: -10px; right: 10px; background: var(--dealer-color); color: white; font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(255,149,0,0.3); }
+        .dealer-badge { position: absolute; top: -10px; right: 10px; background: var(--dealer-color); color: white; font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 12px; }
 
         .p-name { font-size: 14px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; text-decoration: underline dotted; cursor: pointer; }
         .p-score { font-size: 38px; font-weight: 900; letter-spacing: -1.5px; cursor: pointer; }
@@ -69,15 +67,13 @@
         .btn-validate { background: var(--primary); color: white; flex: 2; }
         .btn-undo { background: #3A3A3C; color: white; }
 
-        /* SHEETS */
         .sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end; justify-content: center; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
         .sheet-content { background: var(--bg); width: 100%; max-width: 600px; border-radius: 30px 30px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0, 0.5, 0.2, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        /* KEYBOARD TOOLS */
         .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .btn-tool { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-weight: 700; color: var(--text); font-size: 15px; }
+        .btn-tool { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-weight: 700; color: var(--text); font-size: 14px; }
         .btn-tool.calc { background: var(--success); color: white; grid-column: span 3; border: none; }
         
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -85,20 +81,20 @@
         .nb:active { background: var(--btn-active); }
 
         .edit-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); font-size: 18px; margin: 15px 0; background: var(--card); color: var(--text); }
-        .dealer-toggle { display: flex; align-items: center; gap: 15px; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .dealer-toggle input { width: 22px; height: 22px; }
+        .dealer-toggle-box { display: flex; align-items: center; gap: 15px; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .dealer-toggle-box input { width: 22px; height: 22px; }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
-        <h1 style="text-align:center; margin-top:60px; margin-bottom:40px;">ScoreMaster <span style="color:var(--primary)">v3.5</span></h1>
-        <div class="mode-card" onclick="app.initGame('belote')">
+        <h1 style="text-align:center; margin-top:60px; margin-bottom:40px;">ScoreMaster <span style="color:var(--primary)">v3.6</span></h1>
+        <div style="background: var(--card); padding: 25px; border-radius: 22px; margin-bottom: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('belote')">
             <h2 style="margin:0">🃏 Belote / Coinche</h2>
             <p style="color:#888; margin:5px 0 0 0">2 équipes • Calcul reste auto</p>
         </div>
-        <div class="mode-card" onclick="app.initGame('standard')">
-            <h2 style="margin:0">🎲 Standard</h2>
+        <div style="background: var(--card); padding: 25px; border-radius: 22px; margin-bottom: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('standard')">
+            <h2 style="margin:0">🎲 Multi-joueurs</h2>
             <p style="color:#888; margin:5px 0 0 0">Tous types de jeux (2 à 8)</p>
         </div>
     </div>
@@ -118,7 +114,7 @@
 
     <div id="dock" class="action-bar hidden">
         <button class="main-btn btn-undo" onclick="app.undo()">ANNULER</button>
-        <button class="main-btn btn-validate" onclick="app.validateRound()">VALIDER</button>
+        <button class="main-btn btn-validate" onclick="app.validateRound()">VALIDER MANCHE</button>
     </div>
 
     <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
@@ -153,11 +149,14 @@
     <div id="edit-sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeEditSheet()">
         <div class="sheet-content">
             <h2 style="margin-top:0">Modifier le joueur</h2>
+            <label style="font-size:12px; font-weight:700; color:#888;">NOM</label>
             <input type="text" id="edit-name-input" class="edit-input">
-            <div class="dealer-toggle">
+            
+            <div class="dealer-toggle-box">
                 <input type="checkbox" id="edit-dealer-check">
-                <label for="edit-dealer-check" style="font-weight:700;">Donneur actuel (Dealer) 🃏</label>
+                <label for="edit-dealer-check" style="font-weight:700;">Donneur (Dealer) 🃏</label>
             </div>
+            
             <button class="nb" style="width:100%; background:var(--primary); color:white;" onclick="app.savePlayerEdit()">ENREGISTRER</button>
         </div>
     </div>
@@ -173,7 +172,7 @@
             chart: null,
 
             init() {
-                const saved = localStorage.getItem('sm_v3.5');
+                const saved = localStorage.getItem('sm_v3.6');
                 if(saved) {
                     this.data = JSON.parse(saved);
                     this.showGame();
@@ -191,8 +190,7 @@
                     this.data.players = Array.from({length: Math.min(n, 8)}, (_, i) => ({id: i+1, name: `JOUEUR ${i+1}`, color: COLORS[i], total: 0}));
                 }
                 this.data.dealerId = this.data.players[0].id;
-                this.save();
-                this.showGame();
+                this.save(); this.showGame();
             },
 
             showGame() {
@@ -202,11 +200,10 @@
                 this.render();
             },
 
-            save() { localStorage.setItem('sm_v3.5', JSON.stringify(this.data)); },
+            save() { localStorage.setItem('sm_v3.6', JSON.stringify(this.data)); },
 
-            reset() { if(confirm("Recommencer une partie ?")) { localStorage.clear(); location.reload(); } },
+            reset() { if(confirm("Réinitialiser la partie ?")) { localStorage.clear(); location.reload(); } },
 
-            // --- GESTION JOUEUR ---
             openEditPlayer(pid, event) {
                 event.stopPropagation();
                 this.activeEditPlayerId = pid;
@@ -225,7 +222,6 @@
                 this.save(); this.render(); this.closeEditSheet();
             },
 
-            // --- RENDU ---
             render() {
                 const grid = document.getElementById('grid');
                 grid.innerHTML = '';
@@ -245,8 +241,8 @@
                     grid.appendChild(el);
                 });
 
-                const hist = document.getElementById('history');
-                hist.innerHTML = '';
+                const histList = document.getElementById('history');
+                histList.innerHTML = '';
                 this.data.history.slice().reverse().forEach((round, rIdx) => {
                     const realIdx = this.data.history.length - 1 - rIdx;
                     const row = document.createElement('div');
@@ -255,14 +251,14 @@
                     let sH = '';
                     this.data.players.forEach(p => { sH += `<span class="h-badge" style="background:${p.color}">${round[p.id] || 0}</span>`; });
                     row.innerHTML = `<div class="h-idx">${realIdx+1}</div><div class="h-scores-box">${sH}</div><span style="opacity:0.2">✏️</span>`;
-                    hist.appendChild(row);
+                    histList.appendChild(row);
                 });
                 this.renderChart();
             },
 
             renderChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
-                const labels = ["Début", ...this.data.history.map((_, i) => `M${i+1}`)];
+                const labels = ["Dép.", ...this.data.history.map((_, i) => `M${i+1}`)];
                 const datasets = this.data.players.map(p => {
                     let acc = 0;
                     return {
@@ -282,7 +278,6 @@
                 });
             },
 
-            // --- CLAVIER & AJOUTS ---
             openSheet(pid) {
                 this.activePlayerId = pid;
                 document.getElementById('calc-btn').className = (this.data.mode === 'belote') ? 'btn-tool calc' : 'hidden';
@@ -343,7 +338,6 @@
                 if(opp) { this.data.tempScores[opp.id] = rest; this.renderSheetSwitcher(); }
             },
 
-            // --- VALIDATION ---
             validateRound() {
                 const round = {};
                 this.data.players.forEach(p => { round[p.id] = this.data.tempScores[p.id] || 0; p.total += round[p.id]; });
