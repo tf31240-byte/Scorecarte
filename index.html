@@ -2,91 +2,96 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster Elite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ScoreMaster Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #000000;
-            --border: #C6C6C8; --dealer: #FF9500; --danger: #FF3B30; --success: #34C759;
-            --btn-bg: #FFFFFF; --btn-active: #E5E5EA;
+            --border: #D1D1D6; --dealer: #FF9500; --danger: #FF3B30; --success: #34C759;
+            --btn-active: #E5E5EA; --shadow: rgba(0,0,0,0.08);
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #FFFFFF;
-                --border: #38383A; --btn-bg: #2C2C2E; --btn-active: #3A3A3C;
+                --border: #38383A; --btn-active: #3A3A3C; --shadow: rgba(0,0,0,0.4);
             }
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; touch-action: manipulation; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; transition: background 0.3s; }
+        .container { max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top) 16px 20px; }
         .hidden { display: none !important; }
 
         /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
-        h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 5px; }
+        h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -1px; }
 
-        /* Graphique Style Premium */
-        .chart-box { background: var(--card); border-radius: 20px; padding: 12px; height: 180px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        /* Graphique */
+        .chart-box { background: var(--card); border-radius: 24px; padding: 12px; height: 180px; margin-bottom: 20px; box-shadow: 0 8px 24px var(--shadow); border: 1px solid var(--border); }
 
-        /* Grille Joueurs iOS Style */
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .p-card { background: var(--card); padding: 18px 12px; border-radius: 20px; text-align: center; position: relative; border: 2.5px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        /* Grille Joueurs */
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .p-card { background: var(--card); padding: 18px 10px; border-radius: 22px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 4px 12px var(--shadow); transition: border 0.3s; }
         .p-card.is-dealer { border-color: var(--dealer); }
-        .p-name { font-size: 14px; font-weight: 700; opacity: 0.6; text-transform: uppercase; }
-        .p-score { font-size: 38px; font-weight: 800; letter-spacing: -1px; margin: 4px 0; }
-        .p-temp { font-size: 14px; color: var(--primary); font-weight: 700; min-height: 18px; }
-        .btn-mod { font-size: 9px; font-weight: 800; color: var(--primary); background: var(--bg); border: none; padding: 4px 10px; border-radius: 8px; cursor: pointer; margin-top: 4px; }
-        .dealer-dot { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: var(--dealer); border-radius: 50%; }
+        
+        .p-header { cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; padding: 4px 10px; border-radius: 10px; background: var(--bg); }
+        .p-name { font-size: 12px; font-weight: 800; opacity: 0.6; text-transform: uppercase; }
+        
+        .p-score { font-size: 40px; font-weight: 900; letter-spacing: -2px; margin: 4px 0; cursor: pointer; }
+        .p-temp { font-size: 14px; color: var(--primary); font-weight: 700; min-height: 20px; }
+        .dealer-dot { position: absolute; top: 12px; right: 12px; background: var(--dealer); width: 8px; height: 8px; border-radius: 50%; }
 
-        /* History & Ranking */
-        .rank-card { background: var(--card); border-radius: 18px; padding: 15px; margin-bottom: 20px; }
-        .h-row { background: var(--card); padding: 12px; border-radius: 14px; display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; border: 1px solid var(--border); }
+        /* Historique */
+        .h-row { background: var(--card); padding: 14px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); }
+        .h-idx { font-size: 10px; font-weight: 800; opacity: 0.3; width: 30px; }
 
-        /* Modal Sheet Saisie */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        /* Sheets */
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 28px 28px 0 0; padding: 25px 20px; transform: translateY(100%); transition: 0.4s cubic-bezier(0, 0.5, 0.5, 1); }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 30px 30px 0 0; padding: 25px 20px env(safe-area-inset-bottom); transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        .input-switcher { display: flex; gap: 8px; margin-bottom: 20px; background: var(--btn-active); padding: 4px; border-radius: 16px; }
-        .switch-opt { flex: 1; padding: 12px; text-align: center; border-radius: 12px; cursor: pointer; }
+        .input-switcher { display: flex; gap: 8px; margin-bottom: 20px; background: var(--btn-active); padding: 5px; border-radius: 18px; }
+        .switch-opt { flex: 1; padding: 12px; text-align: center; border-radius: 14px; transition: 0.2s; cursor: pointer; }
         .switch-opt.active { background: var(--card); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .so-val { font-size: 22px; font-weight: 800; display: block; color: var(--primary); }
 
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .nb { background: var(--card); border: none; height: 55px; border-radius: 14px; font-size: 22px; font-weight: 600; color: var(--text); box-shadow: 0 2px 0 var(--border); }
-        .nb:active { background: var(--btn-active); }
+        .nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 600; color: var(--text); box-shadow: 0 3px 0 var(--border); }
+        .nb:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); background: var(--btn-active); }
 
-        /* Dock */
-        .dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; display: flex; gap: 12px; }
-        .btn-main { flex: 2; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 20px; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .btn-undo { flex: 1; background: var(--card); color: var(--danger); border: 1px solid var(--border); border-radius: 20px; font-weight: 800; }
+        /* Bottom Bar */
+        .dock { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; display: flex; gap: 12px; z-index: 1000; }
+        .btn-main { flex: 3; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 20px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .btn-undo { flex: 1; background: var(--card); color: var(--danger); border: 1px solid var(--border); border-radius: 20px; font-size: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="setup" class="container">
-    <h1 style="text-align:center; margin: 60px 0 40px;">ScoreMaster <span style="color:var(--primary)">Elite</span></h1>
-    <div class="mode-card" onclick="app.initGame('belote')" style="background:var(--card); padding:30px; border-radius:24px; margin-bottom:15px; cursor:pointer;">
-        <h2 style="margin:0">🃏 BELOTE</h2>
-        <p style="color:var(--primary); font-weight:700; margin:5px 0 0;">Équipes • 162 pts • Capot</p>
-    </div>
-    <div class="mode-card" onclick="app.initGame('standard')" style="background:var(--card); padding:30px; border-radius:24px; cursor:pointer;">
-        <h2 style="margin:0">🎲 STANDARD</h2>
-        <p style="color:var(--primary); font-weight:700; margin:5px 0 0;">Libre • 2-8 Joueurs</p>
+    <h1 style="text-align:center; margin-top:80px;">ScoreMaster</h1>
+    <div style="display:grid; gap:15px; margin-top:50px;">
+        <button onclick="app.initGame('belote')" style="padding:35px; border-radius:28px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
+            <h2 style="margin:0">🃏 BELOTE</h2>
+            <p style="margin:5px 0 0; color:var(--primary); font-weight:700;">162 pts • Donne Auto</p>
+        </button>
+        <button onclick="app.initGame('standard')" style="padding:35px; border-radius:28px; border:none; background:var(--card); text-align:left; box-shadow:0 8px 20px var(--shadow);">
+            <h2 style="margin:0">🎲 STANDARD</h2>
+            <p style="margin:5px 0 0; color:var(--primary); font-weight:700;">Multi-joueurs • Libre</p>
+        </button>
     </div>
 </div>
 
 <div id="game" class="container hidden">
     <header>
-        <h1 id="game-title">SCORE</h1>
-        <button onclick="app.reset()" style="background:none; border:none; font-size:22px;">⚙️</button>
+        <h1 id="game-title">Partie</h1>
+        <button onclick="app.reset()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
     </header>
 
     <div class="chart-box"><canvas id="chart"></canvas></div>
     <div id="grid" class="players-grid"></div>
 
+    <div style="font-size:11px; font-weight:800; color:var(--primary); margin: 35px 0 15px; letter-spacing:1px; text-transform:uppercase; opacity:0.8;">Historique</div>
     <div id="history"></div>
 </div>
 
@@ -98,43 +103,40 @@
 <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
     <div class="sheet-content">
         <div id="input-switcher" class="input-switcher"></div>
-        
-        <div id="tools" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:15px;">
-            <button id="btn-162" class="nb hidden" style="grid-column: span 4; background:var(--success); color:white; font-size:16px;" onclick="app.calcRest()">✨ COMPLÉTER À 162</button>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom:15px;">
+            <button id="btn-162" class="nb hidden" style="grid-column: span 4; background:var(--success); color:white; font-size:15px; font-weight:800;" onclick="app.calcRest()">✨ RESTE À 162</button>
             <button class="nb" style="font-size:14px" onclick="app.addVal(10)">+10</button>
             <button class="nb" style="font-size:14px" onclick="app.addVal(20)">+20</button>
             <button class="nb" style="font-size:14px" onclick="app.addVal(50)">+50</button>
-            <button id="btn-smart" class="nb" style="font-size:14px; background:var(--primary); color:white;" onclick="app.handleSmart()">CAPOT</button>
+            <button id="btn-smart" class="nb" style="font-size:13px; background:var(--primary); color:white;" onclick="app.handleSmart()">CAPOT</button>
         </div>
-
         <div class="numpad">
             <button class="nb" onclick="app.typeNum(1)">1</button><button class="nb" onclick="app.typeNum(2)">2</button><button class="nb" onclick="app.typeNum(3)">3</button>
             <button class="nb" onclick="app.typeNum(4)">4</button><button class="nb" onclick="app.typeNum(5)">5</button><button class="nb" onclick="app.typeNum(6)">6</button>
             <button class="nb" onclick="app.typeNum(7)">7</button><button class="nb" onclick="app.typeNum(8)">8</button><button class="nb" onclick="app.typeNum(9)">9</button>
-            <button class="nb" style="color:var(--danger)" onclick="app.clearInput()">C</button>
+            <button class="nb" style="color:var(--danger); font-size:16px;" onclick="app.clearInput()">C</button>
             <button class="nb" onclick="app.typeNum(0)">0</button>
             <button class="nb" onclick="app.backspace()">⌫</button>
-            <button class="nb" style="grid-column: span 3; background:var(--primary); color:white; margin-top:10px;" onclick="app.closeSheet()">OK</button>
+            <button class="nb" style="grid-column: span 3; background:var(--text); color:var(--bg); margin-top:10px; height:65px; font-weight:800;" onclick="app.closeSheet()">OK</button>
         </div>
     </div>
 </div>
 
 <script>
-const COLORS = ['#007AFF', '#FF3B30', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA'];
+const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA'];
 const app = {
     data: { mode: null, players: [], history: [], temp: {}, dealerId: 1 },
     activeId: null, editIdx: null, chart: null,
 
     init() {
-        const saved = localStorage.getItem('sm_elite');
+        const saved = localStorage.getItem('sm_v4_final');
         if(saved) { this.data = JSON.parse(saved); this.showGame(); }
     },
-
-    save() { localStorage.setItem('sm_elite', JSON.stringify(this.data)); },
+    save() { localStorage.setItem('sm_v4_final', JSON.stringify(this.data)); },
 
     initGame(mode) {
         this.data.mode = mode;
-        const n = mode === 'belote' ? 2 : (parseInt(prompt("Joueurs ?", "4")) || 4);
+        const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
         this.data.players = Array.from({length: n}, (_, i) => ({
             id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, color: COLORS[i%6], total: 0
         }));
@@ -155,10 +157,12 @@ const app = {
             const card = document.createElement('div');
             card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
             card.innerHTML = `
-                <div class="p-name" style="color:${p.color}">${p.name}</div>
+                <div class="p-header" onclick="app.playerMenu(${p.id})">
+                    <div class="p-name" style="color:${p.color}">${p.name}</div>
+                    <span style="font-size:8px; opacity:0.4;">▼</span>
+                </div>
                 <div class="p-score" onclick="app.openSheet(${p.id})">${p.total + t}</div>
                 <div class="p-temp">${t ? '+'+t : ''}</div>
-                <button class="btn-mod" onclick="app.modifyP(${p.id})">MODIFIER</button>
                 ${this.data.dealerId === p.id ? '<div class="dealer-dot"></div>' : ''}
             `;
             grid.appendChild(card);
@@ -170,16 +174,17 @@ const app = {
             const row = document.createElement('div'); row.className = 'h-row';
             row.onclick = () => this.startEdit(idx);
             let s = '';
-            this.data.players.forEach(p => s += `<span style="color:${p.color}"><b>${r[p.id]||0}</b></span>`);
-            row.innerHTML = `<span style="opacity:0.3">#${idx+1}</span><div style="display:flex; gap:15px">${s}</div>`;
+            this.data.players.forEach(p => s += `<div style="text-align:center; flex:1;"><div style="font-size:10px; font-weight:800; color:${p.color}">${r[p.id]||0}</div></div>`);
+            row.innerHTML = `<div class="h-idx">#${idx+1}</div><div style="display:flex; flex:1;">${s}</div>`;
             hist.appendChild(row);
         });
         this.updateChart();
     },
 
-    modifyP(pid) {
+    playerMenu(pid) {
         const p = this.data.players.find(x => x.id === pid);
-        if(confirm(`Désigner ${p.name} comme DONNEUR ?`)) this.data.dealerId = pid;
+        const choice = confirm(`MODIFIER ${p.name}\n\nOK : Désigner comme Donneur\nAnnuler : Changer le Nom`);
+        if(choice) this.data.dealerId = pid;
         else { const n = prompt("Nom :", p.name); if(n) p.name = n.toUpperCase(); }
         this.save(); this.render();
     },
@@ -188,21 +193,21 @@ const app = {
         this.activeId = pid;
         this.renderSwitcher();
         document.getElementById('btn-162').classList.toggle('hidden', this.data.mode !== 'belote');
-        document.getElementById('btn-smart').innerText = this.data.mode === 'belote' ? 'CAPOT' : '+/-';
         document.getElementById('sheet').classList.add('active');
     },
 
     renderSwitcher() {
         const container = document.getElementById('input-switcher'); container.innerHTML = '';
         this.data.players.forEach(p => {
-            const active = p.id === this.activeId;
             const div = document.createElement('div');
-            div.className = `switch-opt ${active ? 'active' : ''}`;
+            div.className = `switch-opt ${p.id === this.activeId ? 'active' : ''}`;
             div.onclick = () => { this.activeId = p.id; this.renderSwitcher(); };
-            div.innerHTML = `<span style="font-size:10px; font-weight:700; opacity:0.6">${p.name}</span>
+            div.innerHTML = `<span style="font-size:10px; font-weight:800; opacity:0.5">${p.name}</span>
                              <span class="so-val">${this.data.temp[p.id] || 0}</span>`;
             container.appendChild(div);
         });
+        this.updateChart(); // Live update chart while typing
+        this.render(); // Live update scores while typing
     },
 
     handleSmart() {
@@ -248,21 +253,28 @@ const app = {
         if(other) { this.data.temp[other.id] = Math.max(0, 162 - (this.data.temp[this.activeId] || 0)); this.activeId = other.id; this.renderSwitcher(); }
     },
     undo() { if(this.data.history.length && confirm("Annuler la dernière manche ?")) { const last = this.data.history.pop(); this.data.players.forEach(p => p.total -= (last[p.id] || 0)); this.save(); this.render(); } },
-    reset() { if(confirm("Tout effacer ?")) { localStorage.removeItem('sm_elite'); location.reload(); } },
+    reset() { if(confirm("Tout effacer et recommencer ?")) { localStorage.removeItem('sm_v4_final'); location.reload(); } },
 
     updateChart() {
         const ctx = document.getElementById('chart').getContext('2d');
         if(this.chart) this.chart.destroy();
+        const datasets = this.data.players.map(p => {
+            let s = 0;
+            const historyData = this.data.history.map(h => s += (h[p.id] || 0));
+            // Add temp points to chart preview
+            const tempPoint = s + (this.data.temp[p.id] || 0);
+            return { 
+                data: [0, ...historyData, tempPoint], 
+                borderColor: p.color, 
+                tension: 0.4, 
+                pointRadius: (idx) => idx === (this.data.history.length + 1) ? 6 : 3,
+                borderDash: (idx) => idx === (this.data.history.length + 1) ? [5, 5] : [] 
+            }
+        });
         this.chart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: ['0', ...this.data.history.map((_, i) => (i+1))],
-                datasets: this.data.players.map(p => {
-                    let s = 0;
-                    return { data: [0, ...this.data.history.map(h => s += (h[p.id] || 0))], borderColor: p.color, tension: 0.4, pointRadius: 4, pointBackgroundColor: p.color, borderWidth: 3 }
-                })
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { beginAtZero: true } } }
+            data: { labels: Array(datasets[0].data.length).fill(''), datasets },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } } } }
         });
     }
 };
