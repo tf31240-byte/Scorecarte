@@ -1,380 +1,237 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster v3.6</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ScoreMaster v3.7</title>
 
-    <style>
-        :root {
-            --primary: #007AFF; 
-            --bg: #F2F2F7; 
-            --card: #FFFFFF; 
-            --text: #1C1C1E;
-            --border: #D1D1D6;
-            --btn-bg: #FFFFFF;
-            --btn-active: #E5E5EA;
-            --danger: #FF3B30;
-            --success: #34C759;
-            --dealer-color: #FF9500;
-        }
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --primary: #0A84FF;
-                --bg: #000000;
-                --card: #1C1C1E;
-                --text: #F2F2F7;
-                --border: #38383A;
-                --btn-bg: #2C2C2E;
-                --btn-active: #3A3A3C;
-            }
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
-        .hidden { display: none !important; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; }
-        h1 { margin: 0; font-size: 22px; font-weight: 800; }
-        .btn-reset { background: none; border: none; font-size: 20px; cursor: pointer; }
+<style>
+:root {
+    --primary:#007AFF; --bg:#F2F2F7; --card:#FFF; --text:#1C1C1E;
+    --border:#D1D1D6; --btn-bg:#FFF; --btn-active:#E5E5EA;
+    --danger:#FF3B30; --success:#34C759; --dealer-color:#FF9500;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary:#0A84FF; --bg:#000; --card:#1C1C1E; --text:#F2F2F7;
+        --border:#38383A; --btn-bg:#2C2C2E; --btn-active:#3A3A3C;
+    }
+}
+.force-dark {
+    --bg:#000; --card:#1C1C1E; --text:#F2F2F7; --border:#38383A;
+}
 
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .p-card { background: var(--card); padding: 18px; border-radius: 20px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .p-card.is-dealer { border-color: var(--dealer-color); }
-        .dealer-badge { position: absolute; top: -10px; right: 10px; background: var(--dealer-color); color: white; font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 12px; }
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif;user-select:none}
+body{margin:0;background:var(--bg);color:var(--text);padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+.hidden{display:none!important}
 
-        .p-name { font-size: 14px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; text-decoration: underline dotted; cursor: pointer; }
-        .p-score { font-size: 38px; font-weight: 900; letter-spacing: -1.5px; cursor: pointer; }
-        .p-temp { font-size: 16px; font-weight: 700; min-height: 20px; }
+.container{max-width:600px;margin:auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center}
+.btn-reset{background:none;border:none;font-size:20px}
 
-        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 220px; margin-bottom: 25px; border: 1px solid var(--border); }
+.players-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.p-card{background:var(--card);padding:18px;border-radius:20px;text-align:center;border:3px solid transparent}
+.p-card.is-dealer{border-color:var(--dealer-color)}
+.p-card.is-active{box-shadow:0 0 0 3px var(--primary);transform:scale(1.02)}
+.p-name{font-size:14px;font-weight:800;text-transform:uppercase;cursor:pointer}
+.p-score{font-size:38px;font-weight:900;transition:transform .2s}
+.p-score.bump{transform:scale(1.12)}
+.p-temp{animation:tempPulse .3s}
 
-        .h-row { background: var(--card); padding: 15px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); margin-bottom: 10px; }
-        .h-idx { background: var(--bg); color: #888; font-size: 10px; font-weight: 800; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
-        .h-scores-box { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
-        .h-badge { padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 700; color: white; }
+@keyframes tempPulse{
+    0%{transform:scale(1);opacity:.6}
+    50%{transform:scale(1.15);opacity:1}
+}
 
-        .action-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; display: flex; gap: 12px; z-index: 50; }
-        .main-btn { flex: 1; border: none; padding: 18px; border-radius: 18px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .btn-validate { background: var(--primary); color: white; flex: 2; }
-        .btn-undo { background: #3A3A3C; color: white; }
+.chart-box{background:var(--card);border-radius:24px;height:220px;padding:15px;margin-bottom:25px}
 
-        .sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end; justify-content: center; }
-        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; max-width: 600px; border-radius: 30px 30px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0, 0.5, 0.2, 1); }
-        .sheet-overlay.active .sheet-content { transform: translateY(0); }
+.h-row{background:var(--card);padding:12px;border-radius:14px;display:flex;align-items:center;margin-bottom:8px}
+.h-idx{width:26px;height:26px;border-radius:50%;background:var(--bg);font-size:11px;display:flex;align-items:center;justify-content:center}
+.h-badge{padding:4px 8px;border-radius:8px;color:white;font-weight:700}
+.h-badge.win{outline:2px solid white}
 
-        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .btn-tool { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; font-weight: 700; color: var(--text); font-size: 14px; }
-        .btn-tool.calc { background: var(--success); color: white; grid-column: span 3; border: none; }
-        
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .nb { background: var(--btn-bg); border: none; height: 55px; border-radius: 15px; font-size: 22px; color: var(--text); font-weight: 700; box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
-        .nb:active { background: var(--btn-active); }
+.action-bar{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    width:92%;display:flex;gap:12px;padding-bottom:env(safe-area-inset-bottom)
+}
+.main-btn{flex:1;padding:18px;border-radius:18px;font-weight:800;border:none}
+.btn-validate{background:var(--primary);color:white}
+.btn-undo{background:#444;color:white}
 
-        .edit-input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); font-size: 18px; margin: 15px 0; background: var(--card); color: var(--text); }
-        .dealer-toggle-box { display: flex; align-items: center; gap: 15px; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .dealer-toggle-box input { width: 22px; height: 22px; }
-    </style>
+.sheet-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,.6);display:flex;align-items:flex-end;
+    opacity:0;pointer-events:none;transition:.3s
+}
+.sheet-overlay.active{opacity:1;pointer-events:auto}
+.sheet-content{
+    background:var(--bg);width:100%;max-width:600px;
+    border-radius:30px 30px 0 0;padding:20px;
+    transform:translateY(100%);transition:.4s cubic-bezier(0,.5,.2,1)
+}
+.sheet-overlay.active .sheet-content{transform:translateY(0)}
+
+.nb{height:55px;border-radius:15px;font-size:22px;border:none;background:var(--btn-bg)}
+.nb:active{background:var(--btn-active)}
+</style>
 </head>
+
 <body>
 
-    <div id="setup" class="container">
-        <h1 style="text-align:center; margin-top:60px; margin-bottom:40px;">ScoreMaster <span style="color:var(--primary)">v3.6</span></h1>
-        <div style="background: var(--card); padding: 25px; border-radius: 22px; margin-bottom: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('belote')">
-            <h2 style="margin:0">🃏 Belote / Coinche</h2>
-            <p style="color:#888; margin:5px 0 0 0">2 équipes • Calcul reste auto</p>
-        </div>
-        <div style="background: var(--card); padding: 25px; border-radius: 22px; margin-bottom: 15px; text-align: center; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('standard')">
-            <h2 style="margin:0">🎲 Multi-joueurs</h2>
-            <p style="color:#888; margin:5px 0 0 0">Tous types de jeux (2 à 8)</p>
-        </div>
-    </div>
+<div id="setup" class="container">
+<h1 style="text-align:center;margin-top:60px">ScoreMaster v3.7</h1>
+<div onclick="app.initGame('belote')" class="p-card">🃏 Belote</div>
+<div onclick="app.initGame('standard')" class="p-card">🎲 Multi joueurs</div>
+</div>
 
-    <div id="game" class="container hidden">
-        <header>
-            <h1 id="game-title">Partie en cours</h1>
-            <button class="btn-reset" onclick="app.reset()">⚙️</button>
-        </header>
+<div id="game" class="container hidden">
+<header>
+<h2 id="game-title">Partie</h2>
+<button class="btn-reset" onclick="app.toggleDarkMode()">🌙</button>
+</header>
 
-        <div class="chart-box"><canvas id="chart"></canvas></div>
-        <div id="grid" class="players-grid"></div>
+<div class="chart-box"><canvas id="chart"></canvas></div>
+<div id="grid" class="players-grid"></div>
+<div id="history"></div>
+</div>
 
-        <h3 style="margin: 25px 0 15px 5px; font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px;">Historique des manches</h3>
-        <div id="history" class="history-list"></div>
-    </div>
+<div id="dock" class="action-bar hidden">
+<button class="main-btn btn-undo" onclick="app.undo()">ANNULER</button>
+<button class="main-btn btn-validate" onclick="app.validateRound()">VALIDER</button>
+</div>
 
-    <div id="dock" class="action-bar hidden">
-        <button class="main-btn btn-undo" onclick="app.undo()">ANNULER</button>
-        <button class="main-btn btn-validate" onclick="app.validateRound()">VALIDER MANCHE</button>
-    </div>
+<div id="sheet" class="sheet-overlay">
+<div class="sheet-content">
+<div class="numpad">
+<button class="nb" onclick="app.typeNum(1)">1</button>
+<button class="nb" onclick="app.typeNum(2)">2</button>
+<button class="nb" onclick="app.typeNum(3)">3</button>
+<button class="nb" onclick="app.typeNum(4)">4</button>
+<button class="nb" onclick="app.typeNum(5)">5</button>
+<button class="nb" onclick="app.typeNum(6)">6</button>
+<button class="nb" onclick="app.typeNum(7)">7</button>
+<button class="nb" onclick="app.typeNum(8)">8</button>
+<button class="nb" onclick="app.typeNum(9)">9</button>
+<button class="nb" onclick="app.toggleNegative()">+/-</button>
+<button class="nb" onclick="app.typeNum(0)">0</button>
+<button class="nb" onclick="app.backspace()">⌫</button>
+</div>
+</div>
+</div>
 
-    <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
-        <div class="sheet-content">
-            <div id="input-switcher" style="display:flex; gap:10px; margin-bottom:20px; overflow-x:auto;"></div>
-            
-            <div class="quick-actions">
-                <button id="calc-btn" class="btn-tool calc hidden" onclick="app.calcBeloteRest()">🔮 CALCULER LE RESTE (162)</button>
-                <button class="btn-tool" onclick="app.addVal(10)">+10</button>
-                <button class="btn-tool" onclick="app.addVal(20)">+20</button>
-                <button class="btn-tool" onclick="app.addVal(50)">+50</button>
-            </div>
+<script>
+const APP_VERSION="3.7", STORAGE_KEY="scoremaster";
+const COLORS=['#007AFF','#FF2D55','#34C759','#FF9500'];
 
-            <div class="numpad">
-                <button class="nb" onclick="app.typeNum(1)">1</button>
-                <button class="nb" onclick="app.typeNum(2)">2</button>
-                <button class="nb" onclick="app.typeNum(3)">3</button>
-                <button class="nb" onclick="app.typeNum(4)">4</button>
-                <button class="nb" onclick="app.typeNum(5)">5</button>
-                <button class="nb" onclick="app.typeNum(6)">6</button>
-                <button class="nb" onclick="app.typeNum(7)">7</button>
-                <button class="nb" onclick="app.typeNum(8)">8</button>
-                <button class="nb" onclick="app.typeNum(9)">9</button>
-                <button class="nb" style="color:var(--danger)" onclick="app.toggleNegative()">+/-</button>
-                <button class="nb" onclick="app.typeNum(0)">0</button>
-                <button class="nb" onclick="app.backspace()">⌫</button>
-                <button class="nb" style="grid-column: span 3; margin-top:10px; background:var(--primary); color:white;" onclick="app.closeSheet()">OK</button>
-            </div>
-        </div>
-    </div>
+function haptic(t="light"){
+    if(!navigator.vibrate)return;
+    navigator.vibrate({light:8,medium:15,heavy:25}[t]||8);
+}
 
-    <div id="edit-sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeEditSheet()">
-        <div class="sheet-content">
-            <h2 style="margin-top:0">Modifier le joueur</h2>
-            <label style="font-size:12px; font-weight:700; color:#888;">NOM</label>
-            <input type="text" id="edit-name-input" class="edit-input">
-            
-            <div class="dealer-toggle-box">
-                <input type="checkbox" id="edit-dealer-check">
-                <label for="edit-dealer-check" style="font-weight:700;">Donneur (Dealer) 🃏</label>
-            </div>
-            
-            <button class="nb" style="width:100%; background:var(--primary); color:white;" onclick="app.savePlayerEdit()">ENREGISTRER</button>
-        </div>
-    </div>
+const app={
+data:{mode:null,players:[],history:[],tempScores:{},dealerId:null},
+activePlayerId:null,chart:null,
 
-    <script>
-        const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#5856D6', '#AF52DE', '#FFCC00', '#5AC8FA'];
-        
-        const app = {
-            data: { mode: null, players: [], history: [], tempScores: {}, dealerId: null },
-            editingRoundIndex: null,
-            activePlayerId: null,
-            activeEditPlayerId: null,
-            chart: null,
+init(){
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    if(saved.version===APP_VERSION){this.data=saved.data;this.showGame();}
+},
 
-            init() {
-                const saved = localStorage.getItem('sm_v3.6');
-                if(saved) {
-                    this.data = JSON.parse(saved);
-                    this.showGame();
-                }
-            },
+save(){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+        version:APP_VERSION,data:this.data,savedAt:Date.now()
+    }));
+},
 
-            initGame(mode) {
-                this.data.mode = mode;
-                this.data.history = [];
-                this.data.tempScores = {};
-                if(mode === 'belote') {
-                    this.data.players = [{id: 1, name: 'NOUS', color: COLORS[0], total: 0}, {id: 2, name: 'EUX', color: COLORS[1], total: 0}];
-                } else {
-                    const n = parseInt(prompt("Nombre de joueurs ?", "4")) || 4;
-                    this.data.players = Array.from({length: Math.min(n, 8)}, (_, i) => ({id: i+1, name: `JOUEUR ${i+1}`, color: COLORS[i], total: 0}));
-                }
-                this.data.dealerId = this.data.players[0].id;
-                this.save(); this.showGame();
-            },
+initGame(mode){
+    this.data.mode=mode;this.data.history=[];this.data.tempScores={};
+    this.data.players=mode==='belote'
+        ?[{id:1,name:'NOUS',color:COLORS[0],total:0},
+          {id:2,name:'EUX',color:COLORS[1],total:0}]
+        :Array.from({length:4},(_,i)=>({id:i+1,name:'JOUEUR '+(i+1),color:COLORS[i],total:0}));
+    this.data.dealerId=this.data.players[0].id;
+    this.save();this.showGame();
+},
 
-            showGame() {
-                document.getElementById('setup').classList.add('hidden');
-                document.getElementById('game').classList.remove('hidden');
-                document.getElementById('dock').classList.remove('hidden');
-                this.render();
-            },
+showGame(){
+    setup.classList.add('hidden');
+    game.classList.remove('hidden');
+    dock.classList.remove('hidden');
+    this.render();
+},
 
-            save() { localStorage.setItem('sm_v3.6', JSON.stringify(this.data)); },
+render(){
+    grid.innerHTML='';
+    this.data.players.forEach(p=>{
+        const t=this.data.tempScores[p.id]||0;
+        const el=document.createElement('div');
+        el.className=`p-card ${p.id===this.data.dealerId?'is-dealer':''}
+        ${p.id===this.activePlayerId?'is-active':''}`;
+        el.innerHTML=`
+        <div class="p-name">${p.name}</div>
+        <div class="p-score">${p.total+t}</div>
+        <div class="p-temp">${t||''}</div>`;
+        el.onclick=()=>this.openSheet(p.id);
+        grid.appendChild(el);
+        setTimeout(()=>el.querySelector('.p-score').classList.add('bump'),0);
+    });
+},
 
-            reset() { if(confirm("Réinitialiser la partie ?")) { localStorage.clear(); location.reload(); } },
+openSheet(pid){
+    this.activePlayerId=this.data.dealerId||pid;
+    sheet.classList.add('active');
+},
 
-            openEditPlayer(pid, event) {
-                event.stopPropagation();
-                this.activeEditPlayerId = pid;
-                const p = this.data.players.find(x => x.id === pid);
-                document.getElementById('edit-name-input').value = p.name;
-                document.getElementById('edit-dealer-check').checked = (this.data.dealerId === pid);
-                document.getElementById('edit-sheet').classList.add('active');
-            },
+closeSheet(){sheet.classList.remove('active');this.render();},
 
-            closeEditSheet() { document.getElementById('edit-sheet').classList.remove('active'); },
+typeNum(n){haptic();this.data.tempScores[this.activePlayerId]=(this.data.tempScores[this.activePlayerId]||0)*10+n;this.render()},
+toggleNegative(){
+    if(this.data.mode==='belote'){haptic("medium");return;}
+    this.data.tempScores[this.activePlayerId]*=-1;this.render();
+},
+backspace(){this.data.tempScores[this.activePlayerId]=0;this.render()},
 
-            savePlayerEdit() {
-                const p = this.data.players.find(x => x.id === this.activeEditPlayerId);
-                p.name = document.getElementById('edit-name-input').value.trim().toUpperCase() || p.name;
-                if(document.getElementById('edit-dealer-check').checked) this.data.dealerId = p.id;
-                this.save(); this.render(); this.closeEditSheet();
-            },
+validateRound(){
+    haptic("heavy");
+    const round={};let sum=0;
+    this.data.players.forEach(p=>{
+        round[p.id]=this.data.tempScores[p.id]||0;
+        p.total+=round[p.id];sum+=round[p.id];
+    });
+    if(this.data.mode==='belote'&&sum!==162){alert("Total incorrect");return;}
+    this.data.history.push(round);
+    this.data.tempScores={};
+    this.save();this.render();
+},
 
-            render() {
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '';
-                this.data.players.forEach(p => {
-                    const temp = this.data.tempScores[p.id] || 0;
-                    const isD = this.data.dealerId === p.id;
-                    const el = document.createElement('div');
-                    el.className = `p-card ${isD ? 'is-dealer' : ''}`;
-                    el.innerHTML = `
-                        ${isD ? '<div class="dealer-badge">DONNEUR 🃏</div>' : ''}
-                        <div class="p-name" onclick="app.openEditPlayer(${p.id}, event)" style="color:${p.color}">${p.name}</div>
-                        <div onclick="app.openSheet(${p.id})">
-                            <div class="p-score">${p.total + temp}</div>
-                            <div class="p-temp" style="color:${p.color}">${temp !== 0 ? (temp > 0 ? '+'+temp : temp) : ''}</div>
-                        </div>
-                    `;
-                    grid.appendChild(el);
-                });
+undo(){
+    if(!this.data.history.length)return;
+    haptic("medium");
+    const r=this.data.history.pop();
+    this.data.players.forEach(p=>p.total-=r[p.id]||0);
+    this.save();this.render();
+},
 
-                const histList = document.getElementById('history');
-                histList.innerHTML = '';
-                this.data.history.slice().reverse().forEach((round, rIdx) => {
-                    const realIdx = this.data.history.length - 1 - rIdx;
-                    const row = document.createElement('div');
-                    row.className = 'h-row';
-                    row.onclick = () => app.editRound(realIdx);
-                    let sH = '';
-                    this.data.players.forEach(p => { sH += `<span class="h-badge" style="background:${p.color}">${round[p.id] || 0}</span>`; });
-                    row.innerHTML = `<div class="h-idx">${realIdx+1}</div><div class="h-scores-box">${sH}</div><span style="opacity:0.2">✏️</span>`;
-                    histList.appendChild(row);
-                });
-                this.renderChart();
-            },
+toggleDarkMode(){
+    document.documentElement.classList.toggle('force-dark');
+}
+};
 
-            renderChart() {
-                const ctx = document.getElementById('chart').getContext('2d');
-                const labels = ["Dép.", ...this.data.history.map((_, i) => `M${i+1}`)];
-                const datasets = this.data.players.map(p => {
-                    let acc = 0;
-                    return {
-                        label: p.name,
-                        data: [0, ...this.data.history.map(h => { acc += (h[p.id] || 0); return acc; })],
-                        borderColor: p.color,
-                        backgroundColor: p.color + '15',
-                        borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4
-                    };
-                });
-                if(this.chart) this.chart.destroy();
-                this.chart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels, datasets },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } } }
-                });
-            },
+app.init();
 
-            openSheet(pid) {
-                this.activePlayerId = pid;
-                document.getElementById('calc-btn').className = (this.data.mode === 'belote') ? 'btn-tool calc' : 'hidden';
-                this.renderSheetSwitcher();
-                document.getElementById('sheet').classList.add('active');
-            },
-
-            closeSheet() {
-                document.getElementById('sheet').classList.remove('active');
-                if(this.editingRoundIndex !== null) this.commitEdit(); else this.render();
-            },
-
-            renderSheetSwitcher() {
-                const container = document.getElementById('input-switcher');
-                container.innerHTML = '';
-                this.data.players.forEach(p => {
-                    const val = this.data.tempScores[p.id] || 0;
-                    const div = document.createElement('div');
-                    div.style.cssText = `min-width:80px; flex:1; padding:12px; text-align:center; border-radius:15px; background:var(--card); border:3px solid ${p.id===this.activePlayerId?p.color:'transparent'}`;
-                    div.onclick = () => { this.activePlayerId = p.id; this.renderSheetSwitcher(); };
-                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${p.color}">${p.name}</div><div style="font-size:20px; font-weight:900;">${val}</div>`;
-                    container.appendChild(div);
-                });
-            },
-
-            typeNum(n) {
-                let cur = (this.data.tempScores[this.activePlayerId] || 0).toString();
-                let isNeg = cur.startsWith('-');
-                let abs = (isNeg ? cur.substring(1) : cur);
-                if(abs === '0') abs = '';
-                abs += n;
-                this.data.tempScores[this.activePlayerId] = parseInt((isNeg?'-':'') + abs) || 0;
-                this.renderSheetSwitcher();
-            },
-
-            addVal(v) {
-                this.data.tempScores[this.activePlayerId] = (this.data.tempScores[this.activePlayerId] || 0) + v;
-                this.renderSheetSwitcher();
-            },
-
-            toggleNegative() {
-                this.data.tempScores[this.activePlayerId] = (this.data.tempScores[this.activePlayerId] || 0) * -1;
-                this.renderSheetSwitcher();
-            },
-
-            backspace() {
-                let cur = (this.data.tempScores[this.activePlayerId] || 0).toString();
-                cur = cur.slice(0, -1);
-                if(cur === '' || cur === '-') cur = '0';
-                this.data.tempScores[this.activePlayerId] = parseInt(cur) || 0;
-                this.renderSheetSwitcher();
-            },
-
-            calcBeloteRest() {
-                const val = this.data.tempScores[this.activePlayerId] || 0;
-                const rest = 162 - val;
-                const opp = this.data.players.find(p => p.id !== this.activePlayerId);
-                if(opp) { this.data.tempScores[opp.id] = rest; this.renderSheetSwitcher(); }
-            },
-
-            validateRound() {
-                const round = {};
-                this.data.players.forEach(p => { round[p.id] = this.data.tempScores[p.id] || 0; p.total += round[p.id]; });
-                this.data.history.push(round);
-                this.data.tempScores = {};
-                const cIdx = this.data.players.findIndex(p => p.id === this.data.dealerId);
-                this.data.dealerId = this.data.players[(cIdx + 1) % this.data.players.length].id;
-                this.save(); this.render();
-            },
-
-            undo() {
-                if(!this.data.history.length || !confirm("Annuler la dernière manche ?")) return;
-                const last = this.data.history.pop();
-                this.data.players.forEach(p => p.total -= (last[p.id] || 0));
-                const cIdx = this.data.players.findIndex(p => p.id === this.data.dealerId);
-                this.data.dealerId = this.data.players[(cIdx - 1 + this.data.players.length) % this.data.players.length].id;
-                this.save(); this.render();
-            },
-
-            editRound(idx) {
-                this.editingRoundIndex = idx;
-                this.data.tempScores = {...this.data.history[idx]};
-                this.openSheet(this.data.players[0].id);
-            },
-
-            commitEdit() {
-                const old = this.data.history[this.editingRoundIndex];
-                this.data.players.forEach(p => p.total -= old[p.id]);
-                const newR = {};
-                this.data.players.forEach(p => { newR[p.id] = this.data.tempScores[p.id] || 0; p.total += newR[p.id]; });
-                this.data.history[this.editingRoundIndex] = newR;
-                this.editingRoundIndex = null; this.data.tempScores = {};
-                this.save(); this.render();
-            }
-        };
-
-        app.init();
-    </script>
+// swipe down
+let startY=null;
+sheet.addEventListener('touchstart',e=>startY=e.touches[0].clientY,{passive:true});
+sheet.addEventListener('touchmove',e=>{
+    if(e.touches[0].clientY-startY>90)app.closeSheet();
+},{passive:true});
+</script>
 </body>
 </html>
