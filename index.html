@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ScoreMaster v10.2</title>
+    <title>ScoreMaster v10.3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #007AFF; --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F;
             --text-sec: #86868B; --border: #E5E5EA; --dealer: #FF9500; 
             --danger: #FF3B30; --success: #34C759; --shadow: 0 8px 30px rgba(0,0,0,0.08);
-            /* Badges */
             --gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             --silver: linear-gradient(135deg, #C0C0C0 0%, #8E8E93 100%);
             --bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
@@ -29,24 +28,29 @@
         /* --- ACCUEIL --- */
         .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; }
         .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; }
-        .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 14px; color: var(--text-sec); }
+        .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 13px; color: var(--text-sec); }
 
         /* --- JEU --- */
-        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 200px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
         .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
         .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); }
         .p-card.is-dealer { border-color: var(--dealer); }
         
-        /* Badges Stylisés */
-        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 14px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); }
+        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .badge-1 { background: var(--gold); }
         .badge-2 { background: var(--silver); }
         .badge-3 { background: var(--bronze); }
         .badge-none { background: var(--text-sec); opacity: 0.5; }
 
-        .p-name-btn { font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .p-score { font-size: 46px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; }
+        .p-name-btn { font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+        .p-score { font-size: 44px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; }
         .p-temp { font-size: 15px; font-weight: 800; color: var(--primary); min-height: 18px; margin-top: 6px; }
+
+        /* --- HISTORIQUE (FIXÉ) --- */
+        .h-row { background: var(--card); padding: 12px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); gap: 10px; }
+        .h-idx { font-size: 10px; font-weight: 900; color: var(--text-sec); min-width: 30px; flex-shrink: 0; }
+        .h-scores { display: flex; flex: 1; justify-content: space-around; align-items: center; overflow: hidden; }
+        .h-score-item { text-align: center; min-width: 40px; }
 
         /* --- CLAVIER & MODALE --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
@@ -62,9 +66,7 @@
         .sel-box.active { border-color: var(--p-color); transform: scale(1.05); }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
-        .btn-nb:active { transform: translateY(2px); box-shadow: none; }
 
-        /* --- DOCK --- */
         .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; }
         .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .btn-main.editing { background: var(--dealer); color: #000; }
@@ -83,9 +85,9 @@
             <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Multi-joueurs</p></div>
         </div>
         <div class="guide-container">
-            <b style="display:block; margin-bottom:10px; color:var(--text)">📖 Guide d'utilisation</b>
-            • Cliquez sur le <b style="color:var(--text)">NOM</b> pour renommer / donneur 🃏<br>
-            • Cliquez sur le <b style="color:var(--text)">SCORE</b> pour saisir les points ✍️<br>
+            <b style="display:block; margin-bottom:8px; color:var(--text)">📖 Guide Rapide</b>
+            • Cliquez sur le <b style="color:var(--text)">NOM</b> pour le donneur 🃏<br>
+            • Cliquez sur le <b style="color:var(--text)">SCORE</b> pour les points ✍️<br>
             • Cliquez sur l'<b style="color:var(--text)">HISTORIQUE</b> pour corriger ✏️
         </div>
     </div>
@@ -147,10 +149,10 @@
             activeId: null, editIdx: null, editPid: null, chart: null,
 
             init() {
-                const saved = localStorage.getItem('sm_v10_2');
+                const saved = localStorage.getItem('sm_v10_3');
                 if(saved) { this.data = JSON.parse(saved); this.showGame(); }
             },
-            save() { localStorage.setItem('sm_v10_2', JSON.stringify(this.data)); },
+            save() { localStorage.setItem('sm_v10_3', JSON.stringify(this.data)); },
 
             initGame(mode) {
                 this.data.mode = mode;
@@ -176,16 +178,15 @@
                 this.data.players.forEach(p => {
                     const t = this.data.temp[p.id] || 0;
                     const rankIdx = sorted.findIndex(s => s.id === p.id);
-                    let medalClass = 'badge-none';
-                    let medalText = '#'+(rankIdx+1);
-                    if(rankIdx === 0) { medalClass = 'badge-1'; medalText = '🥇'; }
-                    else if(rankIdx === 1) { medalClass = 'badge-2'; medalText = '🥈'; }
-                    else if(rankIdx === 2) { medalClass = 'badge-3'; medalText = '🥉'; }
+                    let mClass = 'badge-none'; let mText = '#'+(rankIdx+1);
+                    if(rankIdx===0) { mClass='badge-1'; mText='🥇'; }
+                    else if(rankIdx===1) { mClass='badge-2'; mText='🥈'; }
+                    else if(rankIdx===2) { mClass='badge-3'; mText='🥉'; }
                     
                     const card = document.createElement('div');
                     card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
                     card.innerHTML = `
-                        <div class="rank-badge ${medalClass}">${medalText}</div>
+                        <div class="rank-badge ${mClass}">${mText}</div>
                         <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
                         <div class="p-score" onclick="app.openSheet(${p.id})">${p.total + t}</div>
                         <div class="p-temp">${t ? (t>0?'+'+t:t) : ''}</div>
@@ -199,8 +200,12 @@
                     const idx = this.data.history.length - 1 - i;
                     const row = document.createElement('div'); row.className = 'h-row';
                     let s = '';
-                    this.data.players.forEach(p => s += `<div style="flex:1; text-align:center;"><div style="font-size:8px; color:${p.color}; font-weight:800; opacity:0.8">${p.name.substring(0,4)}</div><div style="color:${p.color}; font-weight:700">${r[p.id]||0}</div></div>`);
-                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:20px; padding-left:10px;">×</button>`;
+                    this.data.players.forEach(p => s += `
+                        <div class="h-score-item">
+                            <div style="font-size:7px; color:${p.color}; font-weight:900; opacity:0.7">${p.name.substring(0,4)}</div>
+                            <div style="color:${p.color}; font-weight:800; font-size:14px;">${r[p.id]||0}</div>
+                        </div>`);
+                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:18px; padding-left:10px;">×</button>`;
                     hist.appendChild(row);
                 });
                 this.updateChart(); this.save();
@@ -212,7 +217,6 @@
                 document.getElementById('modal-title').innerText = p.name;
                 document.getElementById('modal-title').style.color = p.color;
                 document.getElementById('edit-name').value = p.name;
-                document.getElementById('edit-name').style.borderColor = p.color;
                 document.getElementById('edit-dealer').checked = (this.data.dealerId === pid);
                 document.getElementById('modal-player').classList.add('active'); 
             },
@@ -287,7 +291,7 @@
 
             delRound(idx) { if(confirm("Supprimer ?")) { const r = this.data.history[idx]; this.data.players.forEach(p => p.total -= (r[p.id]||0)); this.data.history.splice(idx,1); this.render(); } },
             undo() { if(this.data.history.length) this.delRound(this.data.history.length-1); },
-            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_2'); location.reload(); } },
+            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_3'); location.reload(); } },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
