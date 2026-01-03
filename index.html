@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ScoreMaster v10.1</title>
+    <title>ScoreMaster v10.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #007AFF; --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F;
             --text-sec: #86868B; --border: #E5E5EA; --dealer: #FF9500; 
             --danger: #FF3B30; --success: #34C759; --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            /* Badges */
+            --gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            --silver: linear-gradient(135deg, #C0C0C0 0%, #8E8E93 100%);
+            --bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -24,18 +28,25 @@
 
         /* --- ACCUEIL --- */
         .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; }
-        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; width: 100%; }
-        .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 14px; }
+        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 14px; color: var(--text-sec); }
 
         /* --- JEU --- */
         .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 200px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
-        .p-card { background: var(--card); padding: 20px 10px; border-radius: 24px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); }
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
+        .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); }
         .p-card.is-dealer { border-color: var(--dealer); }
-        .rank-badge { position: absolute; top: -10px; left: 10px; font-size: 14px; background: var(--text); color: var(--bg); padding: 4px 8px; border-radius: 10px; font-weight: 800; z-index: 2; }
-        .p-name-btn { font-size: 11px; font-weight: 900; color: var(--text-sec); text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-        .p-score { font-size: 44px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; }
-        .p-temp { font-size: 14px; font-weight: 800; color: var(--primary); min-height: 18px; margin-top: 5px; }
+        
+        /* Badges Stylisés */
+        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 14px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); }
+        .badge-1 { background: var(--gold); }
+        .badge-2 { background: var(--silver); }
+        .badge-3 { background: var(--bronze); }
+        .badge-none { background: var(--text-sec); opacity: 0.5; }
+
+        .p-name-btn { font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .p-score { font-size: 46px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; }
+        .p-temp { font-size: 15px; font-weight: 800; color: var(--primary); min-height: 18px; margin-top: 6px; }
 
         /* --- CLAVIER & MODALE --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
@@ -44,7 +55,7 @@
         
         .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(25px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
         .sel-box { background: var(--card); padding: 12px; border-radius: 18px; text-align: center; flex: 1; border: 3px solid transparent; min-width: 80px; }
@@ -52,11 +63,6 @@
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
         .btn-nb:active { transform: translateY(2px); box-shadow: none; }
-
-        /* --- HISTORIQUE --- */
-        .h-row { background: var(--card); padding: 14px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); }
-        .h-idx { font-size: 10px; font-weight: 900; color: var(--text-sec); width: 35px; }
-        .h-scores { display: flex; flex: 1; gap: 8px; overflow-x: auto; scrollbar-width: none; }
 
         /* --- DOCK --- */
         .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; }
@@ -77,10 +83,10 @@
             <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Multi-joueurs</p></div>
         </div>
         <div class="guide-container">
-            <b style="display:block; margin-bottom:10px;">📚 Mode d'emploi</b>
-            • Cliquez sur le <b>NOM</b> pour changer le donneur 🃏<br>
-            • Cliquez sur le <b>SCORE</b> pour saisir les points ✍️<br>
-            • Cliquez sur l'<b>HISTORIQUE</b> pour corriger une manche ✏️
+            <b style="display:block; margin-bottom:10px; color:var(--text)">📖 Guide d'utilisation</b>
+            • Cliquez sur le <b style="color:var(--text)">NOM</b> pour renommer / donneur 🃏<br>
+            • Cliquez sur le <b style="color:var(--text)">SCORE</b> pour saisir les points ✍️<br>
+            • Cliquez sur l'<b style="color:var(--text)">HISTORIQUE</b> pour corriger ✏️
         </div>
     </div>
 
@@ -104,10 +110,10 @@
 
     <div id="modal-player" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
         <div class="modal-box">
-            <h2 style="margin:0 0 20px 0">Joueur</h2>
-            <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--border); font-size:18px; font-weight:700; margin-bottom:20px;">
+            <h2 id="modal-title" style="margin:0 0 20px 0">Joueur</h2>
+            <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); font-size:18px; font-weight:700; margin-bottom:20px; outline:none;">
             <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:12px; font-weight:700; cursor:pointer;">
-                Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:20px; height:20px;">
+                Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:20px; height:20px; accent-color:var(--dealer);">
             </label>
             <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
         </div>
@@ -117,11 +123,11 @@
         <div class="sheet-content" onclick="event.stopPropagation()">
             <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto;"></div>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
-                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px" onclick="app.calcRest()">✨ RESTE À 162</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px" onclick="app.addVal(10)">+10</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px" onclick="app.addVal(20)">+20</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px" onclick="app.addVal(50)">+50</button>
-                <button id="smart-btn" class="btn-nb" style="background:var(--text); color:var(--bg); font-size:14px" onclick="app.handleSmart()">+/-</button>
+                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(20)">+20</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(50)">+50</button>
+                <button id="smart-btn" class="btn-nb" style="background:var(--text); color:var(--bg); font-size:14px; box-shadow:none;" onclick="app.handleSmart()">+/-</button>
             </div>
             <div class="numpad">
                 <button class="btn-nb" onclick="app.typeNum(1)">1</button><button class="btn-nb" onclick="app.typeNum(2)">2</button><button class="btn-nb" onclick="app.typeNum(3)">3</button>
@@ -141,10 +147,10 @@
             activeId: null, editIdx: null, editPid: null, chart: null,
 
             init() {
-                const saved = localStorage.getItem('sm_v10_1');
+                const saved = localStorage.getItem('sm_v10_2');
                 if(saved) { this.data = JSON.parse(saved); this.showGame(); }
             },
-            save() { localStorage.setItem('sm_v10_1', JSON.stringify(this.data)); },
+            save() { localStorage.setItem('sm_v10_2', JSON.stringify(this.data)); },
 
             initGame(mode) {
                 this.data.mode = mode;
@@ -170,13 +176,17 @@
                 this.data.players.forEach(p => {
                     const t = this.data.temp[p.id] || 0;
                     const rankIdx = sorted.findIndex(s => s.id === p.id);
-                    const medal = rankIdx === 0 ? '🥇' : (rankIdx === 1 ? '🥈' : (rankIdx === 2 ? '🥉' : ''));
+                    let medalClass = 'badge-none';
+                    let medalText = '#'+(rankIdx+1);
+                    if(rankIdx === 0) { medalClass = 'badge-1'; medalText = '🥇'; }
+                    else if(rankIdx === 1) { medalClass = 'badge-2'; medalText = '🥈'; }
+                    else if(rankIdx === 2) { medalClass = 'badge-3'; medalText = '🥉'; }
                     
                     const card = document.createElement('div');
                     card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
                     card.innerHTML = `
-                        <div class="rank-badge">${medal || '#'+(rankIdx+1)}</div>
-                        <div class="p-name-btn" onclick="app.openModal(${p.id})">${p.name}</div>
+                        <div class="rank-badge ${medalClass}">${medalText}</div>
+                        <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
                         <div class="p-score" onclick="app.openSheet(${p.id})">${p.total + t}</div>
                         <div class="p-temp">${t ? (t>0?'+'+t:t) : ''}</div>
                         ${this.data.dealerId === p.id ? '<div style="position:absolute; top:8px; right:8px; font-size:12px;">🃏</div>' : ''}
@@ -189,8 +199,8 @@
                     const idx = this.data.history.length - 1 - i;
                     const row = document.createElement('div'); row.className = 'h-row';
                     let s = '';
-                    this.data.players.forEach(p => s += `<div style="flex:1; text-align:center;"><div style="font-size:8px; color:${p.color}; font-weight:800">${p.name.substring(0,4)}</div><div style="color:${p.color}; font-weight:700">${r[p.id]||0}</div></div>`);
-                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:20px;">×</button>`;
+                    this.data.players.forEach(p => s += `<div style="flex:1; text-align:center;"><div style="font-size:8px; color:${p.color}; font-weight:800; opacity:0.8">${p.name.substring(0,4)}</div><div style="color:${p.color}; font-weight:700">${r[p.id]||0}</div></div>`);
+                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:20px; padding-left:10px;">×</button>`;
                     hist.appendChild(row);
                 });
                 this.updateChart(); this.save();
@@ -199,14 +209,17 @@
             openModal(pid) { 
                 this.editPid = pid; 
                 const p = this.data.players.find(x => x.id === pid);
+                document.getElementById('modal-title').innerText = p.name;
+                document.getElementById('modal-title').style.color = p.color;
                 document.getElementById('edit-name').value = p.name;
+                document.getElementById('edit-name').style.borderColor = p.color;
                 document.getElementById('edit-dealer').checked = (this.data.dealerId === pid);
                 document.getElementById('modal-player').classList.add('active'); 
             },
             closeModal() { document.getElementById('modal-player').classList.remove('active'); },
             savePlayer() {
                 const p = this.data.players.find(x => x.id === this.editPid);
-                p.name = document.getElementById('edit-name').value.toUpperCase();
+                p.name = document.getElementById('edit-name').value.toUpperCase() || p.name;
                 if(document.getElementById('edit-dealer').checked) this.data.dealerId = p.id;
                 this.closeModal(); this.render();
             },
@@ -214,7 +227,6 @@
             openSheet(pid) { 
                 this.activeId = pid; 
                 document.getElementById('calc-btn').classList.toggle('hidden', this.data.mode !== 'belote');
-                document.getElementById('smart-btn').innerText = this.data.mode === 'belote' ? 'CAPOT' : '+/-';
                 this.renderSwitcher();
                 document.getElementById('sheet').classList.add('active'); 
             },
@@ -275,7 +287,7 @@
 
             delRound(idx) { if(confirm("Supprimer ?")) { const r = this.data.history[idx]; this.data.players.forEach(p => p.total -= (r[p.id]||0)); this.data.history.splice(idx,1); this.render(); } },
             undo() { if(this.data.history.length) this.delRound(this.data.history.length-1); },
-            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_1'); location.reload(); } },
+            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_2'); location.reload(); } },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
