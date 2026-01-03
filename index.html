@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ScoreMaster v10.3</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ScoreMaster Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -20,87 +22,144 @@
                 --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
             }
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--text); 
+            /* Protection pour la barre home de l'iPhone */
+            padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
+            overflow-x: hidden;
+            -webkit-user-select: none; /* Évite la sélection de texte accidentelle en jouant */
+        }
+
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            padding-top: calc(10px + env(safe-area-inset-top)); 
+        }
+
         .hidden { display: none !important; }
 
-        /* --- ACCUEIL --- */
-        .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; }
-        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; }
-        .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 13px; color: var(--text-sec); }
-
-        /* --- JEU --- */
-        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
-        .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); }
+        /* --- DESIGN DES CARTES (Style iOS) --- */
+        .p-card { 
+            background: var(--card); 
+            padding: 22px 10px; 
+            border-radius: 22px; /* Courbure type Apple */
+            text-align: center; 
+            position: relative; 
+            border: 3px solid transparent; 
+            box-shadow: var(--shadow);
+            transition: transform 0.1s ease;
+        }
+        .p-card:active { transform: scale(0.96); }
         .p-card.is-dealer { border-color: var(--dealer); }
         
-        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .badge-1 { background: var(--gold); }
-        .badge-2 { background: var(--silver); }
-        .badge-3 { background: var(--bronze); }
-        .badge-none { background: var(--text-sec); opacity: 0.5; }
+        .rank-badge { 
+            position: absolute; top: -12px; left: 12px; 
+            font-size: 13px; padding: 4px 10px; border-radius: 12px; 
+            font-weight: 900; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        }
 
-        .p-name-btn { font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
-        .p-score { font-size: 44px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; }
-        .p-temp { font-size: 15px; font-weight: 800; color: var(--primary); min-height: 18px; margin-top: 6px; }
+        .p-name-btn { 
+            font-size: 12px; font-weight: 900; text-transform: uppercase; 
+            cursor: pointer; display: inline-block; padding: 5px 12px; 
+            border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; 
+        }
 
-        /* --- HISTORIQUE (FIXÉ) --- */
-        .h-row { background: var(--card); padding: 12px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); gap: 10px; }
-        .h-idx { font-size: 10px; font-weight: 900; color: var(--text-sec); min-width: 30px; flex-shrink: 0; }
-        .h-scores { display: flex; flex: 1; justify-content: space-around; align-items: center; overflow: hidden; }
-        .h-score-item { text-align: center; min-width: 40px; }
+        .p-score { font-size: 44px; font-weight: 900; letter-spacing: -2px; }
 
-        /* --- CLAVIER & MODALE --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-box { background: var(--card); width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; }
-        
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        /* --- CLAVIER & MODALE IPHONE --- */
+        .sheet-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+            z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: flex; align-items: flex-end; 
+        }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(25px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
+
+        .sheet-content { 
+            background: var(--bg); width: 100%; 
+            border-radius: 30px 30px 0 0; 
+            padding: 20px 20px calc(30px + env(safe-area-inset-bottom)); 
+            transform: translateY(100%); 
+            transition: transform 0.4s cubic-bezier(0.15, 1, 0.3, 1); 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        .sel-box { background: var(--card); padding: 12px; border-radius: 18px; text-align: center; flex: 1; border: 3px solid transparent; min-width: 80px; }
-        .sel-box.active { border-color: var(--p-color); transform: scale(1.05); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
+        /* Barre de swipe en haut du clavier pour le style */
+        .sheet-content::before {
+            content: ""; display: block; width: 40px; height: 5px; 
+            background: var(--border); border-radius: 10px; 
+            margin: -10px auto 15px;
+        }
 
-        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; }
-        .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .btn-main.editing { background: var(--dealer); color: #000; }
+        /* --- HISTORIQUE --- */
+        .h-row { 
+            background: var(--card); padding: 12px; border-radius: 18px; 
+            display: flex; align-items: center; margin-bottom: 8px; 
+            border: 1px solid var(--border); gap: 10px; 
+        }
+        .h-scores { 
+            display: flex; flex: 1; justify-content: space-around; 
+            align-items: center; -webkit-overflow-scrolling: touch; 
+        }
+
+        /* --- BOUTON FIXE IPHONE --- */
+        .dock { 
+            position: fixed; 
+            bottom: 0; left: 0; right: 0;
+            padding: 20px 20px calc(25px + env(safe-area-inset-bottom));
+            background: linear-gradient(to top, var(--bg) 60%, transparent);
+            z-index: 2000;
+        }
+        .btn-main { 
+            width: 100%; background: var(--text); color: var(--bg); border: none; 
+            padding: 20px; border-radius: 20px; font-size: 17px; font-weight: 700; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+        }
+        .btn-main:active { opacity: 0.8; transform: scale(0.98); }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
         <h1 class="welcome-title">ScoreMaster</h1>
-        <div class="mode-btn" onclick="app.initGame('belote')">
-            <span style="font-size:30px; margin-right:15px;">🃏</span>
-            <div><h2 style="margin:0">Belote / Coinche</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Points à 162 • Capot 252</p></div>
+        <div class="mode-btn" onclick="app.initGame('belote')" style="background:var(--card); border-radius:24px; padding:20px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; gap:15px; border:1px solid var(--border);">
+            <span style="font-size:30px;">🃏</span>
+            <div><h2 style="margin:0; font-size:18px;">Belote / Coinche</h2><p style="margin:0; font-size:12px; color:var(--text-sec)">162 pts • Capot 252</p></div>
         </div>
-        <div class="mode-btn" onclick="app.initGame('standard')">
-            <span style="font-size:30px; margin-right:15px;">🎲</span>
-            <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Multi-joueurs</p></div>
+        <div class="mode-btn" onclick="app.initGame('standard')" style="background:var(--card); border-radius:24px; padding:20px; margin-bottom:12px; cursor:pointer; display:flex; align-items:center; gap:15px; border:1px solid var(--border);">
+            <span style="font-size:30px;">🎲</span>
+            <div><h2 style="margin:0; font-size:18px;">Standard</h2><p style="margin:0; font-size:12px; color:var(--text-sec)">Scores libres • Multi-joueurs</p></div>
         </div>
         <div class="guide-container">
-            <b style="display:block; margin-bottom:8px; color:var(--text)">📖 Guide Rapide</b>
-            • Cliquez sur le <b style="color:var(--text)">NOM</b> pour le donneur 🃏<br>
-            • Cliquez sur le <b style="color:var(--text)">SCORE</b> pour les points ✍️<br>
-            • Cliquez sur l'<b style="color:var(--text)">HISTORIQUE</b> pour corriger ✏️
+            <b style="display:block; margin-bottom:8px; color:var(--text)">📖 Guide iPhone</b>
+            • Appuyez sur le <b style="color:var(--text)">NOM</b> pour le donneur 🃏<br>
+            • Appuyez sur le <b style="color:var(--text)">SCORE</b> pour les points ✍️<br>
+            • Glissez pour voir l'historique ✏️
         </div>
     </div>
 
     <div id="game" class="container hidden">
         <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1 id="mode-title" style="margin:0; font-size:28px; font-weight:900;">SCORE</h1>
-            <button onclick="app.reset()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px;">⚙️</button>
+            <h1 id="mode-title" style="margin:0; font-size:26px; font-weight:900;">SCORE</h1>
+            <button onclick="app.reset()" style="background:var(--card); border:1px solid var(--border); width:44px; height:44px; border-radius:14px; font-size:20px;">⚙️</button>
         </header>
-        <div class="chart-box"><canvas id="chart"></canvas></div>
+        
+        <div class="chart-box" style="margin-bottom:20px;"><canvas id="chart"></canvas></div>
+        
         <div id="grid" class="players-grid"></div>
+        
         <div style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
-            <span>HISTORIQUE DES MANCHES</span>
+            <span>HISTORIQUE</span>
             <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:900;">ANNULER</button>
         </div>
         <div id="history"></div>
@@ -113,9 +172,9 @@
     <div id="modal-player" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
         <div class="modal-box">
             <h2 id="modal-title" style="margin:0 0 20px 0">Joueur</h2>
-            <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); font-size:18px; font-weight:700; margin-bottom:20px; outline:none;">
-            <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:12px; font-weight:700; cursor:pointer;">
-                Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:20px; height:20px; accent-color:var(--dealer);">
+            <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:15px; border:2px solid var(--border); font-size:18px; font-weight:700; margin-bottom:20px; outline:none; -webkit-appearance:none;">
+            <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:15px; font-weight:700; cursor:pointer;">
+                Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:24px; height:24px; accent-color:var(--dealer);">
             </label>
             <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
         </div>
@@ -123,40 +182,49 @@
 
     <div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
-            <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto;"></div>
+            <div id="input-switcher" style="display:flex; gap:10px; margin-bottom:20px; overflow-x:auto; padding-bottom:5px;"></div>
+            
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
-                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(20)">+20</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(50)">+50</button>
-                <button id="smart-btn" class="btn-nb" style="background:var(--text); color:var(--bg); font-size:14px; box-shadow:none;" onclick="app.handleSmart()">+/-</button>
+                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; height:50px;" onclick="app.calcRest()">✨ RESTE À 162</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:15px; height:50px;" onclick="app.addVal(10)">+10</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:15px; height:50px;" onclick="app.addVal(20)">+20</button>
+                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:15px; height:50px;" onclick="app.addVal(50)">+50</button>
+                <button id="smart-btn" class="btn-nb" style="background:var(--text); color:var(--bg); font-size:15px; height:50px;" onclick="app.handleSmart()">+/-</button>
             </div>
-            <div class="numpad">
-                <button class="btn-nb" onclick="app.typeNum(1)">1</button><button class="btn-nb" onclick="app.typeNum(2)">2</button><button class="btn-nb" onclick="app.typeNum(3)">3</button>
-                <button class="btn-nb" onclick="app.typeNum(4)">4</button><button class="btn-nb" onclick="app.typeNum(5)">5</button><button class="btn-nb" onclick="app.typeNum(6)">6</button>
-                <button class="btn-nb" onclick="app.typeNum(7)">7</button><button class="btn-nb" onclick="app.typeNum(8)">8</button><button class="btn-nb" onclick="app.typeNum(9)">9</button>
-                <button class="btn-nb" style="color:var(--danger)" onclick="app.clearInput()">C</button>
-                <button class="btn-nb" onclick="app.typeNum(0)">0</button>
-                <button class="btn-nb" onclick="app.backspace()">⌫</button>
+            
+            <div class="numpad" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(1)">1</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(2)">2</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(3)">3</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(4)">4</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(5)">5</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(6)">6</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(7)">7</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(8)">8</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.05);" onclick="app.typeNum(9)">9</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:20px; color:var(--danger); border:none;" onclick="app.clearInput()">C</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:24px; font-weight:600; border:none;" onclick="app.typeNum(0)">0</button>
+                <button class="btn-nb" style="height:60px; background:var(--card); border-radius:15px; font-size:20px; border:none;" onclick="app.backspace()">⌫</button>
             </div>
             <button class="btn-main" style="margin-top:15px; background:var(--primary); color:white" onclick="app.closeSheet()">OK</button>
         </div>
     </div>
 
     <script>
+        // Logique conservée et identique à la v10.3 (pour la stabilité)
         const app = {
             data: { mode: null, players: [], history: [], temp: {}, dealerId: 1 },
             activeId: null, editIdx: null, editPid: null, chart: null,
 
             init() {
-                const saved = localStorage.getItem('sm_v10_3');
+                const saved = localStorage.getItem('sm_v10_4');
                 if(saved) { this.data = JSON.parse(saved); this.showGame(); }
             },
-            save() { localStorage.setItem('sm_v10_3', JSON.stringify(this.data)); },
+            save() { localStorage.setItem('sm_v10_4', JSON.stringify(this.data)); },
 
             initGame(mode) {
                 this.data.mode = mode;
-                const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
+                const n = mode === 'belote' ? 2 : (parseInt(prompt("Combien de joueurs ?", "4")) || 4);
                 this.data.players = Array.from({length: Math.min(n, 8)}, (_, i) => ({
                     id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, 
                     color: ['#007AFF','#FF2D55','#34C759','#FF9500','#AF52DE','#5AC8FA','#FFCC00','#5856D6'][i], total: 0
@@ -201,7 +269,7 @@
                     const row = document.createElement('div'); row.className = 'h-row';
                     let s = '';
                     this.data.players.forEach(p => s += `
-                        <div class="h-score-item">
+                        <div style="text-align:center; min-width:45px;">
                             <div style="font-size:7px; color:${p.color}; font-weight:900; opacity:0.7">${p.name.substring(0,4)}</div>
                             <div style="color:${p.color}; font-weight:800; font-size:14px;">${r[p.id]||0}</div>
                         </div>`);
@@ -289,9 +357,9 @@
                 this.openSheet(this.data.players[0].id);
             },
 
-            delRound(idx) { if(confirm("Supprimer ?")) { const r = this.data.history[idx]; this.data.players.forEach(p => p.total -= (r[p.id]||0)); this.data.history.splice(idx,1); this.render(); } },
+            delRound(idx) { if(confirm("Supprimer la manche ?")) { const r = this.data.history[idx]; this.data.players.forEach(p => p.total -= (r[p.id]||0)); this.data.history.splice(idx,1); this.render(); } },
             undo() { if(this.data.history.length) this.delRound(this.data.history.length-1); },
-            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_3'); location.reload(); } },
+            reset() { if(confirm("Nouveau jeu ?")) { localStorage.removeItem('sm_v10_4'); location.reload(); } },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
