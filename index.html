@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster Immersive</title>
+    <title>ScoreMaster v4.3</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,128 +12,127 @@
     <style>
         :root {
             --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E;
-            --border: #D1D1D6; --danger: #FF3B30; --success: #34C759; --dealer: #FF9500;
+            --border: #D1D1D6; --btn-bg: #FFFFFF; --btn-active: #D1D1D6;
+            --danger: #FF3B30; --success: #34C759; --dealer: #FF9500;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F2F2F7;
-                --border: #38383A;
+                --border: #38383A; --btn-bg: #2C2C2E; --btn-active: #48484A;
             }
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); transition: background 0.4s ease; overflow-x: hidden; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 160px; }
         .container { max-width: 800px; margin: 0 auto; padding: 16px; }
         .hidden { display: none !important; }
         
-        /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
-        .badge-mode { background: var(--primary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; }
-
-        /* Grille Joueurs dynamique */
-        .players-grid { display: grid; gap: 12px; margin: 20px 0; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-        .p-card { background: var(--card); padding: 15px; border-radius: 24px; text-align: center; position: relative; border: 2px solid transparent; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; }
+        #mode-title { margin: 0; font-size: 22px; font-weight: 900; color: var(--primary); text-transform: uppercase; }
+        
+        /* Grille Joueurs */
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .p-card { background: var(--card); padding: 15px 10px; border-radius: 20px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
         .p-card.is-dealer { border-color: var(--dealer); }
-        .p-card:active { transform: scale(0.95); }
-        .p-name { font-size: 11px; font-weight: 800; opacity: 0.6; display: block; margin-bottom: 5px; }
-        .p-score { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
-
-        /* Sheet Saisie Immersive */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 40px 40px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .sheet-overlay.active .sheet-content { transform: translateY(0); }
-
-        /* Adaptatif Nous/Eux vs Multi */
-        .input-header-layout { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
-        .belote-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .multi-layout { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scroll-snap-type: x mandatory; }
-
-        .selector-box { 
-            padding: 15px; border-radius: 20px; background: var(--card); border: 3px solid transparent; 
-            text-align: center; transition: all 0.3s; flex: 1; cursor: pointer;
-        }
-        .selector-box.active { transform: scale(1.05); border-color: var(--active-color); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .selector-box.active .sel-score { color: var(--active-color); }
-
-        /* Pavé Numérique Épuré */
-        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .btn-num { background: var(--card); border: none; height: 60px; border-radius: 18px; font-size: 24px; font-weight: 700; color: var(--text); }
-        .btn-num:active { background: var(--border); }
-        .btn-op { background: rgba(120,120,128,0.1); font-size: 16px; }
+        .rank-badge { position: absolute; top: 6px; left: 6px; font-size: 11px; background: var(--bg); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); font-weight: 800; }
+        .p-name-link { font-size: 11px; font-weight: 800; text-decoration: underline dotted; margin-bottom: 5px; cursor: pointer; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 5px; }
 
         /* Historique */
-        .h-row { background: var(--card); padding: 15px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; overflow-x: auto; }
-        .h-idx { font-weight: 900; color: var(--primary); min-width: 40px; font-size: 10px; border-right: 1px solid var(--border); margin-right: 15px; }
-        .h-scores { display: flex; gap: 15px; flex: 1; }
-        
-        /* Bottom Bar */
-        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; display: flex; gap: 10px; z-index: 90; }
-        .btn-main { flex: 1; padding: 18px; border-radius: 20px; border: none; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .h-row { background: var(--card); padding: 12px; border-radius: 14px; display: flex; align-items: center; border-bottom: 1px solid var(--border); margin-bottom: 6px; overflow-x: auto; }
+        .h-idx { font-size: 9px; font-weight: 800; color: #888; min-width: 45px; border-right: 1px solid var(--border); margin-right: 10px; }
+        .h-scores-box { display: flex; flex: 1; gap: 15px; font-weight: 700; font-size: 14px; min-width: max-content; }
+        .h-val { display: flex; flex-direction: column; align-items: center; min-width: 40px; }
+        .h-val span { font-size: 8px; opacity: 0.5; text-transform: uppercase; }
+
+        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; border: 1px solid var(--border); }
+
+        /* Clavier & Sélecteur */
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end; }
+        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 30px 30px 0 0; padding: 20px; transform: translateY(100%); transition: transform 0.3s ease; }
+        .sheet-overlay.active .sheet-content { transform: translateY(0); }
+
+        /* Centrage Nous/Eux */
+        .selector-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 20px 0; }
+        .belote-center { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+
+        .selector-item { min-width: 85px; padding: 12px; text-align: center; border-radius: 16px; background: var(--card); border: 2px solid transparent; transition: all 0.2s; }
+        .selector-item.active { transform: scale(1.05); border-width: 3px; border-color: var(--active-color); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
+        .nb { background: var(--btn-bg); border: none; height: 55px; border-radius: 15px; font-size: 22px; color: var(--text); font-weight: 700; }
+        .nb:active { background: var(--btn-active); }
+
+        .action-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; z-index: 100; }
+        .btn-validate { width: 100%; background: var(--primary); color: white; border: none; padding: 20px; border-radius: 20px; font-size: 16px; font-weight: 800; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
-        <h1 style="text-align:center; margin: 60px 0 40px 0; font-size: 32px; letter-spacing: -1px;">ScoreMaster <span style="color:var(--primary)">v5</span></h1>
-        <div style="display: grid; gap: 15px;">
-            <button onclick="app.initGame('belote')" style="background:var(--card); border:1px solid var(--border); padding:30px; border-radius:25px; text-align:left;">
-                <span style="font-size:24px; display:block;">🃏 Belote</span>
-                <span style="opacity:0.5; font-size:14px;">Mode 2 équipes (Nous/Eux)</span>
-            </button>
-            <button onclick="app.initGame('standard')" style="background:var(--card); border:1px solid var(--border); padding:30px; border-radius:25px; text-align:left;">
-                <span style="font-size:24px; display:block;">🎲 Standard</span>
-                <span style="opacity:0.5; font-size:14px;">Jusqu'à 12 joueurs libres</span>
-            </button>
+        <h1 style="text-align:center; margin-top:60px;">ScoreMaster <span style="color:var(--primary)">v4.3</span></h1>
+        <div style="display: grid; gap: 15px; margin-top: 40px;">
+            <div style="background: var(--card); padding: 25px; border-radius: 22px; border: 1px solid var(--border); cursor: pointer;" onclick="app.initGame('belote')">
+                <h2 style="margin:0">🃏 Belote</h2>
+                <p style="color:#888; margin:5px 0 0 0">2 Équipes • 162 pts</p>
+            </div>
+            <div style="background: var(--card); padding: 25px; border-radius: 22px; border: 1px solid var(--border); cursor: pointer;" onclick="app.initGame('standard')">
+                <h2 style="margin:0">🎲 Standard</h2>
+                <p style="color:#888; margin:5px 0 0 0">Jusqu'à 12 Joueurs</p>
+            </div>
         </div>
     </div>
 
     <div id="game" class="container hidden">
         <header>
-            <div id="mode-badge" class="badge-mode">MODE</div>
-            <button onclick="app.reset()" style="background:none; border:none; font-size:20px;">⚙️</button>
+            <h1 id="mode-title">MODE</h1>
+            <button class="nb" style="width:40px; height:40px; font-size:18px;" onclick="app.reset()">⚙️</button>
         </header>
 
-        <div style="height: 180px; margin-bottom: 20px;"><canvas id="chart"></canvas></div>
-        
+        <div class="chart-box"><canvas id="chart"></canvas></div>
         <div id="grid" class="players-grid"></div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
-            <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5;">Historique</h3>
-            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:700; font-size:12px;">ANNULER</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin: 25px 0 10px 5px;">
+            <h3 style="font-size:10px; text-transform:uppercase; color:#888; letter-spacing:1px; margin:0;">Historique</h3>
+            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:800; font-size:12px;">ANNULER LA MANCHE</button>
         </div>
         <div id="history"></div>
     </div>
 
-    <div id="dock" class="dock hidden">
-        <button class="btn-main" style="background:var(--primary); color:white;" onclick="app.validateRound()">ENREGISTRER LA MANCHE</button>
+    <div id="dock" class="action-bar hidden">
+        <button class="btn-validate" onclick="app.validateRound()">ENREGISTRER LES POINTS</button>
     </div>
 
     <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
         <div class="sheet-content">
-            <div id="input-layout" class="input-header-layout"></div>
+            <div id="input-switcher" class="selector-scroll"></div>
             
-            <div class="numpad-grid">
-                <button class="btn-num btn-op" onclick="app.addVal(10)">+10</button>
-                <button class="btn-num btn-op" onclick="app.addVal(20)">+20</button>
-                <button class="btn-num btn-op" onclick="app.addVal(50)">+50</button>
-                
-                <button class="btn-num" onclick="app.typeNum(1)">1</button>
-                <button class="nb btn-num" onclick="app.typeNum(2)">2</button>
-                <button class="nb btn-num" onclick="app.typeNum(3)">3</button>
-                <button class="nb btn-num" onclick="app.typeNum(4)">4</button>
-                <button class="nb btn-num" onclick="app.typeNum(5)">5</button>
-                <button class="nb btn-num" onclick="app.typeNum(6)">6</button>
-                <button class="nb btn-num" onclick="app.typeNum(7)">7</button>
-                <button class="nb btn-num" onclick="app.typeNum(8)">8</button>
-                <button class="nb btn-num" onclick="app.typeNum(9)">9</button>
-                
-                <button id="smart-btn" class="btn-num btn-op" onclick="app.handleSmart()"></button>
-                <button class="nb btn-num" onclick="app.typeNum(0)">0</button>
-                <button class="btn-num btn-op" onclick="app.backspace()">⌫</button>
-
-                <button id="calc-btn" class="btn-num hidden" style="grid-column: span 3; background:var(--success); color:white; font-size:14px;" onclick="app.calcRest()">COMPLÉTER À 162</button>
-                <button class="btn-num" style="grid-column: span 3; background:var(--text); color:var(--card); margin-top:10px;" onclick="app.closeSheet()">TERMINER</button>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <button id="calc-btn" class="nb hidden" style="grid-column: span 3; background:var(--success); color:white; font-size:14px;" onclick="app.calcRest()">CALCULER LE RESTE (162)</button>
+                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1)" onclick="app.addVal(10)">+10</button>
+                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1)" onclick="app.addVal(20)">+20</button>
+                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1)" onclick="app.addVal(50)">+50</button>
             </div>
+
+            <div class="numpad">
+                <button class="nb" onclick="app.typeNum(1)">1</button><button class="nb" onclick="app.typeNum(2)">2</button><button class="nb" onclick="app.typeNum(3)">3</button>
+                <button class="nb" onclick="app.typeNum(4)">4</button><button class="nb" onclick="app.typeNum(5)">5</button><button class="nb" onclick="app.typeNum(6)">6</button>
+                <button class="nb" onclick="app.typeNum(7)">7</button><button class="nb" onclick="app.typeNum(8)">8</button><button class="nb" onclick="app.typeNum(9)">9</button>
+                <button id="smart-btn" class="nb" style="font-size:14px;" onclick="app.handleSmart()"></button>
+                <button class="nb" onclick="app.typeNum(0)">0</button><button class="nb" onclick="app.backspace()">⌫</button>
+                <button class="nb" style="grid-column: span 3; margin-top:10px; background:var(--text); color:var(--card);" onclick="app.closeSheet()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeEditSheet()">
+        <div class="sheet-content">
+            <h2 style="margin-top:0">Paramètres Joueur</h2>
+            <input type="text" id="edit-name-input" style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--border); font-size:18px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:15px; background:var(--card); padding:18px; border-radius:16px; border:1px solid var(--border); margin-bottom:25px;">
+                <input type="checkbox" id="edit-dealer-check" style="width:24px; height:24px;">
+                <label for="edit-dealer-check" style="font-weight:700;">Donneur actuel (Dealer) 🃏</label>
+            </div>
+            <button class="nb" style="width:100%; background:var(--primary); color:white; height:60px;" onclick="app.savePlayerEdit()">ENREGISTRER</button>
         </div>
     </div>
 
@@ -142,7 +141,7 @@
         
         const app = {
             data: { mode: null, players: [], history: [], temp: {}, dealerId: null },
-            activeId: null, chart: null,
+            activeId: null, editPid: null, chart: null,
 
             initGame(mode) {
                 this.data.mode = mode;
@@ -160,34 +159,32 @@
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('game').classList.remove('hidden');
                 document.getElementById('dock').classList.remove('hidden');
-                document.getElementById('mode-badge').innerHTML = this.data.mode.toUpperCase();
+                document.getElementById('mode-title').innerHTML = '🃏 ' + this.data.mode;
                 this.render();
             },
 
             render() {
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '';
+                const grid = document.getElementById('grid'); grid.innerHTML = '';
                 this.data.players.forEach(p => {
                     const t = this.data.temp[p.id] || 0;
                     const card = document.createElement('div');
                     card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
-                    card.onclick = () => this.openSheet(p.id);
                     card.innerHTML = `
-                        <span class="p-name" style="color:${p.color}">${p.name} ${this.data.dealerId===p.id?'🃏':''}</span>
-                        <div class="p-score">${p.total + t}</div>
-                        <div style="font-size:12px; font-weight:700; color:${p.color}">${t ? (t>0?'+'+t:t) : ''}</div>
+                        <span class="p-name-link" style="color:${p.color}" onclick="app.openEdit(${p.id})">${p.name}</span>
+                        <div onclick="app.openSheet(${p.id})">
+                            <div style="font-size:32px; font-weight:900;">${p.total + t}</div>
+                            <div style="font-size:12px; font-weight:700; color:${p.color}; min-height:14px;">${t ? (t>0?'+'+t:t) : ''}</div>
+                        </div>
                     `;
                     grid.appendChild(card);
                 });
 
-                const hist = document.getElementById('history');
-                hist.innerHTML = '';
+                const hist = document.getElementById('history'); hist.innerHTML = '';
                 this.data.history.slice().reverse().forEach((r, i) => {
-                    const row = document.createElement('div');
-                    row.className = 'h-row';
+                    const row = document.createElement('div'); row.className = 'h-row';
                     let scores = '';
-                    this.data.players.forEach(p => scores += `<div class="h-val" style="color:${p.color}; margin-right:15px;"><span>${p.name}</span><br>${r[p.id]}</div>`);
-                    row.innerHTML = `<div class="h-idx">M${this.data.history.length-i}</div><div class="h-scores">${scores}</div>`;
+                    this.data.players.forEach(p => scores += `<div class="h-val" style="color:${p.color}"><span>${p.name}</span>${r[p.id]}</div>`);
+                    row.innerHTML = `<div class="h-idx">M${this.data.history.length-i}</div><div class="h-scores-box">${scores}</div>`;
                     hist.appendChild(row);
                 });
                 this.updateChart();
@@ -195,89 +192,84 @@
 
             openSheet(pid) {
                 this.activeId = pid;
-                const sheet = document.getElementById('sheet');
-                const layout = document.getElementById('input-layout');
-                
-                // Adaptation de la couleur de fond immersive
                 const p = this.data.players.find(x => x.id === pid);
-                document.body.style.background = p.color + '20';
-                sheet.style.setProperty('--active-color', p.color);
-
-                layout.className = this.data.mode === 'belote' ? 'belote-layout' : 'multi-layout';
-                layout.innerHTML = '';
-                this.data.players.forEach(player => {
-                    const box = document.createElement('div');
-                    box.className = `selector-box ${player.id === this.activeId ? 'active' : ''}`;
-                    box.onclick = () => this.openSheet(player.id);
-                    box.innerHTML = `<div style="font-size:10px; font-weight:800;">${player.name}</div><div class="sel-score" style="font-size:24px; font-weight:900;">${this.data.temp[player.id] || 0}</div>`;
-                    layout.appendChild(box);
-                });
-
-                document.getElementById('smart-btn').innerHTML = this.data.mode === 'belote' ? "CAPOT" : "+/-";
+                const switcher = document.getElementById('input-switcher');
+                switcher.className = this.data.mode === 'belote' ? 'selector-scroll belote-center' : 'selector-scroll';
+                document.getElementById('sheet').style.setProperty('--active-color', p.color);
+                this.renderSwitcher();
                 document.getElementById('calc-btn').classList.toggle('hidden', this.data.mode !== 'belote');
-                sheet.classList.add('active');
+                document.getElementById('smart-btn').innerHTML = this.data.mode === 'belote' ? "CAPOT" : "+/-";
+                document.getElementById('sheet').classList.add('active');
             },
+            closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
 
-            closeSheet() {
-                document.getElementById('sheet').classList.remove('active');
-                document.body.style.background = 'var(--bg)';
-                this.render();
+            renderSwitcher() {
+                const container = document.getElementById('input-switcher'); container.innerHTML = '';
+                this.data.players.forEach(p => {
+                    const active = p.id === this.activeId;
+                    const div = document.createElement('div');
+                    div.className = `selector-item ${active ? 'active' : ''}`;
+                    if(active) div.style.backgroundColor = p.color + '15';
+                    div.onclick = () => { this.activeId = p.id; document.getElementById('sheet').style.setProperty('--active-color', p.color); this.renderSwitcher(); };
+                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${p.color}">${p.name}</div><div style="font-size:24px; font-weight:900;">${this.data.temp[p.id] || 0}</div>`;
+                    container.appendChild(div);
+                });
             },
 
             typeNum(n) {
                 let cur = (this.data.temp[this.activeId] || 0).toString();
                 if(cur === '0') cur = '';
                 this.data.temp[this.activeId] = parseInt(cur + n) || 0;
-                this.openSheet(this.activeId);
+                this.renderSwitcher();
             },
-
-            addVal(v) {
-                this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v;
-                this.openSheet(this.activeId);
-            },
-
+            addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; this.renderSwitcher(); },
             backspace() {
                 let cur = (this.data.temp[this.activeId] || 0).toString();
                 this.data.temp[this.activeId] = parseInt(cur.slice(0, -1)) || 0;
-                this.openSheet(this.activeId);
+                this.renderSwitcher();
             },
-
             handleSmart() {
                 if(this.data.mode === 'belote') this.data.temp[this.activeId] = 252;
                 else this.data.temp[this.activeId] *= -1;
-                this.openSheet(this.activeId);
+                this.renderSwitcher();
             },
-
             calcRest() {
                 const val = this.data.temp[this.activeId] || 0;
                 const rest = Math.max(0, 162 - val);
                 const other = this.data.players.find(p => p.id !== this.activeId);
-                if(other) { this.data.temp[other.id] = rest; this.openSheet(other.id); }
+                if(other) { this.data.temp[other.id] = rest; this.activeId = other.id; this.renderSwitcher(); }
             },
 
             validateRound() {
-                if(Object.keys(this.data.temp).length === 0) return;
                 const round = {};
-                this.data.players.forEach(p => {
-                    round[p.id] = this.data.temp[p.id] || 0;
-                    p.total += round[p.id];
-                });
-                this.data.history.push(round);
-                this.data.temp = {};
-                // Rotation donneur
+                this.data.players.forEach(p => { round[p.id] = this.data.temp[p.id] || 0; p.total += round[p.id]; });
+                this.data.history.push(round); this.data.temp = {};
                 const idx = this.data.players.findIndex(p => p.id === this.data.dealerId);
                 this.data.dealerId = this.data.players[(idx + 1) % this.data.players.length].id;
                 this.render();
             },
 
             undo() {
-                if(!this.data.history.length) return;
+                if(!this.data.history.length || !confirm("Annuler la dernière manche ?")) return;
                 const last = this.data.history.pop();
                 this.data.players.forEach(p => p.total -= last[p.id]);
                 this.render();
             },
 
-            reset() { if(confirm("Nouvelle partie ?")) location.reload(); },
+            openEdit(pid) {
+                this.editPid = pid; const p = this.data.players.find(x => x.id === pid);
+                document.getElementById('edit-name-input').value = p.name;
+                document.getElementById('edit-dealer-check').checked = (this.data.dealerId === pid);
+                document.getElementById('edit-sheet').classList.add('active');
+            },
+            closeEditSheet() { document.getElementById('edit-sheet').classList.remove('active'); },
+            savePlayerEdit() {
+                const p = this.data.players.find(x => x.id === this.editPid);
+                p.name = document.getElementById('edit-name-input').value.trim().toUpperCase() || p.name;
+                if(document.getElementById('edit-dealer-check').checked) this.data.dealerId = p.id;
+                this.render(); this.closeEditSheet();
+            },
+            reset() { if(confirm("Réinitialiser ?")) location.reload(); },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
@@ -288,13 +280,10 @@
                         labels: ['0', ...this.data.history.map((_, i) => i + 1)],
                         datasets: this.data.players.map(p => {
                             let sum = 0;
-                            return {
-                                data: [0, ...this.data.history.map(h => { sum += h[p.id]; return sum; })],
-                                borderColor: p.color, tension: 0.4, pointRadius: 0, borderWidth: 3
-                            }
+                            return { data: [0, ...this.data.history.map(h => { sum += h[p.id]; return sum; })], borderColor: p.color, tension: 0.3, pointRadius: 2 }
                         })
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } }, x: { grid: { display: false } } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
                 });
             }
         };
