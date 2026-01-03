@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ScoreMaster v4.4</title>
+    <title>ScoreMaster v5.0</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,97 +12,97 @@
     <style>
         :root {
             --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #1C1C1E;
-            --border: #D1D1D6; --btn-bg: #FFFFFF; --btn-active: #D1D1D6;
-            --danger: #FF3B30; --success: #34C759; --dealer: #FF9500;
+            --border: #D1D1D6; --dealer: #FF9500; --danger: #FF3B30; --success: #34C759;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F2F2F7;
-                --border: #38383A; --btn-bg: #2C2C2E; --btn-active: #48484A;
+                --border: #38383A;
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; font-family: -apple-system, system-ui, sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
         .hidden { display: none !important; }
         
-        /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; }
-        #mode-title { margin: 0; font-size: 24px; font-weight: 900; color: var(--text); letter-spacing: -1px; }
-        
-        /* Grille Joueurs */
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .p-card { background: var(--card); padding: 15px 10px; border-radius: 22px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        /* Titre haut gauche */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; }
+        #mode-title { margin: 0; font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -1px; text-transform: uppercase; }
+
+        /* Grille Joueurs Design */
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+        .p-card { background: var(--card); padding: 18px 12px; border-radius: 24px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 8px 20px rgba(0,0,0,0.06); transition: all 0.2s; }
         .p-card.is-dealer { border-color: var(--dealer); }
-        .rank-badge { position: absolute; top: -5px; left: -5px; font-size: 10px; background: var(--text); color: var(--card); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid var(--card); }
-        .p-name-link { font-size: 11px; font-weight: 800; text-decoration: underline dotted; margin-bottom: 6px; cursor: pointer; display: block; opacity: 0.7; }
+        .dealer-tag { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: var(--dealer); color: white; font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+        
+        .p-name-btn { font-size: 13px; font-weight: 900; margin-bottom: 8px; cursor: pointer; display: block; text-decoration: underline; text-underline-offset: 3px; }
+        .p-score-big { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; margin: 4px 0; }
 
-        /* Historique */
-        .h-row { background: var(--card); padding: 14px; border-radius: 16px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid transparent; }
-        .h-row:active { border-color: var(--primary); transform: scale(0.98); }
-        .h-idx { font-size: 10px; font-weight: 900; color: var(--primary); min-width: 40px; border-right: 1px solid var(--border); margin-right: 12px; }
-        .h-scores-box { display: flex; flex: 1; gap: 15px; overflow-x: auto; padding-bottom: 2px; }
-        .h-val { display: flex; flex-direction: column; align-items: center; min-width: 45px; font-weight: 700; font-size: 15px; }
-        .h-val span { font-size: 8px; opacity: 0.5; text-transform: uppercase; font-weight: 800; }
-
-        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; border: 1px solid var(--border); }
-
-        /* Clavier & Sélecteur */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end; }
+        /* Clavier & Remplissage */
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; display: flex; align-items: flex-end; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.15, 1, 0.3, 1); }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 40px 40px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        .selector-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 25px 0; -webkit-overflow-scrolling: touch; }
-        .belote-center { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-
-        .selector-item { padding: 15px; border-radius: 20px; background: var(--card); border: 2px solid transparent; transition: all 0.2s; text-align: center; }
-        .selector-item.active { border-color: var(--active-color); background: var(--active-bg); transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .selector-item .sel-score { font-size: 26px; font-weight: 900; color: var(--text); }
-        .selector-item.active .sel-score { color: var(--active-color); }
+        .selector-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 5px 5px 25px 5px; scroll-padding: 20px; }
+        .belote-center { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 15px; }
+        
+        .sel-item { background: var(--card); padding: 15px; border-radius: 22px; border: 3px solid transparent; text-align: center; transition: all 0.2s; min-width: 100px; }
+        .sel-item.active { border-color: var(--sel-color); transform: scale(1.05); box-shadow: 0 0 20px var(--sel-shadow); }
+        .sel-item .val { font-size: 28px; font-weight: 900; margin-top: 5px; }
 
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-        .nb { background: var(--card); border: none; height: 60px; border-radius: 18px; font-size: 24px; color: var(--text); font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .nb:active { background: var(--btn-active); transform: scale(0.95); }
+        .btn-nb { background: var(--card); border: none; height: 65px; border-radius: 20px; font-size: 26px; font-weight: 700; color: var(--text); box-shadow: 0 4px 0 var(--border); }
+        .btn-nb:active { transform: translateY(2px); box-shadow: none; background: var(--bg); }
+        .btn-special { background: rgba(120,120,128,0.12); box-shadow: none; font-size: 15px; font-weight: 800; }
 
-        .action-bar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; z-index: 100; }
-        .btn-validate { width: 100%; background: var(--primary); color: white; border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        /* Historique */
+        .h-row { background: var(--card); padding: 16px; border-radius: 20px; display: flex; align-items: center; margin-bottom: 10px; border: 1px solid var(--border); }
+        .h-idx { font-size: 11px; font-weight: 900; min-width: 45px; color: var(--primary); }
+        .h-scores { display: flex; flex: 1; gap: 15px; overflow-x: auto; font-weight: 800; }
+
+        /* Bar d'action */
+        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 100; }
+        .btn-save { width: 100%; background: var(--text); color: var(--card); border: none; padding: 22px; border-radius: 24px; font-size: 17px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
-        <h1 style="text-align:center; margin-top:80px; font-size: 32px; letter-spacing: -1.5px;">ScoreMaster <span style="color:var(--primary)">v4.4</span></h1>
-        <div style="display: grid; gap: 15px; margin-top: 50px;">
-            <div style="background: var(--card); padding: 30px; border-radius: 25px; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('belote')">
-                <h2 style="margin:0">🃏 Belote</h2>
-                <p style="color:#888; margin:5px 0 0 0; font-weight: 600;">Nous contre Eux • 162 pts</p>
-            </div>
-            <div style="background: var(--card); padding: 30px; border-radius: 25px; cursor: pointer; border: 1px solid var(--border);" onclick="app.initGame('standard')">
-                <h2 style="margin:0">🎲 Standard</h2>
-                <p style="color:#888; margin:5px 0 0 0; font-weight: 600;">Partie libre jusqu'à 12 joueurs</p>
-            </div>
+        <h1 style="text-align:center; margin-top:60px; font-size: 38px; letter-spacing: -2px;">ScoreMaster</h1>
+        <div style="display: grid; gap: 15px; margin-top: 40px;">
+            <button onclick="app.initGame('belote')" style="background:var(--card); border:none; padding:35px; border-radius:30px; text-align:left; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+                <span style="font-size:28px; display:block;">🃏 Belote</span>
+                <span style="opacity:0.5; font-weight:600;">Nous vs Eux • 162 pts</span>
+            </button>
+            <button onclick="app.initGame('standard')" style="background:var(--card); border:none; padding:35px; border-radius:30px; text-align:left; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+                <span style="font-size:28px; display:block;">🎲 Standard</span>
+                <span style="opacity:0.5; font-weight:600;">Jusqu'à 12 joueurs</span>
+            </button>
         </div>
     </div>
 
     <div id="game" class="container hidden">
         <header>
-            <h1 id="mode-title">MODE</h1>
-            <button class="nb" style="width:45px; height:45px; font-size:18px; border-radius: 14px;" onclick="app.reset()">⚙️</button>
+            <h1 id="mode-title">Score</h1>
+            <button class="btn-nb" style="width:50px; height:50px; font-size:20px; box-shadow:none;" onclick="app.reset()">⚙️</button>
         </header>
 
-        <div class="chart-box"><canvas id="chart"></canvas></div>
+        <div style="background:var(--card); padding:15px; border-radius:28px; height:200px; margin-bottom:25px; border:1px solid var(--border);">
+            <canvas id="chart"></canvas>
+        </div>
+
         <div id="grid" class="players-grid"></div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin: 30px 0 12px 5px;">
-            <h3 style="font-size:11px; text-transform:uppercase; color:#888; letter-spacing:1px; margin:0; font-weight: 800;">Historique des manches</h3>
-            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:800; font-size:11px;">ANNULER DERNIÈRE</button>
+        <div style="display:flex; justify-content:space-between; margin: 35px 0 15px 0; align-items:center;">
+            <span style="font-size:12px; font-weight:900; opacity:0.4; letter-spacing:1px; text-transform:uppercase;">Historique</span>
+            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:800; font-size:12px;">ANNULER</button>
         </div>
         <div id="history"></div>
     </div>
 
-    <div id="dock" class="action-bar hidden">
-        <button id="main-val-btn" class="btn-validate" onclick="app.validateRound()">ENREGISTRER LA MANCHE</button>
+    <div id="dock" class="dock hidden">
+        <button id="main-btn" class="btn-save" onclick="app.validate()">ENREGISTRER</button>
     </div>
 
     <div id="sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeSheet()">
@@ -110,49 +110,49 @@
             <div id="input-switcher" class="selector-scroll"></div>
             
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                <button id="calc-btn" class="nb hidden" style="grid-column: span 3; background:var(--success); color:white; font-size:13px; font-weight: 800;" onclick="app.calcRest()">✨ COMPLÉTER À 162</button>
-                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1); box-shadow:none;" onclick="app.addVal(10)">+10</button>
-                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1); box-shadow:none;" onclick="app.addVal(20)">+20</button>
-                <button class="nb" style="font-size:14px; background:rgba(120,120,128,0.1); box-shadow:none;" onclick="app.addVal(50)">+50</button>
+                <button id="calc-btn" class="btn-nb hidden" style="grid-column: span 3; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ COMPLÉTER À 162</button>
+                <button class="btn-nb btn-special" onclick="app.addVal(10)">+10</button>
+                <button class="btn-nb btn-special" onclick="app.addVal(20)">+20</button>
+                <button class="btn-nb btn-special" onclick="app.addVal(50)">+50</button>
             </div>
 
             <div class="numpad">
-                <button class="nb" onclick="app.typeNum(1)">1</button><button class="nb" onclick="app.typeNum(2)">2</button><button class="nb" onclick="app.typeNum(3)">3</button>
-                <button class="nb" onclick="app.typeNum(4)">4</button><button class="nb" onclick="app.typeNum(5)">5</button><button class="nb" onclick="app.typeNum(6)">6</button>
-                <button class="nb" onclick="app.typeNum(7)">7</button><button class="nb" onclick="app.typeNum(8)">8</button><button class="nb" onclick="app.typeNum(9)">9</button>
-                <button id="smart-btn" class="nb" style="font-size:14px; opacity:0.6;" onclick="app.handleSmart()"></button>
-                <button class="nb" onclick="app.typeNum(0)">0</button><button class="nb" onclick="app.backspace()">⌫</button>
-                <button class="nb" style="grid-column: span 3; margin-top:10px; background:var(--text); color:var(--card);" onclick="app.closeSheet()">RETOUR</button>
+                <button class="btn-nb" onclick="app.typeNum(1)">1</button><button class="btn-nb" onclick="app.typeNum(2)">2</button><button class="btn-nb" onclick="app.typeNum(3)">3</button>
+                <button class="btn-nb" onclick="app.typeNum(4)">4</button><button class="btn-nb" onclick="app.typeNum(5)">5</button><button class="btn-nb" onclick="app.typeNum(6)">6</button>
+                <button class="btn-nb" onclick="app.typeNum(7)">7</button><button class="btn-nb" onclick="app.typeNum(8)">8</button><button class="btn-nb" onclick="app.typeNum(9)">9</button>
+                <button id="smart-btn" class="btn-nb btn-special" onclick="app.handleSmart()"></button>
+                <button class="btn-nb" onclick="app.typeNum(0)">0</button><button class="btn-nb btn-special" onclick="app.backspace()">⌫</button>
+                <button class="btn-nb" style="grid-column: span 3; margin-top:10px; background:var(--text); color:var(--card); font-size:16px;" onclick="app.closeSheet()">OK</button>
             </div>
         </div>
     </div>
 
-    <div id="edit-sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeEditSheet()">
+    <div id="edit-sheet" class="sheet-overlay" onclick="if(event.target===this) app.closeEdit()">
         <div class="sheet-content">
-            <h2 style="margin-top:0; letter-spacing:-1px;">Profil Joueur</h2>
-            <input type="text" id="edit-name-input" style="width:100%; padding:18px; border-radius:18px; border:1px solid var(--border); font-size:18px; margin-bottom:20px; background:var(--card); color:var(--text);">
-            <div style="display:flex; align-items:center; gap:15px; background:var(--card); padding:20px; border-radius:18px; border:1px solid var(--border); margin-bottom:25px;">
-                <input type="checkbox" id="edit-dealer-check" style="width:24px; height:24px;">
-                <label for="edit-dealer-check" style="font-weight:700;">Donneur actuel (Dealer) 🃏</label>
+            <h2 style="margin-top:0">Modifier Joueur</h2>
+            <input type="text" id="edit-name" style="width:100%; padding:20px; border-radius:20px; border:2px solid var(--border); font-size:20px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:15px; background:var(--card); padding:20px; border-radius:20px; margin-bottom:25px;">
+                <input type="checkbox" id="edit-dealer" style="width:25px; height:25px;">
+                <label for="edit-dealer" style="font-weight:800;">Donneur actuel</label>
             </div>
-            <button class="nb" style="width:100%; background:var(--primary); color:white; height:65px;" onclick="app.savePlayerEdit()">METTRE À JOUR</button>
+            <button class="btn-nb" style="width:100%; background:var(--primary); color:white; height:70px; box-shadow:none;" onclick="app.saveEdit()">VALIDER</button>
         </div>
     </div>
 
     <script>
-        const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#5856D6', '#AF52DE', '#FFCC00', '#5AC8FA', '#8E8E93', '#FF3B30', '#4CD964', '#000000'];
+        const COLORS = ['#FF2D55', '#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6'];
         
         const app = {
             data: { mode: null, players: [], history: [], temp: {}, dealerId: null },
-            activeId: null, editPid: null, editRoundIdx: null, chart: null,
+            activeId: null, editPid: null, editIdx: null, chart: null,
 
             initGame(mode) {
                 this.data.mode = mode;
                 if(mode === 'belote') {
                     this.data.players = [{id:1, name:'NOUS', color:COLORS[0], total:0}, {id:2, name:'EUX', color:COLORS[1], total:0}];
                 } else {
-                    const n = parseInt(prompt("Nombre de joueurs (2-12) ?", "4")) || 4;
-                    this.data.players = Array.from({length: Math.min(n, 12)}, (_, i) => ({id:i+1, name:`J${i+1}`, color:COLORS[i], total:0}));
+                    const n = parseInt(prompt("Nombre de joueurs (2-8) ?", "4")) || 4;
+                    this.data.players = Array.from({length: Math.min(n, 8)}, (_, i) => ({id:i+1, name:`JOUEUR ${i+1}`, color:COLORS[i], total:0}));
                 }
                 this.data.dealerId = this.data.players[0].id;
                 this.showGame();
@@ -162,35 +162,35 @@
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('game').classList.remove('hidden');
                 document.getElementById('dock').classList.remove('hidden');
-                document.getElementById('mode-title').innerHTML = (this.data.mode === 'belote' ? '🃏 ' : '🎲 ') + this.data.mode.toUpperCase();
+                document.getElementById('mode-title').innerText = this.data.mode;
                 this.render();
             },
 
             render() {
                 const grid = document.getElementById('grid'); grid.innerHTML = '';
-                this.data.players.forEach((p, idx) => {
+                this.data.players.forEach(p => {
                     const t = this.data.temp[p.id] || 0;
                     const card = document.createElement('div');
                     card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
                     card.innerHTML = `
-                        <div class="rank-badge">${idx+1}</div>
-                        <span class="p-name-link" onclick="app.openEdit(${p.id})">${p.name}</span>
+                        <span class="p-name-btn" style="color:${p.color}" onclick="app.openEdit(${p.id})">${p.name}</span>
                         <div onclick="app.openSheet(${p.id})">
-                            <div style="font-size:32px; font-weight:900; letter-spacing:-1px;">${p.total + t}</div>
-                            <div style="font-size:12px; font-weight:800; color:${p.color}; min-height:14px;">${t ? (t>0?'+'+t:t) : ''}</div>
+                            <div class="p-score-big">${p.total + t}</div>
+                            <div style="font-size:13px; font-weight:800; color:${p.color}; min-height:16px;">${t ? (t>0?'+'+t:t) : ''}</div>
                         </div>
+                        ${this.data.dealerId === p.id ? '<div class="dealer-tag">Donne</div>' : ''}
                     `;
                     grid.appendChild(card);
                 });
 
                 const hist = document.getElementById('history'); hist.innerHTML = '';
                 this.data.history.slice().reverse().forEach((r, i) => {
-                    const realIdx = this.data.history.length - 1 - i;
+                    const idx = this.data.history.length - 1 - i;
                     const row = document.createElement('div'); row.className = 'h-row';
-                    row.onclick = () => app.startEditRound(realIdx);
-                    let scores = '';
-                    this.data.players.forEach(p => scores += `<div class="h-val" style="color:${p.color}"><span>${p.name}</span>${r[p.id]}</div>`);
-                    row.innerHTML = `<div class="h-idx">M${realIdx+1}</div><div class="h-scores-box">${scores}</div><div style="opacity:0.2">✎</div>`;
+                    row.onclick = () => app.startEdit(idx);
+                    let sH = '';
+                    this.data.players.forEach(p => sH += `<div style="color:${p.color}">${r[p.id]}</div>`);
+                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores">${sH}</div><span style="opacity:0.2">✎</span>`;
                     hist.appendChild(row);
                 });
                 this.updateChart();
@@ -202,12 +202,12 @@
                 switcher.className = this.data.mode === 'belote' ? 'selector-scroll belote-center' : 'selector-scroll';
                 this.renderSwitcher();
                 document.getElementById('calc-btn').classList.toggle('hidden', this.data.mode !== 'belote');
-                document.getElementById('smart-btn').innerHTML = this.data.mode === 'belote' ? "CAPOT" : "+/-";
+                document.getElementById('smart-btn').innerText = this.data.mode === 'belote' ? "CAPOT" : "+/-";
                 document.getElementById('sheet').classList.add('active');
             },
             closeSheet() { 
                 document.getElementById('sheet').classList.remove('active');
-                if(this.editRoundIdx !== null) this.saveEditRound();
+                if(this.editIdx !== null) this.saveEditRound();
                 this.render(); 
             },
 
@@ -216,13 +216,13 @@
                 this.data.players.forEach(p => {
                     const active = p.id === this.activeId;
                     const div = document.createElement('div');
-                    div.className = `selector-item ${active ? 'active' : ''}`;
+                    div.className = `sel-item ${active ? 'active' : ''}`;
                     if(active) {
-                        div.style.setProperty('--active-color', p.color);
-                        div.style.setProperty('--active-bg', p.color + '15');
+                        div.style.setProperty('--sel-color', p.color);
+                        div.style.setProperty('--sel-shadow', p.color + '40');
                     }
                     div.onclick = () => { this.activeId = p.id; this.renderSwitcher(); };
-                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${active ? p.color : '#888'}">${p.name}</div><div class="sel-score">${this.data.temp[p.id] || 0}</div>`;
+                    div.innerHTML = `<div style="font-size:11px; font-weight:900; color:${active ? p.color : '#888'}">${p.name}</div><div class="val">${this.data.temp[p.id] || 0}</div>`;
                     container.appendChild(div);
                 });
             },
@@ -236,8 +236,7 @@
             addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; this.renderSwitcher(); },
             backspace() {
                 let cur = (this.data.temp[this.activeId] || 0).toString();
-                let res = cur.slice(0, -1);
-                this.data.temp[this.activeId] = parseInt(res) || 0;
+                this.data.temp[this.activeId] = parseInt(cur.slice(0, -1)) || 0;
                 this.renderSwitcher();
             },
             handleSmart() {
@@ -252,8 +251,8 @@
                 if(other) { this.data.temp[other.id] = rest; this.activeId = other.id; this.renderSwitcher(); }
             },
 
-            validateRound() {
-                if(this.editRoundIdx !== null) return; 
+            validate() {
+                if(this.editIdx !== null) return;
                 const round = {};
                 this.data.players.forEach(p => { round[p.id] = this.data.temp[p.id] || 0; p.total += round[p.id]; });
                 this.data.history.push(round); this.data.temp = {};
@@ -262,27 +261,26 @@
                 this.render();
             },
 
-            startEditRound(idx) {
-                this.editRoundIdx = idx;
-                this.data.temp = {...this.data.history[idx]};
-                document.getElementById('main-val-btn').innerHTML = "MODIFIER LA MANCHE M" + (idx+1);
-                document.getElementById('main-val-btn').style.background = "var(--dealer)";
+            startEdit(idx) {
+                this.editIdx = idx; this.data.temp = {...this.data.history[idx]};
+                document.getElementById('main-btn').innerText = "MODIFIER MANCHE M" + (idx+1);
+                document.getElementById('main-btn').style.background = var(--dealer);
                 this.openSheet(this.data.players[0].id);
             },
             saveEditRound() {
-                const old = this.data.history[this.editRoundIdx];
+                const old = this.data.history[this.editIdx];
                 this.data.players.forEach(p => p.total -= old[p.id]);
                 const newR = {...this.data.temp};
                 this.data.players.forEach(p => p.total += newR[p.id]);
-                this.data.history[this.editRoundIdx] = newR;
-                this.editRoundIdx = null; this.data.temp = {};
-                document.getElementById('main-val-btn').innerHTML = "ENREGISTRER LA MANCHE";
-                document.getElementById('main-val-btn').style.background = "var(--primary)";
+                this.data.history[this.editIdx] = newR;
+                this.editIdx = null; this.data.temp = {};
+                document.getElementById('main-btn').innerText = "ENREGISTRER";
+                document.getElementById('main-btn').style.background = "var(--text)";
                 this.render();
             },
 
             undo() {
-                if(!this.data.history.length || !confirm("Supprimer la dernière manche ?")) return;
+                if(!this.data.history.length) return;
                 const last = this.data.history.pop();
                 this.data.players.forEach(p => p.total -= last[p.id]);
                 this.render();
@@ -290,18 +288,18 @@
 
             openEdit(pid) {
                 this.editPid = pid; const p = this.data.players.find(x => x.id === pid);
-                document.getElementById('edit-name-input').value = p.name;
-                document.getElementById('edit-dealer-check').checked = (this.data.dealerId === pid);
+                document.getElementById('edit-name').value = p.name;
+                document.getElementById('edit-dealer').checked = (this.data.dealerId === pid);
                 document.getElementById('edit-sheet').classList.add('active');
             },
-            closeEditSheet() { document.getElementById('edit-sheet').classList.remove('active'); },
-            savePlayerEdit() {
+            closeEdit() { document.getElementById('edit-sheet').classList.remove('active'); },
+            saveEdit() {
                 const p = this.data.players.find(x => x.id === this.editPid);
-                p.name = document.getElementById('edit-name-input').value.trim().toUpperCase() || p.name;
-                if(document.getElementById('edit-dealer-check').checked) this.data.dealerId = p.id;
-                this.render(); this.closeEditSheet();
+                p.name = document.getElementById('edit-name').value.toUpperCase() || p.name;
+                if(document.getElementById('edit-dealer').checked) this.data.dealerId = p.id;
+                this.render(); this.closeEdit();
             },
-            reset() { if(confirm("Tout effacer et recommencer ?")) location.reload(); },
+            reset() { if(confirm("Nouvelle partie ?")) location.reload(); },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
@@ -309,13 +307,21 @@
                 this.chart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ['0', ...this.data.history.map((_, i) => i + 1)],
+                        labels: ['0', ...this.data.history.map((_, i) => 'M'+(i+1))],
                         datasets: this.data.players.map(p => {
-                            let sum = 0;
-                            return { data: [0, ...this.data.history.map(h => { sum += h[p.id]; return sum; })], borderColor: p.color, tension: 0.3, pointRadius: 2, borderWidth: 2 }
+                            let s = 0;
+                            return { 
+                                label: p.name, 
+                                data: [0, ...this.data.history.map(h => { s += h[p.id]; return s; })], 
+                                borderColor: p.color, tension: 0.3, pointRadius: 4, pointBackgroundColor: p.color
+                            }
                         })
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: true, mode: 'index', intersect: false } },
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+                    }
                 });
             }
         };
