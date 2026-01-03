@@ -3,627 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#F2F2F7">
-    <title>ScoreMaster Ultimate</title>
-    
+    <title>ScoreMaster v8.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        /* --- VARIABLES & THEME --- */
         :root {
-            --primary: #007AFF; 
-            --bg: #F2F2F7; 
-            --card-bg: #FFFFFF; 
-            --text-main: #000000;
-            --text-sub: #8E8E93;
-            --border: #E5E5EA;
-            --danger: #FF3B30;
-            --success: #34C759;
-            --dealer: #FF9500;
-            --radius-l: 24px;
-            --radius-m: 16px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.06);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --primary: #007AFF; --bg: #F2F2F7; --card: #FFFFFF; --text: #000000;
+            --border: #D1D1D6; --dealer: #FF9500; --danger: #FF3B30; --success: #34C759;
+            --anthracite: #1C1C1E; --sheet-bg: #FFFFFF;
         }
-
         @media (prefers-color-scheme: dark) {
             :root {
-                --primary: #0A84FF; 
-                --bg: #000000; 
-                --card-bg: #1C1C1E; 
-                --text-main: #FFFFFF;
-                --text-sub: #98989D;
-                --border: #38383A;
-                --shadow: 0 4px 12px rgba(0,0,0,0.3);
+                --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #FFFFFF;
+                --border: #38383A; --anthracite: #F2F2F7; --sheet-bg: #1C1C1E;
             }
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; touch-action: manipulation; user-select: none; }
-        
-        body { margin: 0; background-color: var(--bg); color: var(--text-main); padding-bottom: calc(80px + var(--safe-bottom)); overflow-x: hidden; }
-
-        /* --- UI COMPONENTS --- */
-        .container { max-width: 800px; margin: 0 auto; padding: 15px; padding-top: max(20px, env(safe-area-inset-top)); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; touch-action: manipulation; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .hidden { display: none !important; }
-        
-        /* Boutons avec effet "press" */
-        .btn { border: none; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-        .btn:active { transform: scale(0.96); opacity: 0.8; }
 
         /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .app-title { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
-        .btn-icon { background: var(--card-bg); width: 44px; height: 44px; border-radius: 50%; font-size: 20px; box-shadow: var(--shadow); color: var(--text-main); }
+        header { display: flex; justify-content: space-between; align-items: flex-end; padding: 10px 0 20px; }
+        #mode-title { margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; }
 
-        /* Setup Cards */
-        .setup-grid { display: grid; gap: 15px; margin-top: 40px; }
-        .mode-btn { background: var(--card-bg); padding: 25px; border-radius: var(--radius-l); text-align: left; box-shadow: var(--shadow); border: 1px solid transparent; }
-        .mode-btn h2 { margin: 0 0 5px 0; font-size: 22px; }
-        .mode-btn p { margin: 0; color: var(--text-sub); font-size: 14px; }
-
-        /* Graphique */
-        .chart-wrapper { background: var(--card-bg); padding: 15px; border-radius: var(--radius-l); height: 200px; margin-bottom: 20px; box-shadow: var(--shadow); }
-
-        /* Grille Joueurs */
-        .players-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 25px; 
-        }
+        /* Graph & Grid */
+        .chart-container { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px; }
         
-        .p-card { 
-            background: var(--card-bg); padding: 15px 10px; border-radius: 20px; 
-            text-align: center; position: relative; border: 2px solid transparent; 
-            box-shadow: var(--shadow); transition: border-color 0.2s;
-        }
-        
-        /* Indicateurs (Rank / Dealer) */
-        .p-rank { position: absolute; top: -8px; left: -8px; width: 26px; height: 26px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; z-index: 2; }
-        .p-dealer { position: absolute; top: -8px; right: -8px; background: var(--dealer); color: white; font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: 800; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .p-name { font-size: 12px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 5px; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-        .p-total { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; cursor: pointer; }
-        .p-live { font-size: 14px; font-weight: 700; height: 20px; color: var(--primary); margin-top: 4px; }
+        .p-card { background: var(--card); padding: 20px 10px; border-radius: 24px; text-align: center; position: relative; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.2s; }
+        .p-card.is-dealer { border-color: var(--dealer); border-width: 3px; }
+        .p-name { font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; cursor: pointer; color: var(--text); opacity: 0.7; }
+        .p-score-big { font-size: 42px; font-weight: 900; letter-spacing: -2px; cursor: pointer; line-height: 1; margin: 5px 0; }
+        .dealer-badge { position: absolute; top: 12px; right: 12px; background: var(--dealer); width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--card); }
 
         /* Historique */
-        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 1px; }
-        .h-row { background: var(--card-bg); padding: 12px 15px; border-radius: 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; font-size: 14px; }
-        .h-idx { font-weight: 900; color: var(--primary); width: 40px; }
-        .h-data { display: flex; gap: 15px; font-weight: 600; overflow-x: auto; flex: 1; }
-        .btn-trash { color: var(--danger); background: none; font-size: 18px; padding: 0 10px; }
+        .h-row { background: var(--card); padding: 16px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 10px; cursor: pointer; border: 1px solid var(--border); }
+        .h-row.editing { border: 2px solid var(--dealer); background: var(--bg); }
+        .h-idx { font-size: 10px; font-weight: 900; opacity: 0.4; width: 35px; }
+        .h-scores { display: flex; flex: 1; gap: 15px; font-weight: 700; overflow-x: auto; }
 
-        /* DOCK Flottant */
-        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; z-index: 100; display: flex; gap: 10px; padding-bottom: var(--safe-bottom); }
-        .btn-dock { flex: 1; padding: 18px; border-radius: 20px; font-size: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); color: white; background: var(--text-main); }
-        
-        /* MODALE & CLAVIER (Sheet) */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
-        .sheet-overlay.open { opacity: 1; pointer-events: auto; }
-        .sheet { background: var(--bg); width: 100%; border-radius: 32px 32px 0 0; padding: 25px 20px calc(20px + var(--safe-bottom)); transform: translateY(100%); transition: 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); max-height: 85vh; overflow-y: auto; }
-        .sheet-overlay.open .sheet { transform: translateY(0); }
+        /* Sheet Clavier */
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; backdrop-filter: blur(5px); }
+        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
+        .sheet-content { background: var(--sheet-bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px env(safe-area-inset-bottom); transform: translateY(100%); transition: 0.35s cubic-bezier(0.1, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); }
+        .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        /* Sélecteur de Joueur dans le clavier */
-        .switcher { display: flex; gap: 10px; overflow-x: auto; padding: 5px; margin-bottom: 20px; scrollbar-width: none; }
-        .sw-item { background: var(--card-bg); min-width: 90px; padding: 12px; border-radius: 16px; text-align: center; border: 2px solid transparent; transition: 0.2s; flex: 1; }
-        .sw-item.active { border-color: var(--p-color); background: var(--p-bg); transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .sw-name { font-size: 11px; font-weight: 800; opacity: 0.6; margin-bottom: 2px; }
-        .sw-val { font-size: 24px; font-weight: 900; }
+        /* Indicateur de contexte (Manche X) */
+        .context-bar { text-align: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: var(--dealer); margin-bottom: 15px; text-transform: uppercase; opacity: 0; transition: opacity 0.3s; }
+        .context-bar.visible { opacity: 1; }
 
-        /* Pavé Numérique */
+        /* Sélecteur Joueur */
+        .input-selector { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .sel-box { background: var(--bg); padding: 12px; border-radius: 18px; text-align: center; flex: 1; min-width: 90px; border: 2px solid transparent; transition: 0.2s; cursor: pointer; }
+        .sel-box.active { background: var(--card); border-color: var(--p-color); box-shadow: 0 8px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
+        .sel-name { font-size: 10px; font-weight: 800; opacity: 0.6; margin-bottom: 2px; }
+        .sel-val { font-size: 26px; font-weight: 900; }
+
+        /* Numpad Grille */
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .nk { background: var(--card-bg); height: 55px; border-radius: 14px; font-size: 22px; font-weight: 600; color: var(--text-main); box-shadow: 0 2px 0 var(--border); }
-        .nk:active { background: var(--border); transform: translateY(2px); box-shadow: none; }
-        .nk.action { font-size: 14px; font-weight: 800; background: rgba(120,120,128,0.1); }
-        .nk-tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+        .btn-nb { background: var(--bg); border: none; height: 60px; border-radius: 16px; font-size: 24px; font-weight: 600; color: var(--text); box-shadow: 0 2px 0 var(--border); transition: 0.1s; cursor: pointer; }
+        .btn-nb:active { transform: translateY(2px); box-shadow: none; background: var(--border); }
+        .btn-op { font-size: 15px; font-weight: 800; background: rgba(120,120,128,0.1); }
+        
+        /* Boutons Spéciaux */
+        .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+        #smart-btn { background: var(--text); color: var(--bg); }
 
-        /* Settings Input */
-        .input-box { width: 100%; padding: 15px; border-radius: 14px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); font-size: 18px; margin-bottom: 20px; }
-        .row-switch { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px; border-radius: 14px; margin-bottom: 20px; font-weight: 700; }
-        input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--primary); }
-
-        /* Belote Layout Special */
-        .belote-mode .players-grid { grid-template-columns: 1fr 1fr; }
-        .belote-mode .p-score { font-size: 48px; }
+        /* Dock Fixe */
+        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; z-index: 3000; }
+        .btn-main { width: 100%; background: #000000; color: #FFFFFF; border: none; padding: 22px; border-radius: 24px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: 0.3s; }
+        .btn-main.editing { background: var(--dealer); color: #000; }
+        @media (prefers-color-scheme: dark) { .btn-main { background: #FFFFFF; color: #000000; } }
     </style>
 </head>
 <body>
 
-    <div id="screen-setup" class="container">
-        <h1 style="text-align:center; margin-top:60px;">ScoreMaster</h1>
-        <div class="setup-grid">
-            <button class="btn mode-btn" onclick="Game.init('belote')">
-                <h2>🃏 Belote</h2>
-                <p>2 Équipes (Nous/Eux) • 162 pts • Capot</p>
-            </button>
-            <button class="btn mode-btn" onclick="Game.init('standard')">
-                <h2>🎲 Standard</h2>
-                <p>2 à 12 joueurs • Score libre • Malus +/-</p>
-            </button>
-        </div>
+<div id="setup" class="container">
+    <h1 style="text-align:center; margin-top:80px; font-size:40px; font-weight:900;">ScoreMaster</h1>
+    <div style="display: grid; gap: 20px; margin-top: 60px;">
+        <button onclick="app.initGame('belote')" style="padding:35px; border-radius:30px; border:none; background:var(--card); text-align:left; box-shadow:0 10px 25px rgba(0,0,0,0.05); cursor:pointer;">
+            <h2 style="margin:0;">🃏 BELOTE</h2>
+            <p style="margin:5px 0 0; color:var(--gray); font-weight:600;">Équipes • 162 pts • Capot</p>
+        </button>
+        <button onclick="app.initGame('standard')" style="padding:35px; border-radius:30px; border:none; background:var(--card); text-align:left; box-shadow:0 10px 25px rgba(0,0,0,0.05); cursor:pointer;">
+            <h2 style="margin:0;">🎲 STANDARD</h2>
+            <p style="margin:5px 0 0; color:var(--gray); font-weight:600;">Partie libre • Malus</p>
+        </button>
     </div>
+</div>
 
-    <div id="screen-game" class="container hidden">
-        <header>
-            <div class="app-title" id="mode-label">SCORE</div>
-            <button class="btn btn-icon" onclick="Game.reset()">⚙️</button>
-        </header>
+<div id="game" class="container hidden">
+    <header>
+        <h1 id="mode-title">SCORE</h1>
+        <button onclick="app.reset()" style="background:none; border:none; font-size:24px; cursor:pointer;">⚙️</button>
+    </header>
 
-        <div class="chart-wrapper">
-            <canvas id="scoreChart"></canvas>
+    <div class="chart-container"><canvas id="chart"></canvas></div>
+    <div id="grid" class="players-grid"></div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin: 30px 0 10px;">
+        <span style="font-size:11px; font-weight:900; opacity:0.5; letter-spacing:1px;">HISTORIQUE</span>
+        <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:800; font-size:11px; cursor:pointer;">ANNULER DERNIÈRE</button>
+    </div>
+    <div id="history"></div>
+</div>
+
+<div id="dock" class="dock hidden">
+    <button id="main-btn" class="btn-main" onclick="app.validateRound()">ENREGISTRER LA MANCHE</button>
+</div>
+
+<div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
+    <div class="sheet-content" onclick="event.stopPropagation()">
+        
+        <div id="sheet-context" class="context-bar">MODIFICATION MANCHE</div>
+
+        <div id="input-switcher" class="input-selector"></div>
+        
+        <div class="tools-grid">
+            <button id="calc-btn" class="btn-nb hidden" style="grid-column: span 4; background:var(--success); color:white; font-size:14px;" onclick="app.calcRest()">✨ COMPLÉTER À 162</button>
+            <button class="btn-nb btn-op" onclick="app.vibe(); app.addVal(10)">+10</button>
+            <button class="btn-nb btn-op" onclick="app.vibe(); app.addVal(20)">+20</button>
+            <button class="btn-nb btn-op" onclick="app.vibe(); app.addVal(50)">+50</button>
+            <button id="smart-btn" class="btn-nb" onclick="app.vibe(); app.handleSmart()">+/-</button>
         </div>
 
-        <div id="players-grid" class="players-grid"></div>
-
-        <div class="history-header">
-            <span>HISTORIQUE</span>
-            <span style="opacity:0.5" id="round-count">0 manches</span>
+        <div class="numpad">
+            <button class="btn-nb" onclick="app.vibe(); app.typeNum(1)">1</button>
+            <button class="btn-nb" onclick="app.vibe(); app.typeNum(2)">2</button>
+            <button class="btn-nb" onclick="app.vibe(); app.typeNum(3)">3</button>
+            <button class="btn-nb" onclick="app.typeNum(4)">4</button>
+            <button class="btn-nb" onclick="app.typeNum(5)">5</button>
+            <button class="btn-nb" onclick="app.typeNum(6)">6</button>
+            <button class="btn-nb" onclick="app.typeNum(7)">7</button>
+            <button class="btn-nb" onclick="app.typeNum(8)">8</button>
+            <button class="btn-nb" onclick="app.typeNum(9)">9</button>
+            <button class="btn-nb" style="color:var(--danger); font-size:16px;" onclick="app.vibe(); app.clearInput()">C</button>
+            <button class="btn-nb" onclick="app.vibe(); app.typeNum(0)">0</button>
+            <button class="btn-nb" style="font-size:20px;" onclick="app.vibe(); app.backspace()">⌫</button>
         </div>
-        <div id="history-list"></div>
+        
+        <div style="height: 20px;"></div>
     </div>
+</div>
 
-    <div id="dock" class="dock hidden">
-        <button id="main-btn" class="btn btn-dock" onclick="Game.validateRound()">ENREGISTRER LA MANCHE</button>
-    </div>
+<script>
+const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6'];
+const app = {
+    data: { mode: null, players: [], history: [], temp: {}, dealerId: 1 },
+    activeId: null, editIdx: null, chart: null,
 
-    <div id="modal-input" class="sheet-overlay" onclick="if(event.target===this) Game.closeInput()">
-        <div class="sheet">
-            <div id="input-switcher" class="switcher"></div>
+    init() {
+        const saved = localStorage.getItem('sm_v8');
+        if(saved) { this.data = JSON.parse(saved); this.showGame(); }
+    },
+    save() { localStorage.setItem('sm_v8', JSON.stringify(this.data)); },
+    vibe() { if(navigator.vibrate) navigator.vibrate(10); },
 
-            <div id="tools-row" class="nk-tools">
-                <button id="btn-162" class="btn nk action hidden" style="grid-column: span 4; background:var(--success); color:white" onclick="Game.calcBelote()">✨ COMPLÉTER 162</button>
-                <button class="btn nk action" onclick="Game.add(10)">+10</button>
-                <button class="btn nk action" onclick="Game.add(20)">+20</button>
-                <button class="btn nk action" onclick="Game.add(50)">+50</button>
-                <button id="btn-smart" class="btn nk action" style="background:var(--primary); color:white" onclick="Game.smartAction()">CAPOT</button>
-            </div>
+    initGame(mode) {
+        this.data.mode = mode;
+        const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
+        this.data.players = Array.from({length: n}, (_, i) => ({
+            id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, color: COLORS[i%COLORS.length], total: 0
+        }));
+        this.data.dealerId = 1; this.save(); this.showGame();
+    },
 
-            <div class="numpad">
-                <button class="btn nk" onclick="Game.type(1)">1</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(2)">2</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(3)">3</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(4)">4</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(5)">5</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(6)">6</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(7)">7</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(8)">8</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(9)">9</button>
-                <button class="btn nk action" style="color:var(--danger)" onclick="Game.clear()">C</button>
-                <button class="btn nk" onclick="appVibe(); Game.type(0)">0</button>
-                <button class="btn nk action" onclick="appVibe(); Game.backspace()">⌫</button>
-                <button class="btn nk" style="grid-column: span 3; background:var(--text-main); color:var(--bg); margin-top:10px;" onclick="Game.closeInput()">VALIDER LES POINTS</button>
-            </div>
-        </div>
-    </div>
+    showGame() {
+        document.getElementById('setup').classList.add('hidden');
+        document.getElementById('game').classList.remove('hidden');
+        document.getElementById('dock').classList.remove('hidden');
+        document.getElementById('mode-title').innerText = this.data.mode;
+        this.render();
+    },
 
-    <div id="modal-player" class="sheet-overlay" onclick="if(event.target===this) Game.closePlayerSettings()">
-        <div class="sheet">
-            <h2 style="margin-top:0">Modifier Joueur</h2>
-            <input type="text" id="edit-name" class="input-box" placeholder="Nom du joueur">
+    render() {
+        const grid = document.getElementById('grid'); grid.innerHTML = '';
+        this.data.players.forEach(p => {
+            const t = parseInt(this.data.temp[p.id]) || 0;
+            const card = document.createElement('div');
+            card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
+            card.innerHTML = `
+                <div class="p-name" onclick="app.managePlayer(${p.id})">${p.name}</div>
+                <div class="p-score-big" onclick="app.openSheet(${p.id})">${p.total + t}</div>
+                <div style="font-size:13px; font-weight:800; color:${p.color}; min-height:16px;">${t ? (t > 0 ? '+'+t : t) : ''}</div>
+                ${this.data.dealerId === p.id ? '<div class="dealer-badge"></div>' : ''}
+            `;
+            grid.appendChild(card);
+        });
+
+        const hist = document.getElementById('history'); hist.innerHTML = '';
+        this.data.history.slice().reverse().forEach((r, i) => {
+            const idx = this.data.history.length - 1 - i;
+            const row = document.createElement('div'); 
+            row.className = `h-row ${this.editIdx === idx ? 'editing' : ''}`;
+            row.onclick = () => this.startEdit(idx);
+            let s = '';
+            this.data.players.forEach(p => s += `<div style="text-align:center; min-width:40px;"><div style="font-size:9px; color:${p.color}; font-weight:900;">${p.name.substring(0,3)}</div><div style="font-weight:700;">${r[p.id]||0}</div></div>`);
+            row.innerHTML = `<div class="h-idx">#${idx+1}</div><div class="h-scores">${s}</div><span style="opacity:0.2; font-size:18px;">✎</span>`;
+            hist.appendChild(row);
+        });
+        this.updateChart();
+    },
+
+    managePlayer(pid) {
+        const p = this.data.players.find(x => x.id === pid);
+        const action = confirm(`Désigner ${p.name} comme DONNEUR ?\n(Annuler pour renommer)`);
+        if(action) this.data.dealerId = pid;
+        else { const n = prompt("Nouveau nom :", p.name); if(n) p.name = n.toUpperCase(); }
+        this.save(); this.render();
+    },
+
+    openSheet(pid) {
+        this.activeId = pid;
+        this.renderSwitcher();
+        
+        // Config Boutons
+        const isBelote = this.data.mode === 'belote';
+        document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
+        document.getElementById('smart-btn').innerText = isBelote ? 'CAPOT' : '+ / -';
+        document.getElementById('smart-btn').style.background = isBelote ? 'var(--dealer)' : 'var(--text)';
+        document.getElementById('smart-btn').style.color = isBelote ? 'black' : 'var(--bg)';
+
+        // Config Contexte (Edition ou Nouveau)
+        const ctxBar = document.getElementById('sheet-context');
+        if(this.editIdx !== null) {
+            ctxBar.innerText = `⚠️ MODIFICATION MANCHE ${this.editIdx+1}`;
+            ctxBar.classList.add('visible');
+        } else {
+            ctxBar.classList.remove('visible');
+        }
+
+        document.getElementById('sheet').classList.add('active');
+    },
+
+    renderSwitcher() {
+        const container = document.getElementById('input-switcher'); container.innerHTML = '';
+        this.data.players.forEach(p => {
+            const active = p.id === this.activeId;
+            const div = document.createElement('div');
+            div.className = `sel-box ${active ? 'active' : ''}`;
+            if(active) div.style.setProperty('--p-color', p.color);
+            div.onclick = (e) => { e.stopPropagation(); this.activeId = p.id; this.renderSwitcher(); };
+            div.innerHTML = `<div class="sel-name" style="color:${active?p.color:'inherit'}">${p.name}</div>
+                             <div class="sel-val">${this.data.temp[p.id] || 0}</div>`;
+            container.appendChild(div);
+            if(active) div.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+        });
+    },
+
+    // --- LOGIQUE MATHÉMATIQUE CORRIGÉE ---
+    typeNum(n) { 
+        let cur = (this.data.temp[this.activeId] || 0).toString(); 
+        this.data.temp[this.activeId] = parseInt((cur === '0' ? '' : cur) + n); 
+        this.renderSwitcher(); 
+    },
+    addVal(v) { 
+        this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; 
+        this.renderSwitcher(); 
+    },
+    backspace() { 
+        let cur = (this.data.temp[this.activeId] || 0).toString(); 
+        this.data.temp[this.activeId] = cur.length > 1 ? parseInt(cur.slice(0, -1)) : 0; 
+        this.renderSwitcher(); 
+    },
+    clearInput() {
+        this.data.temp[this.activeId] = 0; 
+        this.renderSwitcher();
+    },
+    
+    // --- BUG FIX: SMART BUTTON ---
+    handleSmart() {
+        if(this.data.mode === 'belote') {
+            this.data.temp[this.activeId] = 252; // Capot Belote
+        } else {
+            // Standard Mode: Inversion +/-
+            let val = this.data.temp[this.activeId] || 0;
+            this.data.temp[this.activeId] = val * -1;
+        }
+        this.renderSwitcher();
+    },
+
+    calcRest() {
+        const val = this.data.temp[this.activeId] || 0;
+        const other = this.data.players.find(p => p.id !== this.activeId);
+        if(other) { 
+            this.data.temp[other.id] = Math.max(0, 162 - val); 
+            this.activeId = other.id; 
+            this.renderSwitcher(); 
+        }
+    },
+
+    // --- VALIDATION & EDITION ---
+    validateRound() {
+        // Vérif sécurité: au moins 1 point saisi ?
+        if(Object.keys(this.data.temp).length === 0 && !confirm("Enregistrer une manche vide ?")) return;
+
+        if(this.editIdx !== null) {
+            // Mode Édition : On remplace l'ancienne manche
+            const oldRound = this.data.history[this.editIdx];
             
-            <div class="row-switch" onclick="document.getElementById('edit-dealer').click()">
-                <span>Désigner comme Donneur 🃏</span>
-                <input type="checkbox" id="edit-dealer">
-            </div>
+            // 1. Soustraire les anciens points
+            this.data.players.forEach(p => p.total -= (oldRound[p.id] || 0));
+            
+            // 2. Mettre à jour l'historique
+            this.data.history[this.editIdx] = {...this.data.temp};
+            
+            // 3. Ajouter les nouveaux points
+            this.data.players.forEach(p => p.total += (this.data.temp[p.id] || 0));
+            
+            // 4. Reset UI
+            this.editIdx = null;
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "ENREGISTRER LA MANCHE";
+            btn.classList.remove('editing');
+        } else {
+            // Mode Normal : Nouvelle manche
+            const round = {};
+            this.data.players.forEach(p => { 
+                round[p.id] = this.data.temp[p.id] || 0; 
+                p.total += round[p.id]; 
+            });
+            this.data.history.push(round);
+            
+            // Rotation Dealer
+            const idx = this.data.players.findIndex(p => p.id === this.data.dealerId);
+            this.data.dealerId = this.data.players[(idx + 1) % this.data.players.length].id;
+        }
+        
+        this.data.temp = {}; 
+        this.save(); 
+        this.closeSheet();
+    },
 
-            <button class="btn btn-dock" style="width:100%" onclick="Game.savePlayerSettings()">ENREGISTRER</button>
-        </div>
-    </div>
+    startEdit(idx) {
+        this.editIdx = idx; 
+        this.data.temp = {...this.data.history[idx]}; // Charger les scores
+        
+        const btn = document.getElementById('main-btn');
+        btn.innerText = "SAUVEGARDER MANCHE " + (idx+1);
+        btn.classList.add('editing');
+        
+        this.openSheet(this.data.players[0].id);
+        this.render(); // Pour mettre en surbrillance la ligne
+    },
 
-    <script>
-        // --- CONFIG ---
-        const COLORS = ['#007AFF', '#FF3B30', '#34C759', '#FF9500', '#AF52DE', '#5856D6', '#FF2D55', '#5AC8FA'];
-        const appVibe = () => { if(navigator.vibrate) navigator.vibrate(5); };
+    closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
+    
+    undo() { 
+        if(this.data.history.length && confirm("Supprimer définitivement la dernière manche ?")) { 
+            const last = this.data.history.pop(); 
+            this.data.players.forEach(p => p.total -= (last[p.id] || 0)); 
+            this.save(); 
+            this.render(); 
+        } 
+    },
+    
+    reset() { if(confirm("Nouvelle partie ? (Toutes les données seront effacées)")) { localStorage.removeItem('sm_v8'); location.reload(); } },
 
-        // --- APP LOGIC ---
-        const Game = {
-            state: {
-                mode: null,
-                players: [], // { id, name, color, total }
-                history: [], // [ { p1: 10, p2: 0 } ]
-                temp: {},    // { p1: 5 } (points en cours de saisie)
-                dealerId: 1
-            },
-            editingId: null, // ID joueur en cours de saisie
-            editingRoundIdx: null, // Index manche en modif (null = nouvelle manche)
-            editingPlayerId: null, // Pour modale nom/dealer
-            chart: null,
-
-            // --- 1. INITIALIZATION ---
-            start() {
-                const saved = localStorage.getItem('ScoreMaster_v7');
-                if (saved) {
-                    try {
-                        this.state = JSON.parse(saved);
-                        this.loadInterface();
-                    } catch(e) { console.error("Save corrupted"); }
-                }
-            },
-
-            save() {
-                localStorage.setItem('ScoreMaster_v7', JSON.stringify(this.state));
-            },
-
-            init(mode) {
-                this.state.mode = mode;
-                if (mode === 'belote') {
-                    this.state.players = [
-                        { id: 1, name: 'NOUS', color: COLORS[0], total: 0 },
-                        { id: 2, name: 'EUX', color: COLORS[1], total: 0 }
-                    ];
-                } else {
-                    const n = parseInt(prompt("Nombre de joueurs (2-12) ?", "4")) || 4;
-                    this.state.players = Array.from({length: Math.min(n, 12)}, (_, i) => ({
-                        id: i + 1,
-                        name: `J${i + 1}`,
-                        color: COLORS[i % COLORS.length],
-                        total: 0
-                    }));
-                }
-                this.state.dealerId = 1;
-                this.state.history = [];
-                this.state.temp = {};
-                this.save();
-                this.loadInterface();
-            },
-
-            loadInterface() {
-                document.getElementById('screen-setup').classList.add('hidden');
-                document.getElementById('screen-game').classList.remove('hidden');
-                document.getElementById('dock').classList.remove('hidden');
-                document.getElementById('mode-label').innerText = this.state.mode.toUpperCase();
-                
-                if (this.state.mode === 'belote') {
-                    document.getElementById('screen-game').classList.add('belote-mode');
-                }
-                this.render();
-            },
-
-            reset() {
-                if(confirm("Effacer toutes les données et recommencer ?")) {
-                    localStorage.removeItem('ScoreMaster_v7');
-                    location.reload();
-                }
-            },
-
-            // --- 2. RENDERING ---
-            render() {
-                this.renderGrid();
-                this.renderHistory();
-                this.updateChart();
-                this.save();
-            },
-
-            getRankings() {
-                // Créer une copie triée pour le classement
-                const sorted = [...this.state.players].map(p => ({
-                    id: p.id,
-                    score: p.total + (this.state.temp[p.id] || 0)
-                })).sort((a, b) => b.score - a.score);
-
-                const ranks = {};
-                let currentRank = 1;
-                sorted.forEach((p, i) => {
-                    if (i > 0 && p.score < sorted[i-1].score) currentRank = i + 1;
-                    ranks[p.id] = currentRank;
-                });
-                return ranks;
-            },
-
-            renderGrid() {
-                const container = document.getElementById('players-grid');
-                container.innerHTML = '';
-                
-                // Style grille
-                container.style.gridTemplateColumns = this.state.mode === 'belote' 
-                    ? '1fr 1fr' 
-                    : 'repeat(auto-fit, minmax(100px, 1fr))';
-
-                const ranks = this.getRankings();
-
-                this.state.players.forEach(p => {
-                    const tempVal = this.state.temp[p.id] || 0;
-                    const isDealer = this.state.dealerId === p.id;
-                    const rank = ranks[p.id];
-                    let rankDisplay = `#${rank}`;
-                    if(rank === 1) rankDisplay = '🥇';
-                    if(rank === 2) rankDisplay = '🥈';
-                    if(rank === 3) rankDisplay = '🥉';
-
-                    const div = document.createElement('div');
-                    div.className = `p-card ${isDealer ? 'is-dealer' : ''}`;
-                    div.innerHTML = `
-                        <div class="p-rank">${rankDisplay}</div>
-                        ${isDealer ? `<div class="p-dealer">D</div>` : ''}
-                        
-                        <div class="p-name" onclick="Game.openPlayerSettings(${p.id})">${p.name}</div>
-                        <div class="p-total" onclick="Game.openInput(${p.id})" style="color:${p.color}">${p.total + tempVal}</div>
-                        <div class="p-live">${tempVal !== 0 ? (tempVal > 0 ? '+'+tempVal : tempVal) : ''}</div>
-                    `;
-                    container.appendChild(div);
-                });
-            },
-
-            renderHistory() {
-                const list = document.getElementById('history-list');
-                list.innerHTML = '';
-                document.getElementById('round-count').innerText = `${this.state.history.length} manches`;
-
-                this.state.history.slice().reverse().forEach((round, rIndex) => {
-                    const realIndex = this.state.history.length - 1 - rIndex;
-                    
-                    let scoresHTML = '';
-                    this.state.players.forEach(p => {
-                        scoresHTML += `<div style="text-align:center; min-width:40px;">
-                            <div style="font-size:9px; font-weight:800; color:${p.color}">${p.name.substring(0,3)}</div>
-                            <div>${round[p.id] || 0}</div>
-                        </div>`;
-                    });
-
-                    const row = document.createElement('div');
-                    row.className = 'h-row';
-                    row.innerHTML = `
-                        <div class="h-idx">#${realIndex + 1}</div>
-                        <div class="h-data" onclick="Game.editRound(${realIndex})">${scoresHTML}</div>
-                        <button class="btn btn-trash" onclick="Game.deleteRound(${realIndex})">×</button>
-                    `;
-                    list.appendChild(row);
-                });
-            },
-
-            // --- 3. INPUT LOGIC ---
-            openInput(pid) {
-                this.editingId = pid;
-                
-                // Config boutons contextuels
-                document.getElementById('btn-162').classList.toggle('hidden', this.state.mode !== 'belote');
-                document.getElementById('btn-smart').innerText = this.state.mode === 'belote' ? 'CAPOT' : '+ / -';
-
-                document.getElementById('modal-input').classList.add('open');
-                this.renderSwitcher();
-            },
-
-            closeInput() {
-                document.getElementById('modal-input').classList.remove('open');
-                // Si on était en mode édition historique et qu'on ferme, on sauve
-                if(this.editingRoundIdx !== null) this.commitEdit();
-                else this.render();
-            },
-
-            renderSwitcher() {
-                const sw = document.getElementById('input-switcher');
-                sw.innerHTML = '';
-                
-                this.state.players.forEach(p => {
-                    const active = p.id === this.editingId;
-                    const btn = document.createElement('div');
-                    btn.className = `sw-item ${active ? 'active' : ''}`;
-                    if(active) {
-                        btn.style.setProperty('--p-color', p.color);
-                        btn.style.setProperty('--p-bg', p.color + '15');
-                        // Scroll to element
-                        setTimeout(() => btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}), 10);
-                    }
-                    btn.onclick = () => { this.editingId = p.id; this.renderSwitcher(); };
-                    btn.innerHTML = `
-                        <div class="sw-name" style="color:${active?p.color:'inherit'}">${p.name}</div>
-                        <div class="sw-val">${this.state.temp[p.id] || 0}</div>
-                    `;
-                    sw.appendChild(btn);
-                });
-                
-                // Mise à jour visuelle live sur la grille
-                this.renderGrid();
-                this.updateChart();
-            },
-
-            // Numpad Functions
-            type(n) {
-                let val = (this.state.temp[this.editingId] || 0).toString();
-                if(val === '0') val = '';
-                this.state.temp[this.editingId] = parseInt(val + n) || 0;
-                this.renderSwitcher();
-            },
-            add(n) {
-                this.state.temp[this.editingId] = (this.state.temp[this.editingId] || 0) + n;
-                this.renderSwitcher();
-            },
-            backspace() {
-                let val = (this.state.temp[this.editingId] || 0).toString();
-                this.state.temp[this.editingId] = parseInt(val.slice(0, -1)) || 0;
-                this.renderSwitcher();
-            },
-            clear() {
-                this.state.temp[this.editingId] = 0;
-                this.renderSwitcher();
-            },
-            handleSmart() {
-                if (this.state.mode === 'belote') {
-                    this.state.temp[this.editingId] = 252;
-                } else {
-                    this.state.temp[this.editingId] = (this.state.temp[this.editingId] || 0) * -1;
-                }
-                this.renderSwitcher();
-            },
-            calcBelote() {
-                const current = this.state.temp[this.editingId] || 0;
-                const rest = Math.max(0, 162 - current);
-                const other = this.state.players.find(p => p.id !== this.editingId);
-                if (other) {
-                    this.state.temp[other.id] = rest;
-                    // Auto switch to other to show result
-                    this.editingId = other.id;
-                    this.renderSwitcher();
-                }
-            },
-
-            // --- 4. GAME FLOW ---
-            validateRound() {
-                if (this.editingRoundIdx !== null) return; // Mode édition géré par closeInput
-
-                // Vérifier s'il y a des points
-                const hasPoints = Object.keys(this.state.temp).length > 0;
-                if (!hasPoints) return;
-
-                const round = {};
-                this.state.players.forEach(p => {
-                    const val = this.state.temp[p.id] || 0;
-                    round[p.id] = val;
-                    p.total += val;
-                });
-
-                this.state.history.push(round);
-                this.state.temp = {}; // Reset temp
-                
-                // Rotation Dealer
-                const currentDealerIdx = this.state.players.findIndex(p => p.id === this.state.dealerId);
-                const nextDealer = this.state.players[(currentDealerIdx + 1) % this.state.players.length];
-                this.state.dealerId = nextDealer.id;
-
-                this.render();
-            },
-
-            // --- 5. EDITING ---
-            editRound(idx) {
-                this.editingRoundIdx = idx;
-                // Charger les scores de l'historique dans temp
-                this.state.temp = { ...this.state.history[idx] };
-                
-                // Changer visuellement le bouton
-                const btn = document.getElementById('main-btn');
-                btn.innerText = "MODIFIER MANCHE " + (idx+1);
-                btn.style.background = "var(--dealer)";
-                
-                this.openInput(this.state.players[0].id);
-            },
-
-            commitEdit() {
-                if(this.editingRoundIdx === null) return;
-
-                // 1. Retirer les anciens points du total
-                const oldRound = this.state.history[this.editingRoundIdx];
-                this.state.players.forEach(p => {
-                    p.total -= (oldRound[p.id] || 0);
-                });
-
-                // 2. Ajouter les nouveaux
-                const newRound = {};
-                this.state.players.forEach(p => {
-                    const val = this.state.temp[p.id] || 0;
-                    newRound[p.id] = val;
-                    p.total += val;
-                });
-
-                // 3. Sauver
-                this.state.history[this.editingRoundIdx] = newRound;
-                
-                // Reset UI
-                this.editingRoundIdx = null;
-                this.state.temp = {};
-                const btn = document.getElementById('main-btn');
-                btn.innerText = "ENREGISTRER LA MANCHE";
-                btn.style.background = "var(--text-main)";
-                
-                this.render();
-            },
-
-            deleteRound(idx) {
-                if(confirm("Supprimer cette manche ?")) {
-                    const round = this.state.history[idx];
-                    this.state.players.forEach(p => p.total -= (round[p.id] || 0));
-                    this.state.history.splice(idx, 1);
-                    this.render();
-                }
-            },
-
-            // --- 6. PLAYER SETTINGS ---
-            openPlayerSettings(pid) {
-                this.editingPlayerId = pid;
-                const p = this.state.players.find(x => x.id === pid);
-                document.getElementById('edit-name').value = p.name;
-                document.getElementById('edit-dealer').checked = (this.state.dealerId === pid);
-                document.getElementById('modal-player').classList.add('open');
-            },
-            closePlayerSettings() {
-                document.getElementById('modal-player').classList.remove('open');
-            },
-            savePlayerSettings() {
-                const p = this.state.players.find(x => x.id === this.editingPlayerId);
-                const newName = document.getElementById('edit-name').value.trim().toUpperCase();
-                if(newName) p.name = newName;
-                
-                if(document.getElementById('edit-dealer').checked) {
-                    this.state.dealerId = p.id;
-                }
-                
-                this.closePlayerSettings();
-                this.render();
-            },
-
-            // --- 7. CHART ---
-            updateChart() {
-                const ctx = document.getElementById('scoreChart').getContext('2d');
-                if (this.chart) this.chart.destroy();
-
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
-
-                const datasets = this.state.players.map(p => {
-                    let acc = 0;
-                    const data = [0, ...this.state.history.map(h => {
-                        acc += (h[p.id] || 0);
-                        return acc;
-                    })];
-                    
-                    // Ajout point prévisionnel si saisie en cours
-                    const currentTemp = this.state.temp[p.id] || 0;
-                    if(currentTemp !== 0 || Object.keys(this.state.temp).length > 0) {
-                        data.push(p.total + currentTemp);
-                    }
-
-                    return {
-                        label: p.name,
-                        data: data,
-                        borderColor: p.color,
-                        backgroundColor: p.color,
-                        tension: 0.3,
-                        pointRadius: 3,
-                        borderWidth: 2
-                    };
-                });
-
-                const labels = ['Dép.', ...this.state.history.map((_, i) => i + 1)];
-                if (Object.keys(this.state.temp).length > 0) labels.push('Live');
-
-                this.chart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels, datasets },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { 
-                                backgroundColor: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
-                                titleColor: isDark ? '#000' : '#fff',
-                                bodyColor: isDark ? '#000' : '#fff',
-                                bodyFont: { weight: 'bold' }
-                            }
-                        },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { color: isDark ? '#888' : '#aaa' } },
-                            y: { grid: { color: gridColor }, beginAtZero: true }
-                        }
-                    }
-                });
+    updateChart() {
+        const ctx = document.getElementById('chart').getContext('2d');
+        if(this.chart) this.chart.destroy();
+        
+        const datasets = this.data.players.map(p => {
+            let s = 0;
+            const data = [0, ...this.data.history.map(h => s += (h[p.id] || 0))];
+            
+            // Point prévisionnel si saisie en cours
+            const currentTemp = this.data.temp[p.id] || 0;
+            if(Object.keys(this.data.temp).length > 0) {
+                data.push(s + currentTemp);
             }
-        };
 
-        // Boot
-        window.onload = () => Game.start();
-    </script>
+            return { 
+                label: p.name, 
+                data: data, 
+                borderColor: p.color, 
+                backgroundColor: p.color,
+                tension: 0.3, pointRadius: 4, borderWidth: 3 
+            }
+        });
+
+        const labels = ['Start', ...this.data.history.map((_, i) => i+1)];
+        if(Object.keys(this.data.temp).length > 0) labels.push('Live');
+
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } }, 
+                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } } 
+                }
+            }
+        });
+    }
+};
+app.init();
+</script>
 </body>
 </html>
