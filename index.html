@@ -3,142 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ScoreMaster v9.0</title>
+    <title>ScoreMaster Final</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            /* Palette Pro */
-            --primary: #007AFF; 
-            --bg: #F5F5F7; 
-            --card: #FFFFFF; 
-            --text: #1D1D1F;
-            --text-sec: #86868B;
-            --border: #E5E5EA;
-            --dealer: #FF9500; 
-            --danger: #FF3B30; 
-            --success: #34C759;
-            --btn-active: #F2F2F7;
-            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+            --primary: #007AFF; --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F;
+            --text-sec: #86868B; --border: #E5E5EA; --dealer: #FF9500; 
+            --danger: #FF3B30; --success: #34C759; --shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
         @media (prefers-color-scheme: dark) {
             :root {
-                --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7; --text-sec: #98989D;
-                --border: #38383A; --btn-active: #2C2C2E; --shadow: 0 4px 20px rgba(0,0,0,0.4);
+                --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
+                --text-sec: #98989D; --border: #38383A; --shadow: 0 4px 20px rgba(0,0,0,0.4);
             }
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; touch-action: manipulation; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); }
         .hidden { display: none !important; }
 
-        /* --- ACCUEIL REDESIGNÉ --- */
-        .welcome-title { font-size: 42px; font-weight: 900; letter-spacing: -2px; text-align: center; margin: 60px 0 10px; background: linear-gradient(135deg, var(--text) 0%, var(--text-sec) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-sub { text-align: center; color: var(--text-sec); font-weight: 600; margin-bottom: 50px; }
-        
-        .mode-grid { display: grid; gap: 20px; }
-        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 28px; padding: 25px; text-align: left; box-shadow: var(--shadow); transition: transform 0.1s; cursor: pointer; display: flex; align-items: center; gap: 20px; }
-        .mode-btn:active { transform: scale(0.98); }
-        .mode-icon { font-size: 32px; background: var(--bg); width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
-        .mode-info h2 { margin: 0; font-size: 20px; font-weight: 800; }
-        .mode-info p { margin: 4px 0 0; font-size: 13px; color: var(--text-sec); font-weight: 600; }
+        /* --- ACCUEIL --- */
+        .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 60px; background: linear-gradient(135deg, var(--text) 0%, var(--text-sec) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 15px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 20px; width: 100%; text-align: left; }
+        .mode-icon { font-size: 30px; background: var(--bg); width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; }
 
         /* --- JEU --- */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px; }
-        #mode-title { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
-
-        /* Graphique */
         .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 180px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-
-        /* Grille Joueurs */
         .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .p-card { background: var(--card); padding: 20px 10px; border-radius: 24px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); transition: 0.2s; }
+        .p-card { background: var(--card); padding: 20px 10px; border-radius: 24px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); }
         .p-card.is-dealer { border-color: var(--dealer); }
         
-        .rank-badge { position: absolute; top: -10px; left: 10px; font-size: 16px; background: var(--card); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--border); z-index: 2; }
-        
-        .p-name-btn { font-size: 13px; font-weight: 800; opacity: 0.6; text-transform: uppercase; margin-bottom: 5px; cursor: pointer; display: inline-block; padding: 5px; }
-        .p-score { font-size: 42px; font-weight: 900; letter-spacing: -2px; cursor: pointer; line-height: 1; }
-        .p-temp { font-size: 14px; font-weight: 800; color: var(--primary); min-height: 20px; margin-top: 5px; }
+        .rank-badge { position: absolute; top: -10px; left: 10px; font-size: 16px; background: var(--card); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+        .p-name-btn { font-size: 12px; font-weight: 800; color: var(--text-sec); text-transform: uppercase; margin-bottom: 5px; cursor: pointer; text-decoration: underline dotted; }
+        .p-score { font-size: 44px; font-weight: 900; cursor: pointer; line-height: 1; }
+        .p-temp { font-size: 14px; font-weight: 800; color: var(--primary); min-height: 20px; margin-top: 4px; }
         .dealer-tag { position: absolute; top: 10px; right: 10px; background: var(--dealer); width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px var(--card); }
 
-        /* Historique */
-        .h-row { background: var(--card); padding: 16px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border: 1px solid var(--border); cursor: pointer; }
-        .h-idx { font-size: 11px; font-weight: 900; color: var(--text-sec); width: 40px; }
-        .h-scores { display: flex; flex: 1; gap: 15px; overflow-x: auto; font-weight: 700; }
-        .btn-del { color: var(--danger); background: none; border: none; font-size: 20px; padding: 0 10px; cursor: pointer; }
-
-        /* MODALE JOUEUR (Au centre) */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
+        /* --- MODALES --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-box { background: var(--card); width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: scale(0.9); transition: 0.2s cubic-bezier(0.1, 0.9, 0.2, 1); }
-        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-box { background: var(--card); width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; }
         
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-sec); margin-bottom: 8px; }
-        .styled-input { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 18px; font-weight: 700; outline: none; }
-        
-        .switch-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 15px; border-radius: 16px; cursor: pointer; }
-        .switch-row span { font-weight: 700; }
-        input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--primary); }
-
-        /* CLAVIER & SHEET (En bas) */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
         .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px env(safe-area-inset-bottom); transform: translateY(100%); transition: 0.35s cubic-bezier(0.1, 0.9, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); }
+        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        .input-selector { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .belote-center { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-        .sel-box { background: var(--card); padding: 15px; border-radius: 20px; text-align: center; min-width: 90px; flex: 1; border: 3px solid transparent; transition: 0.2s; cursor: pointer; }
-        .sel-box.active { border-color: var(--p-color); background: var(--card); transform: scale(1.05); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .btn-nb { background: var(--card); border: none; height: 62px; border-radius: 18px; font-size: 24px; font-weight: 700; color: var(--text); box-shadow: 0 4px 0 var(--border); cursor: pointer; }
-        .btn-nb:active { transform: translateY(2px); box-shadow: none; background: var(--btn-active); }
-        .btn-op { font-size: 16px; font-weight: 800; background: rgba(120,120,128,0.1); box-shadow: none; }
+        /* --- CLAVIER --- */
+        .sel-box { background: var(--card); padding: 15px; border-radius: 20px; text-align: center; flex: 1; border: 3px solid transparent; }
+        .sel-box.active { border-color: var(--p-color); transform: scale(1.05); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
+        .btn-nb:active { transform: translateY(2px); box-shadow: none; }
+        .btn-op { background: rgba(120,120,128,0.12); box-shadow: none; font-size: 15px; }
 
-        /* Dock */
-        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; z-index: 1000; }
-        .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 22px; border-radius: 24px; font-size: 17px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: 0.2s; }
+        /* --- HISTORIQUE --- */
+        .h-row { background: var(--card); padding: 14px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); }
+        .h-idx { font-size: 10px; font-weight: 900; color: var(--text-sec); width: 35px; }
+        .h-scores { display: flex; flex: 1; gap: 12px; font-weight: 700; }
+
+        /* --- DOCK --- */
+        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; }
+        .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .btn-main.editing { background: var(--dealer); color: #000; }
+        
+        .input-group { margin-bottom: 20px; }
+        .styled-input { width: 100%; padding: 15px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 18px; font-weight: 700; }
     </style>
 </head>
 <body>
 
     <div id="setup" class="container">
         <h1 class="welcome-title">ScoreMaster</h1>
-        <p class="welcome-sub">L'outil ultime pour vos parties de cartes.</p>
-        
-        <div class="mode-grid">
-            <div class="mode-btn" onclick="app.initGame('belote')">
-                <div class="mode-icon">🃏</div>
-                <div class="mode-info">
-                    <h2>Belote / Coinche</h2>
-                    <p>2 Équipes • 162 pts • Capot</p>
-                </div>
-            </div>
-            <div class="mode-btn" onclick="app.initGame('standard')">
-                <div class="mode-icon">🎲</div>
-                <div class="mode-info">
-                    <h2>Mode Standard</h2>
-                    <p>2 à 12 joueurs • Scores libres</p>
-                </div>
-            </div>
+        <p style="text-align:center; color:var(--text-sec); margin-bottom:40px; font-weight:600;">Choisissez votre jeu :</p>
+        <div class="mode-btn" onclick="app.initGame('belote')">
+            <div class="mode-icon">🃏</div>
+            <div><h2 style="margin:0">Belote / Coinche</h2><p style="margin:4px 0 0; font-size:13px; color:var(--text-sec)">2 équipes • 162 pts • Capot</p></div>
+        </div>
+        <div class="mode-btn" onclick="app.initGame('standard')">
+            <div class="mode-icon">🎲</div>
+            <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:13px; color:var(--text-sec)">Multi-joueurs • Score libre</p></div>
         </div>
     </div>
 
     <div id="game" class="container hidden">
         <header>
-            <h1 id="mode-title">SCORE</h1>
-            <button onclick="app.reset()" style="background:var(--card); border:1px solid var(--border); width:44px; height:44px; border-radius:14px; font-size:20px; cursor:pointer;">⚙️</button>
+            <h1 id="mode-title" style="margin:0; font-size:28px; font-weight:900;">SCORE</h1>
+            <button onclick="app.reset()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px;">⚙️</button>
         </header>
-
         <div class="chart-box"><canvas id="chart"></canvas></div>
         <div id="grid" class="players-grid"></div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin: 40px 0 15px;">
-            <span style="font-size:11px; font-weight:900; color:var(--text-sec); letter-spacing:1px;">HISTORIQUE</span>
-            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:800; font-size:11px; cursor:pointer;">ANNULER DERNIÈRE</button>
+        <div style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
+            <span>HISTORIQUE DES MANCHES</span>
+            <button onclick="app.undo()" style="background:none; border:none; color:var(--danger); font-weight:900;">ANNULER</button>
         </div>
         <div id="history"></div>
     </div>
@@ -149,97 +106,80 @@
 
     <div id="modal-player" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
         <div class="modal-box">
-            <h2 style="margin:0 0 25px 0; font-size:24px;">Modifier Joueur</h2>
+            <h2 style="margin:0 0 20px 0">Joueur</h2>
             <div class="input-group">
-                <label>Nom du joueur</label>
-                <input type="text" id="edit-name" class="styled-input" maxlength="10">
+                <input type="text" id="edit-name" class="styled-input" placeholder="NOM">
             </div>
-            <div class="switch-row" onclick="document.getElementById('edit-dealer').click()">
-                <span>Désigner comme Donneur 🃏</span>
-                <input type="checkbox" id="edit-dealer">
-            </div>
-            <button class="btn-main" style="margin-top:25px; background:var(--primary); color:white;" onclick="app.savePlayer()">VALIDER</button>
+            <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:14px; font-weight:700;">
+                Donneur 🃏 <input type="checkbox" id="edit-dealer">
+            </label>
+            <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
         </div>
     </div>
 
     <div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
-            <div id="input-switcher" class="input-selector"></div>
-            
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom:15px;">
-                <button id="calc-btn" class="btn-nb hidden" style="grid-column: span 4; background:var(--success); color:white; font-size:15px; font-weight:800; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
+            <div id="input-switcher" style="display:flex; gap:10px; margin-bottom:20px; overflow-x:auto;"></div>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
+                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px" onclick="app.calcRest()">✨ RESTE À 162</button>
                 <button class="btn-nb btn-op" onclick="app.addVal(10)">+10</button>
                 <button class="btn-nb btn-op" onclick="app.addVal(20)">+20</button>
                 <button class="btn-nb btn-op" onclick="app.addVal(50)">+50</button>
-                <button id="smart-btn" class="btn-nb btn-op" style="background:var(--text); color:var(--bg);" onclick="app.handleSmart()">+/-</button>
+                <button id="smart-btn" class="btn-nb btn-op" style="background:var(--text); color:var(--bg)" onclick="app.handleSmart()">+/-</button>
             </div>
-
             <div class="numpad">
-                <button class="btn-nb" onclick="app.typeNum(1)">1</button>
-                <button class="btn-nb" onclick="app.typeNum(2)">2</button>
-                <button class="btn-nb" onclick="app.typeNum(3)">3</button>
-                <button class="btn-nb" onclick="app.typeNum(4)">4</button>
-                <button class="btn-nb" onclick="app.typeNum(5)">5</button>
-                <button class="btn-nb" onclick="app.typeNum(6)">6</button>
-                <button class="btn-nb" onclick="app.typeNum(7)">7</button>
-                <button class="btn-nb" onclick="app.typeNum(8)">8</button>
-                <button class="btn-nb" onclick="app.typeNum(9)">9</button>
-                <button class="btn-nb" style="color:var(--danger); font-size:16px;" onclick="app.clearInput()">C</button>
+                <button class="btn-nb" onclick="app.typeNum(1)">1</button><button class="btn-nb" onclick="app.typeNum(2)">2</button><button class="btn-nb" onclick="app.typeNum(3)">3</button>
+                <button class="btn-nb" onclick="app.typeNum(4)">4</button><button class="btn-nb" onclick="app.typeNum(5)">5</button><button class="btn-nb" onclick="app.typeNum(6)">6</button>
+                <button class="btn-nb" onclick="app.typeNum(7)">7</button><button class="btn-nb" onclick="app.typeNum(8)">8</button><button class="btn-nb" onclick="app.typeNum(9)">9</button>
+                <button class="btn-nb" style="color:var(--danger)" onclick="app.clearInput()">C</button>
                 <button class="btn-nb" onclick="app.typeNum(0)">0</button>
                 <button class="btn-nb" onclick="app.backspace()">⌫</button>
-                <button class="btn-nb" style="grid-column: span 3; background:var(--primary); color:white; margin-top:10px; font-size:16px;" onclick="app.closeSheet()">VALIDER LES POINTS</button>
             </div>
+            <button class="btn-main" style="margin-top:15px; background:var(--primary); color:white" onclick="app.closeSheet()">VALIDER POINTS</button>
         </div>
     </div>
 
     <script>
-        const COLORS = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6'];
         const app = {
             data: { mode: null, players: [], history: [], temp: {}, dealerId: 1 },
             activeId: null, editIdx: null, editPid: null, chart: null,
 
             init() {
-                const saved = localStorage.getItem('sm_v9');
+                const saved = localStorage.getItem('sm_v9_1');
                 if(saved) { this.data = JSON.parse(saved); this.showGame(); }
             },
-            save() { localStorage.setItem('sm_v9', JSON.stringify(this.data)); },
+            save() { localStorage.setItem('sm_v9_1', JSON.stringify(this.data)); },
 
             initGame(mode) {
                 this.data.mode = mode;
-                const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
-                this.data.players = Array.from({length: n}, (_, i) => ({
-                    id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, color: COLORS[i%8], total: 0
+                const n = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs (2-8) ?", "4")) || 4);
+                this.data.players = Array.from({length: Math.min(n, 8)}, (_, i) => ({
+                    id: i + 1, name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, color: ['#007AFF','#FF2D55','#34C759','#FF9500','#AF52DE','#5AC8FA','#FFCC00','#5856D6'][i], total: 0
                 }));
-                this.data.dealerId = 1; this.save(); this.showGame();
+                this.showGame();
             },
 
             showGame() {
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('game').classList.remove('hidden');
                 document.getElementById('dock').classList.remove('hidden');
-                document.getElementById('mode-title').innerText = this.data.mode;
                 this.render();
             },
 
-            // --- RANKING LOGIC ---
-            getRanking(pid) {
-                const sorted = [...this.data.players].sort((a,b) => b.total - a.total);
-                const idx = sorted.findIndex(p => p.id === pid);
-                if(idx === 0) return '🥇';
-                if(idx === 1) return '🥈';
-                if(idx === 2) return '🥉';
-                return '';
-            },
-
             render() {
+                // Tri pour médailles
+                const sorted = [...this.data.players].sort((a,b) => (b.total + (this.data.temp[b.id]||0)) - (a.total + (this.data.temp[a.id]||0)));
                 const grid = document.getElementById('grid'); grid.innerHTML = '';
+                
                 this.data.players.forEach(p => {
                     const t = this.data.temp[p.id] || 0;
-                    const rank = this.getRanking(p.id);
+                    const rankIdx = sorted.findIndex(s => s.id === p.id);
+                    const medal = rankIdx === 0 ? '🥇' : (rankIdx === 1 ? '🥈' : (rankIdx === 2 ? '🥉' : ''));
+                    
                     const card = document.createElement('div');
                     card.className = `p-card ${this.data.dealerId === p.id ? 'is-dealer' : ''}`;
                     card.innerHTML = `
-                        ${rank ? `<div class="rank-badge">${rank}</div>` : ''}
+                        <div class="rank-badge">${medal || '#'+(rankIdx+1)}</div>
                         <div class="p-name-btn" onclick="app.openModal(${p.id})">${p.name}</div>
                         <div class="p-score" onclick="app.openSheet(${p.id})">${p.total + t}</div>
                         <div class="p-temp">${t ? (t>0?'+'+t:t) : ''}</div>
@@ -253,117 +193,107 @@
                     const idx = this.data.history.length - 1 - i;
                     const row = document.createElement('div'); row.className = 'h-row';
                     let s = '';
-                    this.data.players.forEach(p => s += `<div style="text-align:center; min-width:45px;"><div style="font-size:9px; color:${p.color}; font-weight:800">${p.name.substring(0,3)}</div><div style="font-weight:700">${r[p.id]||0}</div></div>`);
-                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button class="btn-del" onclick="app.deleteRound(${idx})">×</button>`;
+                    this.data.players.forEach(p => s += `<div style="flex:1; text-align:center"><div style="font-size:9px; color:${p.color}; font-weight:800">${p.name.substring(0,3)}</div><div>${r[p.id]||0}</div></div>`);
+                    row.innerHTML = `<div class="h-idx">M${idx+1}</div><div class="h-scores" onclick="app.startEdit(${idx})">${s}</div><button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:18px">×</button>`;
                     hist.appendChild(row);
                 });
-                this.updateChart();
+                this.updateChart(); this.save();
             },
 
-            // --- MODALE JOUEUR ---
-            openModal(pid) {
-                this.editPid = pid;
+            openModal(pid) { 
+                this.editPid = pid; 
                 const p = this.data.players.find(x => x.id === pid);
                 document.getElementById('edit-name').value = p.name;
                 document.getElementById('edit-dealer').checked = (this.data.dealerId === pid);
-                document.getElementById('modal-player').classList.add('active');
+                document.getElementById('modal-player').classList.add('active'); 
             },
             closeModal() { document.getElementById('modal-player').classList.remove('active'); },
             savePlayer() {
                 const p = this.data.players.find(x => x.id === this.editPid);
-                p.name = document.getElementById('edit-name').value.toUpperCase();
+                p.name = document.getElementById('edit-name').value.toUpperCase() || p.name;
                 if(document.getElementById('edit-dealer').checked) this.data.dealerId = p.id;
-                this.save(); this.render(); this.closeModal();
+                this.closeModal(); this.render();
             },
 
-            // --- CLAVIER ---
-            openSheet(pid) {
-                this.activeId = pid;
-                document.getElementById('input-switcher').className = this.data.mode === 'belote' ? 'input-selector belote-center' : 'input-selector';
-                this.renderSwitcher();
+            openSheet(pid) { 
+                this.activeId = pid; 
                 document.getElementById('calc-btn').classList.toggle('hidden', this.data.mode !== 'belote');
                 document.getElementById('smart-btn').innerText = this.data.mode === 'belote' ? 'CAPOT' : '+/-';
-                document.getElementById('sheet').classList.add('active');
+                this.renderSwitcher();
+                document.getElementById('sheet').classList.add('active'); 
             },
             closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
 
             renderSwitcher() {
-                const container = document.getElementById('input-switcher'); container.innerHTML = '';
+                const cont = document.getElementById('input-switcher'); cont.innerHTML = '';
                 this.data.players.forEach(p => {
                     const active = p.id === this.activeId;
                     const div = document.createElement('div');
                     div.className = `sel-box ${active ? 'active' : ''}`;
-                    if(active) { div.style.setProperty('--p-color', p.color); div.style.setProperty('--p-bg', p.color + '10'); }
+                    if(active) div.style.setProperty('--p-color', p.color);
                     div.onclick = () => { this.activeId = p.id; this.renderSwitcher(); };
-                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${active?p.color:'var(--text-sec)'}">${p.name}</div><div style="font-size:24px; font-weight:900;">${this.data.temp[p.id] || 0}</div>`;
-                    container.appendChild(div);
+                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${active?p.color:'var(--text-sec)'}">${p.name}</div><div style="font-size:22px; font-weight:900">${this.data.temp[p.id]||0}</div>`;
+                    cont.appendChild(div);
                 });
             },
 
-            typeNum(n) { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = parseInt((cur === '0' ? '' : cur) + n); this.renderSwitcher(); },
-            addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) + v; this.renderSwitcher(); },
-            backspace() { let cur = (this.data.temp[this.activeId] || 0).toString(); this.data.temp[this.activeId] = cur.length > 1 ? parseInt(cur.slice(0, -1)) : 0; this.renderSwitcher(); },
-            clearInput() { this.data.temp[this.activeId] = 0; this.renderSwitcher(); },
+            typeNum(n) { let c = (this.data.temp[this.activeId]||0).toString(); this.data.temp[this.activeId] = parseInt((c==='0'?'':c)+n); this.renderSwitcher(); this.render(); },
+            addVal(v) { this.data.temp[this.activeId] = (this.data.temp[this.activeId]||0)+v; this.renderSwitcher(); this.render(); },
+            backspace() { let c = (this.data.temp[this.activeId]||0).toString(); this.data.temp[this.activeId] = c.length>1 ? parseInt(c.slice(0,-1)) : 0; this.renderSwitcher(); this.render(); },
+            clearInput() { this.data.temp[this.activeId] = 0; this.renderSwitcher(); this.render(); },
             handleSmart() {
                 if(this.data.mode === 'belote') this.data.temp[this.activeId] = 252;
-                else this.data.temp[this.activeId] = (this.data.temp[this.activeId] || 0) * -1;
-                this.renderSwitcher();
+                else this.data.temp[this.activeId] = (this.data.temp[this.activeId]||0)*-1;
+                this.renderSwitcher(); this.render();
             },
             calcRest() {
                 const other = this.data.players.find(p => p.id !== this.activeId);
-                if(other) { this.data.temp[other.id] = Math.max(0, 162 - (this.data.temp[this.activeId] || 0)); this.activeId = other.id; this.renderSwitcher(); }
+                if(other) { this.data.temp[other.id] = Math.max(0, 162 - (this.data.temp[this.activeId]||0)); this.activeId = other.id; this.renderSwitcher(); this.render(); }
             },
 
             validateRound() {
                 if(Object.keys(this.data.temp).length === 0) return;
                 if(this.editIdx !== null) {
                     const old = this.data.history[this.editIdx];
-                    this.data.players.forEach(p => p.total -= (old[p.id] || 0));
+                    this.data.players.forEach(p => p.total -= (old[p.id]||0));
                     this.data.history[this.editIdx] = {...this.data.temp};
-                    this.data.players.forEach(p => p.total += (this.data.temp[p.id] || 0));
+                    this.data.players.forEach(p => p.total += (this.data.temp[p.id]||0));
                     this.editIdx = null;
                     document.getElementById('save-btn').innerText = "ENREGISTRER LA MANCHE";
                     document.getElementById('save-btn').classList.remove('editing');
                 } else {
-                    const round = {};
-                    this.data.players.forEach(p => { round[p.id] = this.data.temp[p.id] || 0; p.total += round[p.id]; });
-                    this.data.history.push(round);
-                    const idx = this.data.players.findIndex(p => p.id === this.data.dealerId);
-                    this.data.dealerId = this.data.players[(idx + 1) % this.data.players.length].id;
+                    const r = {}; this.data.players.forEach(p => { r[p.id] = this.data.temp[p.id]||0; p.total += r[p.id]; });
+                    this.data.history.push(r);
+                    const cur = this.data.players.findIndex(p => p.id === this.data.dealerId);
+                    this.data.dealerId = this.data.players[(cur+1)%this.data.players.length].id;
                 }
-                this.data.temp = {}; this.save(); this.render();
+                this.data.temp = {}; this.render();
             },
 
             startEdit(idx) {
                 this.editIdx = idx; this.data.temp = {...this.data.history[idx]};
-                document.getElementById('save-btn').innerText = "MODIFIER MANCHE " + (idx+1);
+                document.getElementById('save-btn').innerText = "MODIFIER MANCHE "+(idx+1);
                 document.getElementById('save-btn').classList.add('editing');
                 this.openSheet(this.data.players[0].id);
             },
 
-            deleteRound(idx) {
-                if(confirm("Supprimer la manche M"+(idx+1)+" ?")) {
-                    const round = this.data.history[idx];
-                    this.data.players.forEach(p => p.total -= (round[p.id] || 0));
-                    this.data.history.splice(idx, 1);
-                    this.save(); this.render();
-                }
-            },
-
-            undo() { if(this.data.history.length && confirm("Annuler la dernière manche ?")) { const last = this.data.history.pop(); this.data.players.forEach(p => p.total -= (last[p.id] || 0)); this.save(); this.render(); } },
-            reset() { if(confirm("Réinitialiser ?")) { localStorage.removeItem('sm_v9'); location.reload(); } },
+            delRound(idx) { if(confirm("Supprimer ?")) { const r = this.data.history[idx]; this.data.players.forEach(p => p.total -= (r[p.id]||0)); this.data.history.splice(idx,1); this.render(); } },
+            undo() { if(this.data.history.length) this.delRound(this.data.history.length-1); },
+            reset() { if(confirm("Nouvelle partie ?")) { localStorage.removeItem('sm_v9_1'); location.reload(); } },
 
             updateChart() {
                 const ctx = document.getElementById('chart').getContext('2d');
                 if(this.chart) this.chart.destroy();
                 const datasets = this.data.players.map(p => {
-                    let s = 0;
-                    return { label: p.name, data: [0, ...this.data.history.map(h => s += (h[p.id] || 0))], borderColor: p.color, tension: 0.3, pointRadius: 4, borderWidth: 3 }
+                    let s = 0; 
+                    const data = [0, ...this.data.history.map(h => s += (h[p.id]||0))];
+                    if(Object.keys(this.data.temp).length > 0) data.push(s + (this.data.temp[p.id]||0));
+                    return { label: p.name, data, borderColor: p.color, tension: 0.3, pointRadius: 4, borderWidth: 3 }
                 });
                 this.chart = new Chart(ctx, {
                     type: 'line',
-                    data: { labels: ['0', ...this.data.history.map((_, i) => i+1)], datasets },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }, scales: { x: { display: false }, y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } } } }
+                    data: { labels: ['0', ...this.data.history.map((_,i)=>i+1), '...'], datasets },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.1)' } } } }
                 });
             }
         };
