@@ -1,7 +1,10 @@
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
     <title>ScoreMaster v11.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -14,16 +17,25 @@
             --silver: linear-gradient(135deg, #C0C0C0 0%, #8E8E93 100%);
             --bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
         }
+        :root[data-theme="dark"] {
+            --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
+            --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
         @media (prefers-color-scheme: dark) {
-            :root {
+            :root:not([data-theme="light"]) {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
                 --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); animation: slideIn 0.4s ease-out; }
         .hidden { display: none !important; }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 /* ========= GAME ACTIONS (touch feedback) ========= */
 
 .game-actions {
@@ -45,7 +57,12 @@
 }
         /* --- ACCUEIL --- */
         .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; }
-        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.3s; }
+        .theme-toggle:active { transform: scale(0.9); }
+        .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; }
+        .mode-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+        .mode-btn:active { transform: translateY(0); }
         .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 13px; color: var(--text-sec); }
 
         /* --- HISTORIQUE PARTIES --- */
@@ -126,9 +143,19 @@
         /* --- VICTORY SCREEN --- */
         .victory-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 6000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
         .victory-overlay.active { opacity: 1; pointer-events: auto; }
-        .victory-box { background: var(--card); border-radius: 32px; padding: 40px; text-align: center; max-width: 400px; }
+        .victory-box { background: var(--card); border-radius: 32px; padding: 40px; text-align: center; max-width: 400px; animation: victoryPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .victory-title { font-size: 48px; margin-bottom: 20px; }
         .victory-player { font-size: 32px; font-weight: 900; margin-bottom: 30px; }
+        .victory-stats { background: var(--bg); border-radius: 20px; padding: 20px; margin-bottom: 30px; text-align: left; }
+        .victory-stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .victory-stat-row:last-child { border-bottom: none; }
+        .victory-stat-label { color: var(--text-sec); font-size: 14px; font-weight: 600; }
+        .victory-stat-value { color: var(--text); font-size: 16px; font-weight: 900; }
+        
+        @keyframes victoryPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -138,7 +165,10 @@
 
     <!-- ÉCRAN ACCUEIL -->
     <div id="setup" class="container">
-        <h1 class="welcome-title">ScoreMaster</h1>
+        <div class="header-controls">
+            <h1 class="welcome-title" style="margin:0; flex:1;">ScoreMaster</h1>
+            <button id="theme-toggle" class="theme-toggle" onclick="app.toggleTheme()">🌙</button>
+        </div>
         <div class="mode-btn" onclick="app.showModeSelection('belote')">
             <span style="font-size:30px; margin-right:15px;">🃏</span>
             <div><h2 style="margin:0">Belote / Coinche</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Points à 162 • Capot 252</p></div>
@@ -230,7 +260,8 @@
         <div class="victory-box">
             <div class="victory-title">🏆</div>
             <div id="victory-player" class="victory-player"></div>
-            <div id="victory-score" style="font-size:18px; color:var(--text-sec); margin-bottom:30px;"></div>
+            <div id="victory-score" style="font-size:18px; color:var(--text-sec); margin-bottom:20px;"></div>
+            <div id="victory-stats" class="victory-stats"></div>
             <button class="btn-main" style="background:var(--primary); color:white; margin-bottom:12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
             <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
         </div>
@@ -518,15 +549,63 @@
                 });
             },
 
-            showVictory(winner, score) {
+            showVictory(winner, score, state) {
                 const overlay = document.getElementById('victory');
                 document.getElementById('victory-player').textContent = winner.name;
                 document.getElementById('victory-player').style.color = winner.color;
                 document.getElementById('victory-score').textContent = `${score} points`;
+                
+                // Calculate stats
+                const stats = this.calculateVictoryStats(winner, state);
+                const statsHtml = `
+                    <div class="victory-stat-row">
+                        <span class="victory-stat-label">Meilleur manche</span>
+                        <span class="victory-stat-value" style="color:${winner.color}">${stats.bestRound} pts</span>
+                    </div>
+                    <div class="victory-stat-row">
+                        <span class="victory-stat-label">Pire manche</span>
+                        <span class="victory-stat-value">${stats.worstRound} pts</span>
+                    </div>
+                    <div class="victory-stat-row">
+                        <span class="victory-stat-label">Moyenne par manche</span>
+                        <span class="victory-stat-value">${stats.average} pts</span>
+                    </div>
+                    <div class="victory-stat-row">
+                        <span class="victory-stat-label">Manches gagnées</span>
+                        <span class="victory-stat-value">${stats.roundsWon}/${state.history.length}</span>
+                    </div>
+                `;
+                document.getElementById('victory-stats').innerHTML = statsHtml;
+                
                 overlay.classList.add('active');
                 
                 // Confettis et feux d'artifice
                 this.launchFireworks();
+                
+                // Vibration pattern victoire
+                if(navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100, 50, 200]);
+                }
+            },
+
+            calculateVictoryStats(winner, state) {
+                const winnerRounds = state.history.map(h => h[winner.id] || 0);
+                const nonZeroRounds = winnerRounds.filter(r => r > 0);
+                
+                const bestRound = Math.max(...winnerRounds, 0);
+                const worstRound = nonZeroRounds.length > 0 ? Math.min(...nonZeroRounds) : 0;
+                const average = state.history.length > 0 ? Math.round(winner.total / state.history.length) : 0;
+                
+                // Count rounds won
+                let roundsWon = 0;
+                state.history.forEach(round => {
+                    const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
+                    if(round[winner.id] === maxScore && maxScore > 0) {
+                        roundsWon++;
+                    }
+                });
+                
+                return { bestRound, worstRound, average, roundsWon };
             },
 
             closeVictory() {
@@ -602,6 +681,13 @@
                 else if(score >= 500) milestone = '🎊 500 POINTS !';
                 else if(score >= 200) milestone = '✨ 200 POINTS !';
                 
+                // Vibration pattern according to milestone
+                if(navigator.vibrate) {
+                    if(score >= 1000) navigator.vibrate([50, 100, 50, 100, 50]);
+                    else if(score >= 500) navigator.vibrate([50, 100, 50]);
+                    else navigator.vibrate(100);
+                }
+                
                 if(milestone) this.showToast(milestone);
             }
         };
@@ -612,8 +698,22 @@
             activePlayerId: null,
             editIdx: null,
             chart: null,
+            savedPlayers: {},
 
             init() {
+                // Load theme preference
+                const savedTheme = localStorage.getItem('sm_theme');
+                if(savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                    this.updateThemeIcon();
+                }
+                
+                // Load saved players
+                const savedPlayersData = localStorage.getItem('sm_saved_players');
+                if(savedPlayersData) {
+                    this.savedPlayers = JSON.parse(savedPlayersData);
+                }
+                
                 const game = Storage.loadCurrentGame();
                 if(game) {
                     this.currentGame = game;
@@ -622,6 +722,25 @@
                     this.showSetup();
                 }
                 this.renderGamesList();
+            },
+
+            toggleTheme() {
+                const root = document.documentElement;
+                const currentTheme = root.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', newTheme);
+                localStorage.setItem('sm_theme', newTheme);
+                this.updateThemeIcon();
+                
+                // Vibration feedback
+                if(navigator.vibrate) navigator.vibrate(30);
+            },
+
+            updateThemeIcon() {
+                const theme = document.documentElement.getAttribute('data-theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
+                document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
             },
 
             showSetup() {
@@ -636,6 +755,16 @@
 
             showModeSelection(mode) {
                 const playerCount = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
+                
+                // Save player names for reuse
+                if(this.currentGame && this.currentGame.mode === mode) {
+                    this.savedPlayers[mode] = this.currentGame.state.players.map(p => ({
+                        name: p.name,
+                        color: p.color
+                    }));
+                    localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
+                }
+                
                 this.createGame(mode, playerCount);
             },
 
@@ -648,6 +777,18 @@
                     state: GameState.create(mode, playerCount),
                     finished: false
                 };
+                
+                // Restore saved player names if available
+                if(this.savedPlayers[mode]) {
+                    const saved = this.savedPlayers[mode];
+                    this.currentGame.state.players.forEach((p, idx) => {
+                        if(saved[idx]) {
+                            p.name = saved[idx].name;
+                            p.color = saved[idx].color;
+                        }
+                    });
+                }
+                
                 Storage.saveGame(this.currentGame);
                 this.showGame();
             },
@@ -793,8 +934,15 @@
                 this.currentGame.finished = true;
                 Storage.saveGame(this.currentGame);
                 
+                // Save player names for next game
+                this.savedPlayers[this.currentGame.mode] = this.currentGame.state.players.map(p => ({
+                    name: p.name,
+                    color: p.color
+                }));
+                localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
+                
                 const winner = [...this.currentGame.state.players].sort((a,b) => b.total - a.total)[0];
-                UI.showVictory(winner, winner.total);
+                UI.showVictory(winner, winner.total, this.currentGame.state);
             },
 
             // ==================== PLAYER MODAL ====================
@@ -870,10 +1018,13 @@
                 const newVal = parseInt((current === '0' ? '' : current) + n);
                 
                 if(newVal > 9999) {
-                    if(navigator.vibrate) navigator.vibrate(50);
+                    if(navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error pattern
                     UI.showToast('⚠️ Maximum 9999 points', 'warning');
                     return;
                 }
+                
+                // Success vibration
+                if(navigator.vibrate) navigator.vibrate(10);
                 
                 this.currentGame.state.temp[this.activePlayerId] = newVal;
                 this.renderSwitcher();
@@ -885,10 +1036,13 @@
                 const newVal = current + value;
                 
                 if(newVal > 9999) {
-                    if(navigator.vibrate) navigator.vibrate(50);
+                    if(navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error pattern
                     UI.showToast('⚠️ Maximum 9999 points', 'warning');
                     return;
                 }
+                
+                // Success vibration
+                if(navigator.vibrate) navigator.vibrate(20);
                 
                 this.currentGame.state.temp[this.activePlayerId] = Math.max(0, newVal);
                 this.renderSwitcher();
@@ -898,12 +1052,20 @@
             backspace() {
                 const current = (this.currentGame.state.temp[this.activePlayerId] || 0).toString();
                 this.currentGame.state.temp[this.activePlayerId] = current.length > 1 ? parseInt(current.slice(0, -1)) : 0;
+                
+                // Light vibration
+                if(navigator.vibrate) navigator.vibrate(15);
+                
                 this.renderSwitcher();
                 this.render();
             },
 
             clearInput() {
                 this.currentGame.state.temp[this.activePlayerId] = 0;
+                
+                // Double tap vibration
+                if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
+                
                 this.renderSwitcher();
                 this.render();
             },
@@ -986,8 +1148,18 @@
                 if(this.currentGame.mode === 'belote') {
                     const winner = state.players.find(p => p.total >= 1000);
                     if(winner) {
+                        // Save player names
+                        this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({
+                            name: p.name,
+                            color: p.color
+                        }));
+                        localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
+                        
+                        this.currentGame.finished = true;
+                        Storage.saveGame(this.currentGame);
+                        
                         setTimeout(() => {
-                            UI.showVictory(winner, winner.total);
+                            UI.showVictory(winner, winner.total, state);
                         }, 500);
                     }
                 }
