@@ -1,14 +1,15 @@
-
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-    <title>ScoreMaster v11.0</title>
+    <title>ScoreMaster v12.3 (Final)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+        /* --- VARIABLES & THEME --- */
         :root {
             --primary: #007AFF; --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F;
             --text-sec: #86868B; --border: #E5E5EA; --dealer: #FF9500; 
@@ -16,15 +17,26 @@
             --gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             --silver: linear-gradient(135deg, #C0C0C0 0%, #8E8E93 100%);
             --bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+            
+            /* GLASSMORPHISM VARS */
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-blur: 20px;
         }
         :root[data-theme="dark"] {
             --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
             --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            
+            /* GLASSMORPHISM VARS DARK */
+            --glass-bg: rgba(28, 28, 30, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) {
                 --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
                 --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
+                --glass-bg: rgba(28, 28, 30, 0.75);
+                --glass-border: rgba(255, 255, 255, 0.1);
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
@@ -32,40 +44,69 @@
         .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); animation: slideIn 0.4s ease-out; }
         .hidden { display: none !important; }
         
+        /* --- ANIMATIONS --- */
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-/* ========= GAME ACTIONS (touch feedback) ========= */
+        @keyframes rankPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes badgeBounce {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.3) rotate(-10deg); }
+            75% { transform: scale(1.3) rotate(10deg); }
+        }
+        @keyframes scoreBump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        @keyframes victoryPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
-.game-actions {
-  display: flex;
-  gap: 8px;
-}
+        /* --- GLASSMORPHISM COMPONENTS --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { 
+            width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; text-align: center; 
+            background: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .modal-box.large { max-width: 500px; text-align: left; max-height: 80vh; overflow-y: auto; }
+        
+        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
+        .sheet-content { 
+            width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(25px + env(safe-area-inset-bottom)); 
+            transform: translateY(100%); transition: 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            background: var(--bg); 
+            border: 1px solid var(--border);
+        }
+        .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-.game-actions button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  padding: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.game-actions button:active {
-  transform: scale(0.9);
-}
-        /* --- ACCUEIL --- */
-        .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; }
+        /* --- UI ELEMENTS --- */
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.3s; }
-        .theme-toggle:active { transform: scale(0.9); }
+        .theme-toggle, .btn-stats, .btn-focus { 
+            background: var(--card); border: 1px solid var(--border); width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.3s; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .theme-toggle:active, .btn-stats:active, .btn-focus:active { transform: scale(0.9); }
+        .btn-stats { color:var(--gold) }
+        .btn-focus { color: var(--primary); }
+
+        .welcome-title { font-size: 42px; font-weight: 900; text-align: center; margin-top: 40px; letter-spacing: -2px; background: linear-gradient(120deg, var(--text), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+
         .mode-btn { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; }
         .mode-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
         .mode-btn:active { transform: translateY(0); }
+
         .guide-container { margin-top: 30px; background: var(--card); border-radius: 24px; padding: 20px; border: 1px solid var(--border); font-size: 13px; color: var(--text-sec); }
 
-        /* --- HISTORIQUE PARTIES --- */
         .game-item { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
         .game-item:hover { border-color: var(--primary); transform: translateX(4px); }
         .game-mode-badge { display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: 900; margin-left: 8px; }
@@ -73,26 +114,20 @@
         .badge-standard { background: #007AFF; color: white; }
         .game-players-list { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
         .game-player-score { font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: 700; }
+        .game-actions { display: flex; gap: 8px; }
+        .game-actions button { background: none; border: none; font-size: 18px; padding: 8px; cursor: pointer; transition: transform 0.2s; }
+        .game-actions button:active { transform: scale(0.9); }
 
-        /* --- JEU --- */
-        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 200px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
+        .chart-box { background: var(--card); border-radius: 24px; padding: 15px; height: 200px; margin-bottom: 25px; box-shadow: var(--shadow); border: 1px solid var(--border); transition: opacity 0.5s ease; }
+        
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-bottom: 30px; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
         .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: var(--shadow); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s; }
         .p-card.is-dealer { border-color: var(--dealer); }
         .p-card.rank-change { animation: rankPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes rankPop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
         
         .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .rank-badge.bounce { animation: badgeBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes badgeBounce {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.3) rotate(-10deg); }
-            75% { transform: scale(1.3) rotate(10deg); }
-        }
         .badge-1 { background: var(--gold); }
         .badge-2 { background: var(--silver); }
         .badge-3 { background: var(--bronze); }
@@ -101,40 +136,84 @@
         .p-name-btn { font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: inline-block; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
         .p-score { font-size: 44px; font-weight: 900; cursor: pointer; line-height: 1; letter-spacing: -2px; transition: transform 0.2s ease-out; }
         .p-score.score-bump { animation: scoreBump 0.4s ease-out; }
-        @keyframes scoreBump {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
         .p-temp { font-size: 15px; font-weight: 800; color: var(--primary); min-height: 18px; margin-top: 6px; }
 
-        /* --- HISTORIQUE --- */
-        .h-row { background: var(--card); padding: 12px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); gap: 10px; }
+        .h-row { background: var(--card); padding: 12px; border-radius: 18px; display: flex; align-items: center; margin-bottom: 8px; border: 1px solid var(--border); gap: 10px; overflow-x: auto; transition: opacity 0.5s ease; }
         .h-idx { font-size: 10px; font-weight: 900; color: var(--text-sec); min-width: 30px; flex-shrink: 0; }
-        .h-scores { display: flex; flex: 1; justify-content: space-around; align-items: center; overflow: hidden; cursor: pointer; }
-        .h-score-item { text-align: center; min-width: 40px; }
+        .h-scores { display: flex; flex: 1; justify-content: space-between; align-items: center; min-width: max-content; padding-right: 5px; cursor: pointer; }
+        .h-score-item { text-align: center; min-width: 50px; padding: 0 5px; }
 
-        /* --- CLAVIER & MODALE --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-box { background: var(--card); width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; }
-        
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
-        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-        .sheet-content { background: var(--bg); width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(25px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
-        .sheet-overlay.active .sheet-content { transform: translateY(0); }
-
-        .sel-box { background: var(--card); padding: 12px; border-radius: 18px; text-align: center; flex: 1; border: 3px solid transparent; min-width: 80px; }
+        .sel-box { background: var(--card); padding: 12px; border-radius: 18px; text-align: center; flex: 1; border: 3px solid transparent; min-width: 80px; transition: transform 0.2s; }
         .sel-box.active { border-color: var(--p-color); transform: scale(1.05); }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); }
+        .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); cursor: pointer; }
+        .btn-nb:active { transform: translateY(3px); box-shadow: none; }
 
-        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; }
-        .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .dock { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; z-index: 2000; transition: opacity 0.5s ease; }
+        .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 22px; font-size: 16px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.1s; }
+        .btn-main:active { transform: scale(0.98); }
         .btn-main.editing { background: var(--dealer); color: #000; }
 
+        /* --- FOCUS MODE --- */
+        .focus-mode .chart-box,
+        .focus-mode .h-row,
+        .focus-mode #history,
+        .focus-mode #dock,
+        .focus-mode .header-controls {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px);
+        }
+
+        .focus-mode .players-grid {
+            transform: scale(1.15) translateY(10vh);
+            gap: 20px;
+        }
+
+        .focus-mode-cta {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--text);
+            color: var(--bg);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            z-index: 9999;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .focus-mode .focus-mode-cta {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- STATS STYLES --- */
+        .stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
+        .stats-tab.active { opacity: 1; background: var(--card); color: var(--primary); }
+        
+        .rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .rank-item:last-child { border-bottom: none; }
+        .rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
+        .rank-1 .rank-num { color: #FFD700; }
+        .rank-2 .rank-num { color: #C0C0C0; }
+        .rank-3 .rank-num { color: #CD7F32; }
+        
+        .rank-info { flex: 1; }
+        .rank-name { font-weight: 900; font-size: 16px; }
+        .rank-sub { font-size: 12px; color: var(--text-sec); }
+        .rank-val { font-weight: 800; font-size: 18px; }
+
+        .stat-detail { background: var(--bg); padding: 15px; border-radius: 15px; margin-bottom: 15px; }
+        .stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(--text-sec); }
+        .stat-detail .value { font-size: 24px; font-weight: 900; color: var(--text); }
+
         /* --- TOAST --- */
-        .toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--card); padding: 16px 24px; border-radius: 20px; box-shadow: var(--shadow); font-weight: 700; z-index: 5000; opacity: 0; transition: all 0.3s; border: 1px solid var(--border); }
+        .toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--card); padding: 16px 24px; border-radius: 20px; box-shadow: var(--shadow); font-weight: 700; z-index: 5000; opacity: 0; transition: all 0.3s; border: 1px solid var(--border); white-space: nowrap; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast.success { border-color: var(--success); background: var(--success); color: white; }
         .toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; }
@@ -151,11 +230,13 @@
         .victory-stat-row:last-child { border-bottom: none; }
         .victory-stat-label { color: var(--text-sec); font-size: 14px; font-weight: 600; }
         .victory-stat-value { color: var(--text); font-size: 16px; font-weight: 900; }
-        
-        @keyframes victoryPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+
+        /* --- CUSTOM CONFIRM MODAL --- */
+        #confirm-modal .modal-box { text-align: center; }
+        #confirm-msg { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
+        .confirm-actions { display: flex; gap: 10px; }
+        .btn-confirm-no { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+        .btn-confirm-yes { background: var(--danger); color: white; border: 1px solid var(--danger); }
     </style>
 </head>
 <body>
@@ -163,11 +244,74 @@
     <!-- TOAST -->
     <div id="toast" class="toast"></div>
 
+    <!-- FOCUS MODE EXIT BUTTON -->
+    <div id="focus-cta" class="focus-mode-cta" onclick="app.toggleFocusMode()">⇧ QUITTER ZEN</div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="confirm-msg">Confirmer l'action ?</h3>
+            <div class="confirm-actions">
+                <button class="btn-main btn-confirm-no" onclick="UI.closeConfirm()">Annuler</button>
+                <button id="confirm-yes-btn" class="btn-main btn-confirm-yes">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE STATS GLOBALES -->
+    <div id="stats-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeStats()">
+        <div class="modal-box large">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0">📊 Statistiques</h2>
+                <button onclick="UI.closeStats()" style="background:none; border:none; font-size:24px;">✕</button>
+            </div>
+            
+            <div class="stats-tabs">
+                <div id="tab-rank" class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
+                <div id="tab-records" class="stats-tab" onclick="UI.switchStatsTab('records')">Records</div>
+            </div>
+
+            <div id="stats-content-rank"></div>
+            <div id="stats-content-player" class="hidden">
+                <button onclick="UI.showRanking()" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:14px; margin-bottom:10px;">← Retour au classement</button>
+                <div id="player-detail-content"></div>
+            </div>
+            <div id="stats-content-records" class="hidden"></div>
+        </div>
+    </div>
+
+    <!-- MODALE SELECTION NOMBRE DE JOUEURS (STANDARD) -->
+    <div id="modal-player-count" class="modal-overlay" onclick="if(event.target===this) document.getElementById('modal-player-count').classList.remove('active')">
+        <div class="modal-box">
+            <h2 style="margin:0 0 10px 0">Mode Standard</h2>
+            <p style="color:var(--text-sec); margin-bottom:20px;">Combien de joueurs ?</p>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                <button class="btn-nb" onclick="app.selectPlayerCount(2)">2</button>
+                <button class="btn-nb" onclick="app.selectPlayerCount(3)">3</button>
+                <button class="btn-nb" onclick="app.selectPlayerCount(4)">4</button>
+                <button class="btn-nb" onclick="app.selectPlayerCount(5)">5</button>
+                <button class="btn-nb" onclick="app.selectPlayerCount(6)">6</button>
+                <button id="btn-toggle-players" class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px;" onclick="app.toggleMorePlayers()">Plus ▼</button>
+                <div id="extra-players" class="hidden" style="grid-column: 1 / -1; display:contents;">
+                    <button class="btn-nb" onclick="app.selectPlayerCount(7)">7</button>
+                    <button class="btn-nb" onclick="app.selectPlayerCount(8)">8</button>
+                    <button class="btn-nb" onclick="app.selectPlayerCount(9)">9</button>
+                    <button class="btn-nb" onclick="app.selectPlayerCount(10)">10</button>
+                    <button class="btn-nb" onclick="app.selectPlayerCount(11)">11</button>
+                    <button class="btn-nb" onclick="app.selectPlayerCount(12)">12</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ÉCRAN ACCUEIL -->
     <div id="setup" class="container">
         <div class="header-controls">
             <h1 class="welcome-title" style="margin:0; flex:1;">ScoreMaster</h1>
-            <button id="theme-toggle" class="theme-toggle" onclick="app.toggleTheme()">🌙</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-stats" onclick="app.showStats()" title="Statistiques">📊</button>
+                <button class="theme-toggle" onclick="app.toggleTheme()">🌙</button>
+            </div>
         </div>
         <div class="mode-btn" onclick="app.showModeSelection('belote')">
             <span style="font-size:30px; margin-right:15px;">🃏</span>
@@ -175,7 +319,7 @@
         </div>
         <div class="mode-btn" onclick="app.showModeSelection('standard')">
             <span style="font-size:30px; margin-right:15px;">🎲</span>
-            <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Multi-joueurs</p></div>
+            <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Jusqu'à 12 joueurs</p></div>
         </div>
 
         <div style="margin-top: 40px;">
@@ -197,10 +341,11 @@
     <!-- ÉCRAN JEU -->
     <div id="game" class="container hidden">
         <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1 id="mode-title" style="margin:0; font-size:28px; font-weight:900;">SCORE</h1>
-            <div style="display:flex; gap:10px;">
-                <button onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px;">⬅️</button>
+            <button onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px;">⬅️</button>
+            <div style="flex:1; text-align:center;">
+                <h1 id="mode-title" style="margin:0; font-size:22px; font-weight:900;">SCORE</h1>
             </div>
+            <button class="btn-focus" onclick="app.toggleFocusMode()" title="Mode Zen">👁️</button>
         </header>
         <div class="chart-box"><canvas id="chart"></canvas></div>
         <div id="grid" class="players-grid"></div>
@@ -234,7 +379,7 @@
     <!-- SHEET CLAVIER -->
     <div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
-            <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto;"></div>
+            <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:5px;"></div>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
                 <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
                 <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
@@ -268,26 +413,100 @@
     </div>
 
     <script>
+        // ==================== SOUND ENGINE (WEB AUDIO API) ====================
+        const SoundFX = {
+            ctx: null,
+            enabled: true,
+            init() {
+                if (!this.ctx) {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.ctx = new AudioContext();
+                        if (this.ctx.state === 'suspended') {
+                            this.ctx.resume();
+                        }
+                    } catch (e) {
+                        console.warn("Audio not supported or blocked");
+                        this.enabled = false;
+                    }
+                }
+            },
+            playTone(freq, type, duration) {
+                if (!this.enabled || !this.ctx) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {}
+            },
+            click() { this.playTone(800, 'sine', 0.1); },
+            slide() { 
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const bufferSize = this.ctx.sampleRate * 0.15; 
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const gain = this.ctx.createGain();
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400;
+
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start();
+                } catch (e) {}
+            },
+            success() {
+                this.playTone(600, 'sine', 0.1);
+                setTimeout(() => this.playTone(900, 'sine', 0.2), 100);
+            },
+            error() {
+                this.playTone(150, 'sawtooth', 0.3);
+            },
+            toggle() {
+                this.enabled = !this.enabled;
+                if(this.enabled) this.click();
+            }
+        };
+
         // ==================== DATA LAYER ====================
         const GameState = {
             create(mode, playerCount) {
-                const colors = ['#007AFF','#FF2D55','#34C759','#FF9500','#AF52DE','#5AC8FA','#FFCC00','#5856D6'];
+                const colors = [
+                    '#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6', 
+                    '#FF3B30', '#30B0C7', '#8E8E93', '#4CD964'
+                ];
                 return {
                     mode,
-                    players: Array.from({length: Math.min(playerCount, 8)}, (_, i) => ({
+                    players: Array.from({length: Math.min(playerCount, 12)}, (_, i) => ({
                         id: i + 1, 
                         name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, 
-                        color: colors[i], 
+                        color: colors[i] || '#000000',
                         total: 0,
                         previousRank: null
                     })),
                     history: [],
                     temp: {},
                     dealerId: 1,
-                    celebratedMilestones: {} // Track which milestones have been celebrated
+                    celebratedMilestones: {}
                 };
             },
-
             addRound(state, scores) {
                 const round = {};
                 state.players.forEach(p => {
@@ -298,11 +517,9 @@
                 state.history.push(round);
                 return state;
             },
-
             updateRound(state, index, scores) {
                 const oldRound = state.history[index];
                 state.players.forEach(p => p.total -= (oldRound[p.id] || 0));
-                
                 const newRound = {};
                 state.players.forEach(p => {
                     const score = scores[p.id] || 0;
@@ -312,14 +529,12 @@
                 state.history[index] = newRound;
                 return state;
             },
-
             deleteRound(state, index) {
                 const round = state.history[index];
                 state.players.forEach(p => p.total -= (round[p.id] || 0));
                 state.history.splice(index, 1);
                 return state;
             },
-
             validate(scores, mode) {
                 const values = Object.values(scores);
                 if(values.some(v => v > 9999)) return { valid: false, error: 'Score trop élevé (max 9999)' };
@@ -328,61 +543,126 @@
             }
         };
 
-        // ==================== STORAGE LAYER ====================
+        // ==================== STORAGE LAYER (UPDATED FOR MIGRATION) ====================
         const Storage = {
-            GAMES_KEY: 'sm_v11_games',
-            CURRENT_KEY: 'sm_v11_current',
+            GAMES_KEY: 'sm_v12_games', // NEW KEY
+            CURRENT_KEY: 'sm_v12_current',
+            
+            migrateData() {
+                // Try to migrate from v11 to v12 if v12 is empty
+                const v12Data = localStorage.getItem(this.GAMES_KEY);
+                if (!v12Data) {
+                    const v11Data = localStorage.getItem('sm_v11_games');
+                    if (v11Data) {
+                        try {
+                            const parsed = JSON.parse(v11Data);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                localStorage.setItem(this.GAMES_KEY, v11Data);
+                                console.log("SM: Migrated v11 games to v12");
+                                // Also migrate current game
+                                const v11Current = localStorage.getItem('sm_v11_current');
+                                if (v11Current) {
+                                    // Check if ID exists in migrated list
+                                    const exists = parsed.find(g => g.id === v11Current);
+                                    if (exists) localStorage.setItem(this.CURRENT_KEY, v11Current);
+                                }
+                            }
+                        } catch(e) { console.error("SM: Migration failed", e); }
+                    }
+                }
+            },
 
             saveGame(game) {
                 try {
-                    const games = this.loadGames();
+                    const games = this.loadGames() || []; // Safe fallback
                     const existing = games.findIndex(g => g.id === game.id);
                     if(existing >= 0) games[existing] = game;
                     else games.push(game);
-                    
                     localStorage.setItem(this.GAMES_KEY, JSON.stringify(games));
                     localStorage.setItem(this.CURRENT_KEY, game.id);
                     return true;
                 } catch(e) {
-                    if(e.name === 'QuotaExceededError') {
-                        UI.showToast('⚠️ Mémoire pleine. Supprimez d\'anciennes parties.');
-                    }
-                    console.error('Save error:', e);
+                    if(e.name === 'QuotaExceededError') UI.showToast('⚠️ Mémoire pleine. Supprimez d\'anciennes parties.');
                     return false;
                 }
             },
-
             loadGames() {
                 try {
                     const data = localStorage.getItem(this.GAMES_KEY);
                     return data ? JSON.parse(data) : [];
-                } catch(e) {
-                    console.error('Load error:', e);
-                    return [];
+                } catch(e) { 
+                    console.error("SM: Corrupt game data", e);
+                    return []; 
                 }
             },
-
             loadCurrentGame() {
-                const currentId = localStorage.getItem(this.CURRENT_KEY);
-                if(!currentId) return null;
-                const games = this.loadGames();
-                return games.find(g => g.id === currentId);
+                try {
+                    const currentId = localStorage.getItem(this.CURRENT_KEY);
+                    if(!currentId) return null;
+                    const games = this.loadGames();
+                    return games.find(g => g.id === currentId);
+                } catch(e) { return null; }
             },
-
             deleteGame(gameId) {
                 const games = this.loadGames().filter(g => g.id !== gameId);
                 localStorage.setItem(this.GAMES_KEY, JSON.stringify(games));
                 const currentId = localStorage.getItem(this.CURRENT_KEY);
                 if(currentId === gameId) localStorage.removeItem(this.CURRENT_KEY);
             },
-
             clearAll() {
-                if(confirm('⚠️ Supprimer TOUTES les parties ?')) {
+                UI.confirm("⚠️ Supprimer TOUTES les parties ?", () => {
                     localStorage.removeItem(this.GAMES_KEY);
                     localStorage.removeItem(this.CURRENT_KEY);
                     UI.showToast('✅ Historique effacé', 'success');
                     app.renderGamesList();
-                }
+                });
+            }
+        };
+
+        // ==================== STATS ENGINE ====================
+        const StatsEngine = {
+            calculateStats() {
+                const games = Storage.loadGames().filter(g => g.finished); 
+                const stats = {};
+                games.forEach(game => {
+                    const winner = game.state.players.sort((a,b) => b.total - a.total)[0];
+                    game.state.players.forEach(p => {
+                        const name = p.name.toUpperCase();
+                        if(!stats[name]) {
+                            stats[name] = { wins: 0, played: 0, totalScoreSum: 0, highestScore: 0, highestRound: 0 };
+                        }
+                        stats[name].played++;
+                        stats[name].totalScoreSum += p.total;
+                        if(p.total > stats[name].highestScore) stats[name].highestScore = p.total;
+                        game.state.history.forEach(round => {
+                            if(round[p.id] > stats[name].highestRound) stats[name].highestRound = round[p.id];
+                        });
+                    });
+                    if(winner) {
+                        const winnerName = winner.name.toUpperCase();
+                        if(stats[winnerName]) stats[winnerName].wins++;
+                    }
+                });
+                const sortedGames = games.sort((a,b) => new Date(b.date) - new Date(a.date));
+                Object.keys(stats).forEach(name => {
+                    const playerStats = stats[name];
+                    playerStats.winRate = playerStats.wins > 0 ? Math.round((playerStats.wins / playerStats.played) * 100) : 0;
+                    playerStats.streak = 0;
+                    for(let g of sortedGames) {
+                        const pInGame = g.state.players.find(p => p.name.toUpperCase() === name);
+                        if(!pInGame) break;
+                        const winner = g.state.players.sort((a,b) => b.total - a.total)[0];
+                        if(winner.name.toUpperCase() === name) playerStats.streak++;
+                        else break;
+                    }
+                });
+                return Object.entries(stats).map(([name, data]) => ({ name, ...data }))
+                    .filter(p => p.played >= 1)
+                    .sort((a,b) => b.winRate - a.winRate);
+            },
+            getRecordScores() {
+                const stats = this.calculateStats();
+                return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
             }
         };
 
@@ -394,45 +674,138 @@
                 toast.className = 'toast show';
                 if(type !== 'default') toast.classList.add(type);
                 setTimeout(() => toast.classList.remove('show'), 2500);
+                if(type === 'success') SoundFX.success();
+                else if(type === 'error') SoundFX.error();
             },
+            confirm(message, onYes) {
+                SoundFX.click();
+                const modal = document.getElementById('confirm-modal');
+                const msgEl = document.getElementById('confirm-msg');
+                const yesBtn = document.getElementById('confirm-yes-btn');
+                msgEl.textContent = message;
+                modal.classList.add('active');
+                const newBtn = yesBtn.cloneNode(true);
+                yesBtn.parentNode.replaceChild(newBtn, yesBtn);
+                newBtn.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                    onYes();
+                });
+            },
+            closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); },
+            
+            /* --- STATS UI --- */
+            showStats() {
+                SoundFX.click();
+                document.getElementById('stats-modal').classList.add('active');
+                this.switchStatsTab('rank'); 
+            },
+            closeStats() { document.getElementById('stats-modal').classList.remove('active'); },
+            switchStatsTab(tab) {
+                SoundFX.click();
+                document.getElementById('tab-rank').classList.remove('active');
+                document.getElementById('tab-records').classList.remove('active');
+                document.getElementById('stats-content-rank').classList.add('hidden');
+                document.getElementById('stats-content-records').classList.add('hidden');
+                document.getElementById('stats-content-player').classList.add('active');
 
+                if(tab === 'rank') {
+                    document.getElementById('tab-rank').classList.add('active');
+                    this.renderRanking();
+                    document.getElementById('stats-content-rank').classList.remove('hidden');
+                    document.getElementById('stats-content-player').classList.add('hidden');
+                } else if (tab === 'records') {
+                    document.getElementById('tab-records').classList.add('active');
+                    this.renderRecords();
+                    document.getElementById('stats-content-records').classList.remove('hidden');
+                    document.getElementById('stats-content-player').classList.add('hidden');
+                }
+            },
+            showRanking() {
+                SoundFX.click();
+                this.switchStatsTab('rank');
+            },
+            renderRanking() {
+                const data = StatsEngine.calculateStats();
+                const container = document.getElementById('stats-content-rank');
+                container.innerHTML = '';
+                if(data.length === 0) { container.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucune statistique disponible (terminez des parties !)</p>'; return; }
+                data.forEach((p, idx) => {
+                    const el = document.createElement('div');
+                    el.className = `rank-item rank-${idx+1}`;
+                    el.onclick = () => this.renderPlayerDetail(p.name);
+                    el.innerHTML = `
+                        <div class="rank-num">${idx+1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${p.name}</div>
+                            <div class="rank-sub">${p.played} parties jouées</div>
+                        </div>
+                        <div class="rank-val" style="color:${p.winRate >= 50 ? 'var(--success)' : 'var(--text)'}">${p.winRate}%</div>
+                    `;
+                    container.appendChild(el);
+                });
+            },
+            renderPlayerDetail(name) {
+                const allStats = StatsEngine.calculateStats();
+                const p = allStats.find(s => s.name === name);
+                if(!p) return;
+                document.getElementById('stats-content-rank').classList.add('hidden');
+                document.getElementById('stats-content-player').classList.remove('hidden');
+                document.getElementById('stats-content-records').classList.add('hidden');
+                const container = document.getElementById('player-detail-content');
+                container.innerHTML = `
+                    <h2 style="margin:0 0 15px 0; font-size:28px;">${name}</h2>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="stat-detail"><h4>Taux de victoire</h4><div class="value">${p.winRate}%</div></div>
+                        <div class="stat-detail"><h4>Série actuelle</h4><div class="value" style="color:${p.streak > 0 ? 'var(--primary)' : 'var(--text)'}">${p.streak} 🏆</div></div>
+                        <div class="stat-detail"><h4>Victoires</h4><div class="value">${p.wins}</div></div>
+                        <div class="stat-detail"><h4>Parties</h4><div class="value">${p.played}</div></div>
+                    </div>
+                `;
+            },
+            renderRecords() {
+                const data = StatsEngine.getRecordScores();
+                const container = document.getElementById('stats-content-records');
+                container.innerHTML = '';
+                if(data.length === 0) { container.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
+                data.forEach((p, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'rank-item';
+                    el.innerHTML = `
+                        <div class="rank-info">
+                            <div class="rank-name">${p.name}</div>
+                            <div class="rank-sub">Meilleure manche: ${p.highestRound} pts</div>
+                        </div>
+                        <div class="rank-val">${p.highestScore}</div>
+                    `;
+                    container.appendChild(el);
+                });
+            },
+            /* --- GAME UI --- */
             renderScoreCards(state) {
                 const sorted = [...state.players].sort((a,b) => {
                     const aScore = a.total + (state.temp[a.id] || 0);
                     const bScore = b.total + (state.temp[b.id] || 0);
                     return bScore - aScore;
                 });
-
                 const grid = document.getElementById('grid');
-                
-                // Detect rank changes
                 const rankChanges = new Set();
                 state.players.forEach((p, idx) => {
                     const newRank = sorted.findIndex(s => s.id === p.id);
-                    if(p.previousRank !== null && p.previousRank !== newRank) {
-                        rankChanges.add(p.id);
-                    }
+                    if(p.previousRank !== null && p.previousRank !== newRank) rankChanges.add(p.id);
                     p.previousRank = newRank;
                 });
-                
                 grid.innerHTML = '';
-                
                 state.players.forEach(p => {
                     const tempScore = state.temp[p.id] || 0;
                     const totalScore = p.total + tempScore;
                     const rankIdx = sorted.findIndex(s => s.id === p.id);
-                    
                     let badgeClass = 'badge-none', badgeText = '#' + (rankIdx + 1);
                     if(rankIdx === 0) { badgeClass = 'badge-1'; badgeText = '🥇'; }
                     else if(rankIdx === 1) { badgeClass = 'badge-2'; badgeText = '🥈'; }
                     else if(rankIdx === 2) { badgeClass = 'badge-3'; badgeText = '🥉'; }
-                    
                     const card = document.createElement('div');
                     card.className = `p-card ${state.dealerId === p.id ? 'is-dealer' : ''}`;
-                    if(rankChanges.has(p.id)) {
-                        card.classList.add('rank-change');
-                    }
-                    
+                    if(rankChanges.has(p.id)) card.classList.add('rank-change');
                     card.innerHTML = `
                         <div class="rank-badge ${badgeClass} ${rankChanges.has(p.id) ? 'bounce' : ''}">${badgeText}</div>
                         <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
@@ -443,19 +816,15 @@
                     grid.appendChild(card);
                 });
             },
-
             renderHistory(state, editIdx) {
                 const hist = document.getElementById('history');
                 hist.innerHTML = '';
-                
                 state.history.slice().reverse().forEach((r, i) => {
                     const idx = state.history.length - 1 - i;
                     const isEditing = idx === editIdx;
-                    
                     const row = document.createElement('div');
                     row.className = 'h-row';
                     row.style.borderColor = isEditing ? 'var(--dealer)' : 'var(--border)';
-                    
                     let scoresHtml = '';
                     state.players.forEach(p => {
                         const score = isEditing && state.temp[p.id] !== undefined ? state.temp[p.id] : (r[p.id] || 0);
@@ -466,57 +835,33 @@
                             </div>
                         `;
                     });
-                    
                     row.innerHTML = `
                         <div class="h-idx">M${idx+1}</div>
                         <div class="h-scores" onclick="app.startEdit(${idx})">${scoresHtml}</div>
-                        <button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:18px; padding-left:10px;">×</button>
+                        <button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:18px; padding-left:10px; flex-shrink:0;">×</button>
                     `;
                     hist.appendChild(row);
                 });
             },
-
             renderChart(state, editIdx) {
                 const ctx = document.getElementById('chart');
                 if(!ctx) return;
-                
                 if(app.chart) app.chart.destroy();
-                
                 const datasets = state.players.map(p => {
                     let cumul = 0;
                     const data = [0];
-                    
                     state.history.forEach((h, idx) => {
-                        if(idx === editIdx && state.temp[p.id] !== undefined) {
-                            cumul += state.temp[p.id];
-                        } else {
-                            cumul += (h[p.id] || 0);
-                        }
+                        if(idx === editIdx && state.temp[p.id] !== undefined) cumul += state.temp[p.id];
+                        else cumul += (h[p.id] || 0);
                         data.push(cumul);
                     });
-                    
-                    if(Object.keys(state.temp).length > 0 && editIdx === null) {
-                        data.push(cumul + (state.temp[p.id] || 0));
-                    }
-                    
+                    if(Object.keys(state.temp).length > 0 && editIdx === null) data.push(cumul + (state.temp[p.id] || 0));
                     return {
-                        label: p.name,
-                        data,
-                        borderColor: p.color,
-                        backgroundColor: p.color + '20',
-                        tension: 0.4,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        borderWidth: 2.5,
-                        fill: false
+                        label: p.name, data, borderColor: p.color, backgroundColor: p.color + '20', tension: 0.4, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2.5, fill: false
                     };
                 });
-                
                 const labels = ['0', ...state.history.map((_, i) => 'M' + (i + 1))];
-                if(Object.keys(state.temp).length > 0 && editIdx === null) {
-                    labels.push('...');
-                }
-                
+                if(Object.keys(state.temp).length > 0 && editIdx === null) labels.push('...');
                 app.chart = new Chart(ctx, {
                     type: 'line',
                     data: { labels, datasets },
@@ -524,206 +869,92 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(0,0,0,0.8)',
-                                padding: 12,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 13 }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 10, weight: '700' }, color: '#86868B' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: 'rgba(128,128,128,0.08)' },
-                                ticks: { font: { size: 10, weight: '600' }, color: '#86868B' }
-                            }
-                        },
+                        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 13 } } },
+                        scales: { x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#86868B' } }, y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.08)' }, ticks: { font: { size: 10, weight: '600' }, color: '#86868B' } } },
                         animation: { duration: 400 }
                     }
                 });
             },
-
             showVictory(winner, score, state) {
+                SoundFX.success();
                 const overlay = document.getElementById('victory');
                 document.getElementById('victory-player').textContent = winner.name;
                 document.getElementById('victory-player').style.color = winner.color;
                 document.getElementById('victory-score').textContent = `${score} points`;
-                
-                // Calculate stats
                 const stats = this.calculateVictoryStats(winner, state);
                 const statsHtml = `
-                    <div class="victory-stat-row">
-                        <span class="victory-stat-label">Meilleur manche</span>
-                        <span class="victory-stat-value" style="color:${winner.color}">${stats.bestRound} pts</span>
-                    </div>
-                    <div class="victory-stat-row">
-                        <span class="victory-stat-label">Pire manche</span>
-                        <span class="victory-stat-value">${stats.worstRound} pts</span>
-                    </div>
-                    <div class="victory-stat-row">
-                        <span class="victory-stat-label">Moyenne par manche</span>
-                        <span class="victory-stat-value">${stats.average} pts</span>
-                    </div>
-                    <div class="victory-stat-row">
-                        <span class="victory-stat-label">Manches gagnées</span>
-                        <span class="victory-stat-value">${stats.roundsWon}/${state.history.length}</span>
-                    </div>
+                    <div class="victory-stat-row"><span class="victory-stat-label">Meilleur manche</span><span class="victory-stat-value" style="color:${winner.color}">${stats.bestRound} pts</span></div>
+                    <div class="victory-stat-row"><span class="victory-stat-label">Pire manche</span><span class="victory-stat-value">${stats.worstRound} pts</span></div>
+                    <div class="victory-stat-row"><span class="victory-stat-label">Moyenne / manche</span><span class="victory-stat-value">${stats.average} pts</span></div>
+                    <div class="victory-stat-row"><span class="victory-stat-label">Manches gagnées</span><span class="victory-stat-value">${stats.roundsWon}/${state.history.length}</span></div>
                 `;
                 document.getElementById('victory-stats').innerHTML = statsHtml;
-                
                 overlay.classList.add('active');
-                
-                // Confettis et feux d'artifice
                 this.launchFireworks();
-                
-                // Vibration pattern victoire
-                if(navigator.vibrate) {
-                    navigator.vibrate([100, 50, 100, 50, 200]);
-                }
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
             },
-
             calculateVictoryStats(winner, state) {
                 const winnerRounds = state.history.map(h => h[winner.id] || 0);
                 const nonZeroRounds = winnerRounds.filter(r => r > 0);
-                
                 const bestRound = Math.max(...winnerRounds, 0);
                 const worstRound = nonZeroRounds.length > 0 ? Math.min(...nonZeroRounds) : 0;
                 const average = state.history.length > 0 ? Math.round(winner.total / state.history.length) : 0;
-                
-                // Count rounds won
                 let roundsWon = 0;
                 state.history.forEach(round => {
                     const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
-                    if(round[winner.id] === maxScore && maxScore > 0) {
-                        roundsWon++;
-                    }
+                    if(round[winner.id] === maxScore && maxScore > 0) roundsWon++;
                 });
-                
                 return { bestRound, worstRound, average, roundsWon };
             },
-
-            closeVictory() {
-                document.getElementById('victory').classList.remove('active');
-            },
-
+            closeVictory() { document.getElementById('victory').classList.remove('active'); },
             launchFireworks() {
                 const duration = 5000;
                 const end = Date.now() + duration;
-
                 const colors = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#FFD700'];
-
                 (function frame() {
-                    confetti({
-                        particleCount: 3,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0, y: 0.8 },
-                        colors: colors
-                    });
-                    confetti({
-                        particleCount: 3,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1, y: 0.8 },
-                        colors: colors
-                    });
-
-                    if (Date.now() < end) {
-                        requestAnimationFrame(frame);
-                    }
+                    confetti({ particleCount:3, angle: 60, spread: 55, origin: { x: 0, y: 0.8 }, colors: colors });
+                    confetti({ particleCount:3, angle: 120, spread: 55, origin: { x: 1, y: 0.8 }, colors: colors });
+                    if (Date.now() < end) requestAnimationFrame(frame);
                 })();
-
-                // Explosion centrale au début
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: colors
-                });
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: colors });
             },
-
             launchMilestoneConfetti(score) {
                 const colors = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#FFD700'];
-                
-                // Quick burst without victory screen
-                confetti({
-                    particleCount: 60,
-                    spread: 60,
-                    origin: { y: 0.6 },
-                    colors: colors
-                });
-                
-                confetti({
-                    particleCount: 30,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0, y: 0.7 },
-                    colors: colors
-                });
-                
-                confetti({
-                    particleCount: 30,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1, y: 0.7 },
-                    colors: colors
-                });
-
-                // Show toast instead
+                confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: colors });
                 let milestone = '';
                 if(score >= 1000) milestone = '🎉 1000 POINTS !';
                 else if(score >= 500) milestone = '🎊 500 POINTS !';
                 else if(score >= 200) milestone = '✨ 200 POINTS !';
-                
-                // Vibration pattern according to milestone
                 if(navigator.vibrate) {
                     if(score >= 1000) navigator.vibrate([50, 100, 50, 100, 50]);
                     else if(score >= 500) navigator.vibrate([50, 100, 50]);
                     else navigator.vibrate(100);
                 }
-                
                 if(milestone) this.showToast(milestone);
             }
         };
 
         // ==================== APP CONTROLLER ====================
         const app = {
-            currentGame: null,
-            activePlayerId: null,
-            editIdx: null,
-            chart: null,
-            savedPlayers: {},
+            currentGame: null, activePlayerId: null, editIdx: null, chart: null, savedPlayers: {}, focusMode: false,
 
             init() {
-                // Load theme preference
+                // 1. Run Migration
+                Storage.migrateData();
+
                 const savedTheme = localStorage.getItem('sm_theme');
-                if(savedTheme) {
-                    document.documentElement.setAttribute('data-theme', savedTheme);
-                    this.updateThemeIcon();
-                }
+                if(savedTheme) { document.documentElement.setAttribute('data-theme', savedTheme); this.updateThemeIcon(); }
                 
-                // Load saved players
-                const savedPlayersData = localStorage.getItem('sm_saved_players');
-                if(savedPlayersData) {
-                    this.savedPlayers = JSON.parse(savedPlayersData);
-                }
-                
+                // Safe parsing of saved players
+                try {
+                    const savedPlayersData = localStorage.getItem('sm_saved_players');
+                    if(savedPlayersData) { this.savedPlayers = JSON.parse(savedPlayersData); }
+                } catch(e) { console.warn("Corrupt saved players data, resetting."); this.savedPlayers = {}; }
+
                 const game = Storage.loadCurrentGame();
-                if(game) {
-                    this.currentGame = game;
-                    this.showGame();
-                } else {
-                    this.showSetup();
-                }
+                if(game) { this.currentGame = game; this.showGame(); } else { this.showSetup(); }
                 this.renderGamesList();
             },
-
             toggleTheme() {
                 const root = document.documentElement;
                 const currentTheme = root.getAttribute('data-theme');
@@ -731,251 +962,193 @@
                 root.setAttribute('data-theme', newTheme);
                 localStorage.setItem('sm_theme', newTheme);
                 this.updateThemeIcon();
-                
-                // Vibration feedback
                 if(navigator.vibrate) navigator.vibrate(30);
             },
-
             updateThemeIcon() {
                 const theme = document.documentElement.getAttribute('data-theme');
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
                 document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
             },
-
             showSetup() {
-                document.getElementById('setup').classList.remove('hidden');
-                document.getElementById('game').classList.add('hidden');
+                // FIX : Fermer l'écran de victoire s'il est ouvert
+                UI.closeVictory();
+                
+                this.focusMode = false;
+                document.getElementById('game').classList.remove('focus-mode');
                 document.getElementById('dock').classList.add('hidden');
-                document.getElementById('victory').classList.remove('active');
                 this.currentGame = null;
                 this.editIdx = null;
+                
+                document.getElementById('setup').classList.remove('hidden');
+                document.getElementById('game').classList.add('hidden');
+                
                 this.renderGamesList();
             },
-
             showModeSelection(mode) {
-                const playerCount = mode === 'belote' ? 2 : (parseInt(prompt("Nombre de joueurs ?", "4")) || 4);
-                
-                // Save player names for reuse
-                if(this.currentGame && this.currentGame.mode === mode) {
-                    this.savedPlayers[mode] = this.currentGame.state.players.map(p => ({
-                        name: p.name,
-                        color: p.color
-                    }));
-                    localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
-                }
-                
-                this.createGame(mode, playerCount);
+                SoundFX.click();
+                if(mode === 'belote') { this.createGame(mode, 2); }
+                else { document.getElementById('modal-player-count').classList.add('active'); }
             },
-
+            toggleMorePlayers() {
+                const extraDiv = document.getElementById('extra-players');
+                const btn = document.getElementById('btn-toggle-players');
+                if (extraDiv.classList.contains('hidden')) { extraDiv.classList.remove('hidden'); btn.textContent = 'Moins ▲'; }
+                else { extraDiv.classList.add('hidden'); btn.textContent = 'Plus ▼'; }
+            },
+            selectPlayerCount(count) {
+                document.getElementById('modal-player-count').classList.remove('active');
+                document.getElementById('extra-players').classList.add('hidden');
+                document.getElementById('btn-toggle-players').textContent = 'Plus ▼';
+                this.createGame('standard', count);
+            },
             createGame(mode, playerCount) {
                 this.currentGame = {
                     id: Date.now().toString(),
                     name: mode === 'belote' ? 'Belote' : 'Partie Standard',
-                    mode,
-                    date: new Date().toISOString(),
-                    state: GameState.create(mode, playerCount),
-                    finished: false
+                    mode, date: new Date().toISOString(),
+                    state: GameState.create(mode, playerCount), finished: false
                 };
-                
-                // Restore saved player names if available
                 if(this.savedPlayers[mode]) {
                     const saved = this.savedPlayers[mode];
                     this.currentGame.state.players.forEach((p, idx) => {
-                        if(saved[idx]) {
-                            p.name = saved[idx].name;
-                            p.color = saved[idx].color;
-                        }
+                        if(saved[idx]) { p.name = saved[idx].name; p.color = saved[idx].color; }
                     });
                 }
-                
                 Storage.saveGame(this.currentGame);
                 this.showGame();
             },
-
-            loadGame(gameId) {
-                const games = Storage.loadGames();
-                this.currentGame = games.find(g => g.id === gameId);
-                if(this.currentGame) {
-                    Storage.saveGame(this.currentGame);
-                    this.showGame();
-                }
-            },
-
             showGame() {
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('game').classList.remove('hidden');
                 document.getElementById('dock').classList.remove('hidden');
-                document.getElementById('mode-title').textContent = this.currentGame.mode === 'belote' ? 'BELOTE' : 'STANDARD';
                 
-                // Configure keyboard buttons based on mode
                 const isBelote = this.currentGame.mode === 'belote';
+                document.getElementById('mode-title').textContent = isBelote ? 'BELOTE' : 'STANDARD';
                 document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
                 document.getElementById('btn-82').classList.toggle('hidden', !isBelote);
-                document.getElementById('btn-50').classList.toggle('hidden', isBelote); // Hide +50 in Belote
-                
-                const smartBtn = document.getElementById('smart-btn');
-                smartBtn.textContent = isBelote ? 'CAPOT' : '+/-';
-                
+                document.getElementById('btn-50').classList.toggle('hidden', isBelote);
+                document.getElementById('smart-btn').textContent = isBelote ? 'CAPOT' : '+/-';
                 this.render();
             },
-
+            toggleFocusMode() {
+                SoundFX.click();
+                this.focusMode = !this.focusMode;
+                const gameEl = document.getElementById('game');
+                const dockEl = document.getElementById('dock');
+                if(this.focusMode) { gameEl.classList.add('focus-mode'); dockEl.classList.add('hidden'); }
+                else { gameEl.classList.remove('focus-mode'); dockEl.classList.remove('hidden'); }
+            },
+            showStats() { UI.showStats(); },
             render() {
                 if(!this.currentGame) return;
-                const state = this.currentGame.state;
-                
-                UI.renderScoreCards(state);
-                UI.renderHistory(state, this.editIdx);
-                UI.renderChart(state, this.editIdx);
-                
+                UI.renderScoreCards(this.currentGame.state);
+                UI.renderHistory(this.currentGame.state, this.editIdx);
+                UI.renderChart(this.currentGame.state, this.editIdx);
                 Storage.saveGame(this.currentGame);
             },
-
             renderGamesList() {
                 const games = Storage.loadGames();
                 const list = document.getElementById('games-list');
-                
-                if(games.length === 0) {
-                    list.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucune partie enregistrée</p>';
-                    return;
-                }
-                
+                if(!games || games.length === 0) { list.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucune partie enregistrée</p>'; return; }
                 list.innerHTML = '';
                 games.slice().reverse().forEach(game => {
                     const sortedPlayers = [...game.state.players].sort((a,b) => b.total - a.total);
                     const winner = sortedPlayers[0];
                     const date = new Date(game.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                    
-                    const modeBadge = game.mode === 'belote' 
-                        ? '<span class="game-mode-badge badge-belote">🃏 BELOTE</span>'
-                        : '<span class="game-mode-badge badge-standard">🎲 STANDARD</span>';
-                    
+                    const modeBadge = game.mode === 'belote' ? '<span class="game-mode-badge badge-belote">🃏 BELOTE</span>' : '<span class="game-mode-badge badge-standard">🎲 STANDARD</span>';
                     const item = document.createElement('div');
                     item.className = 'game-item';
-                    
                     let playersScoresHtml = '';
                     sortedPlayers.forEach((p, idx) => {
                         const isWinner = idx === 0;
                         playersScoresHtml += `<div class="game-player-score" style="background:${p.color}20; color:${p.color}; border: 1px solid ${p.color}40;">${isWinner ? '🏆 ' : ''}${p.name}: ${p.total}</div>`;
                     });
-                    
                     item.innerHTML = `
                         <div onclick="app.loadGame('${game.id}')" style="flex:1; cursor:pointer;">
-                            <div style="font-weight:900; font-size:16px; margin-bottom:6px;">
-                                ${game.name} ${game.finished ? '✓' : ''}
-                                ${modeBadge}
-                            </div>
+                            <div style="font-weight:900; font-size:16px; margin-bottom:6px;">${game.name} ${game.finished ? '✓' : ''} ${modeBadge}</div>
                             <div style="font-size:12px; color:var(--text-sec); margin-bottom:8px;">${date} • ${game.state.history.length} manches</div>
                             <div class="game-players-list">${playersScoresHtml}</div>
                         </div>
-                        <div class="game-actions">
-                            <button onclick="event.stopPropagation(); app.deleteGame('${game.id}')" title="Supprimer">🗑️</button>
-                        </div>
+                        <div class="game-actions"><button onclick="event.stopPropagation(); app.deleteGame('${game.id}')" title="Supprimer">🗑️</button></div>
                     `;
                     list.appendChild(item);
                 });
             },
-
+            loadGame(id) {
+                SoundFX.click();
+                const games = Storage.loadGames();
+                const game = games.find(g => g.id === id);
+                if(game) {
+                    this.savedPlayers[game.mode] = game.state.players.map(p => ({ name: p.name, color: p.color }));
+                    localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
+                    
+                    this.currentGame = game;
+                    localStorage.setItem(Storage.CURRENT_KEY, id); 
+                    this.showGame();
+                } else {
+                    UI.showToast('⚠️ Partie introuvable', 'error');
+                }
+            },
             deleteGame(gameId) {
-                if(confirm('Supprimer cette partie ?')) {
+                UI.confirm('Supprimer cette partie ?', () => {
                     Storage.deleteGame(gameId);
                     UI.showToast('✅ Partie supprimée', 'success');
                     this.renderGamesList();
-                }
+                });
             },
-
             restartWithSamePlayers() {
-                if(!this.currentGame) return;
-                
-                // Close victory screen if open
+                // FIX : Fermer l'overlay AVANT de tout traiter
                 UI.closeVictory();
-                
-                // Finish current game first
-                if(!this.currentGame.finished) {
-                    this.currentGame.finished = true;
-                    Storage.saveGame(this.currentGame);
-                }
-                
-                // Create new game with same players
+
+                if(!this.currentGame) return;
+                if(!this.currentGame.finished) { this.currentGame.finished = true; Storage.saveGame(this.currentGame); }
                 const oldState = this.currentGame.state;
                 const newGame = {
                     id: Date.now().toString(),
                     name: this.currentGame.mode === 'belote' ? 'Belote' : 'Partie Standard',
-                    mode: this.currentGame.mode,
-                    date: new Date().toISOString(),
-                    state: {
-                        mode: oldState.mode,
-                        players: oldState.players.map(p => ({
-                            ...p,
-                            total: 0,
-                            previousRank: null
-                        })),
-                        history: [],
-                        temp: {},
-                        dealerId: oldState.dealerId,
-                        celebratedMilestones: {}
-                    },
+                    mode: this.currentGame.mode, date: new Date().toISOString(),
+                    state: { mode: oldState.mode, players: oldState.players.map(p => ({ ...p, total: 0, previousRank: null })), history: [], temp: {}, dealerId: oldState.dealerId, celebratedMilestones: {} },
                     finished: false
                 };
-                
                 this.currentGame = newGame;
                 Storage.saveGame(newGame);
-                
                 UI.showToast('🎮 Nouvelle partie lancée !', 'success');
                 this.render();
             },
-
             finishGame() {
-                if(this.currentGame.state.history.length === 0) {
-                    UI.showToast('⚠️ Aucune manche jouée', 'warning');
-                    return;
-                }
-                
+                if(this.currentGame.state.history.length === 0) { UI.showToast('⚠️ Aucune manche jouée', 'warning'); return; }
                 this.currentGame.finished = true;
                 Storage.saveGame(this.currentGame);
-                
-                // Save player names for next game
-                this.savedPlayers[this.currentGame.mode] = this.currentGame.state.players.map(p => ({
-                    name: p.name,
-                    color: p.color
-                }));
+                this.savedPlayers[this.currentGame.mode] = this.currentGame.state.players.map(p => ({ name: p.name, color: p.color }));
                 localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
-                
                 const winner = [...this.currentGame.state.players].sort((a,b) => b.total - a.total)[0];
                 UI.showVictory(winner, winner.total, this.currentGame.state);
             },
-
             // ==================== PLAYER MODAL ====================
             openModal(playerId) {
+                SoundFX.click();
                 this.editPlayerId = playerId;
                 const player = this.currentGame.state.players.find(p => p.id === playerId);
-                
                 document.getElementById('modal-title').textContent = player.name;
                 document.getElementById('modal-title').style.color = player.color;
                 document.getElementById('edit-name').value = player.name;
                 document.getElementById('edit-dealer').checked = (this.currentGame.state.dealerId === playerId);
                 document.getElementById('modal-player').classList.add('active');
             },
-
-            closeModal() {
-                document.getElementById('modal-player').classList.remove('active');
-            },
-
+            closeModal() { document.getElementById('modal-player').classList.remove('active'); },
             savePlayer() {
+                SoundFX.click();
                 const player = this.currentGame.state.players.find(p => p.id === this.editPlayerId);
                 const newName = document.getElementById('edit-name').value.trim().toUpperCase();
-                
                 if(newName) player.name = newName;
-                if(document.getElementById('edit-dealer').checked) {
-                    this.currentGame.state.dealerId = player.id;
-                }
-                
+                if(document.getElementById('edit-dealer').checked) { this.currentGame.state.dealerId = player.id; }
                 this.closeModal();
                 this.render();
             },
-
             // ==================== SCORE INPUT SHEET ====================
             openSheet(playerId) {
+                SoundFX.click();
                 this.activePlayerId = playerId;
                 const isBelote = this.currentGame.mode === 'belote';
                 document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
@@ -984,104 +1157,61 @@
                 this.renderSwitcher();
                 document.getElementById('sheet').classList.add('active');
             },
-
-            closeSheet() {
-                document.getElementById('sheet').classList.remove('active');
-                this.render();
-            },
-
+            closeSheet() { document.getElementById('sheet').classList.remove('active'); this.render(); },
             renderSwitcher() {
                 const cont = document.getElementById('input-switcher');
                 cont.innerHTML = '';
-                
                 this.currentGame.state.players.forEach(p => {
                     const isActive = p.id === this.activePlayerId;
                     const tempScore = this.currentGame.state.temp[p.id] || 0;
-                    
                     const div = document.createElement('div');
                     div.className = `sel-box ${isActive ? 'active' : ''}`;
                     if(isActive) div.style.setProperty('--p-color', p.color);
-                    div.onclick = () => {
-                        this.activePlayerId = p.id;
-                        this.renderSwitcher();
-                    };
-                    div.innerHTML = `
-                        <div style="font-size:10px; font-weight:800; color:${isActive ? p.color : 'var(--text-sec)'}">${p.name}</div>
-                        <div style="font-size:20px; font-weight:900">${tempScore}</div>
-                    `;
+                    div.onclick = () => { this.activePlayerId = p.id; this.renderSwitcher(); SoundFX.click(); };
+                    div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${isActive ? p.color : 'var(--text-sec)'}">${p.name}</div><div style="font-size:20px; font-weight:900">${tempScore}</div>`;
                     cont.appendChild(div);
                 });
             },
-
             typeNum(n) {
                 const current = (this.currentGame.state.temp[this.activePlayerId] || 0).toString();
                 const newVal = parseInt((current === '0' ? '' : current) + n);
-                
-                if(newVal > 9999) {
-                    if(navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error pattern
-                    UI.showToast('⚠️ Maximum 9999 points', 'warning');
-                    return;
-                }
-                
-                // Success vibration
+                if(newVal > 9999) { if(navigator.vibrate) navigator.vibrate([50, 50, 50]); UI.showToast('⚠️ Maximum 9999 points', 'warning'); return; }
                 if(navigator.vibrate) navigator.vibrate(10);
-                
                 this.currentGame.state.temp[this.activePlayerId] = newVal;
                 this.renderSwitcher();
                 this.render();
             },
-
             addVal(value) {
                 const current = this.currentGame.state.temp[this.activePlayerId] || 0;
                 const newVal = current + value;
-                
-                if(newVal > 9999) {
-                    if(navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error pattern
-                    UI.showToast('⚠️ Maximum 9999 points', 'warning');
-                    return;
-                }
-                
-                // Success vibration
+                if(newVal > 9999) { if(navigator.vibrate) navigator.vibrate([50, 50, 50]); UI.showToast('⚠️ Maximum 9999 points', 'warning'); return; }
                 if(navigator.vibrate) navigator.vibrate(20);
-                
                 this.currentGame.state.temp[this.activePlayerId] = Math.max(0, newVal);
                 this.renderSwitcher();
                 this.render();
             },
-
             backspace() {
                 const current = (this.currentGame.state.temp[this.activePlayerId] || 0).toString();
                 this.currentGame.state.temp[this.activePlayerId] = current.length > 1 ? parseInt(current.slice(0, -1)) : 0;
-                
-                // Light vibration
                 if(navigator.vibrate) navigator.vibrate(15);
-                
                 this.renderSwitcher();
                 this.render();
             },
-
             clearInput() {
                 this.currentGame.state.temp[this.activePlayerId] = 0;
-                
-                // Double tap vibration
                 if(navigator.vibrate) navigator.vibrate([30, 50, 30]);
-                
                 this.renderSwitcher();
                 this.render();
             },
-
             handleSmart() {
-                if(this.currentGame.mode === 'belote') {
-                    this.currentGame.state.temp[this.activePlayerId] = 252;
-                } else {
-                    const current = this.currentGame.state.temp[this.activePlayerId] || 0;
-                    this.currentGame.state.temp[this.activePlayerId] = current * -1;
-                }
+                SoundFX.click();
+                if(this.currentGame.mode === 'belote') { this.currentGame.state.temp[this.activePlayerId] = 252; }
+                else { const current = this.currentGame.state.temp[this.activePlayerId] || 0; this.currentGame.state.temp[this.activePlayerId] = current * -1; }
                 this.renderSwitcher();
                 this.render();
             },
-
             calcRest() {
+                SoundFX.click();
                 const otherPlayer = this.currentGame.state.players.find(p => p.id !== this.activePlayerId);
                 if(otherPlayer) {
                     const currentScore = this.currentGame.state.temp[this.activePlayerId] || 0;
@@ -1091,28 +1221,15 @@
                     this.render();
                 }
             },
-
             // ==================== ROUND MANAGEMENT ====================
             validateRound() {
+                SoundFX.click();
                 const state = this.currentGame.state;
-                
-                if(Object.keys(state.temp).length === 0) {
-                    UI.showToast('⚠️ Aucun score saisi', 'warning');
-                    return;
-                }
-                
+                if(Object.keys(state.temp).length === 0) { UI.showToast('⚠️ Aucun score saisi', 'warning'); return; }
                 const validation = GameState.validate(state.temp, this.currentGame.mode);
-                if(!validation.valid) {
-                    UI.showToast(validation.error, 'error');
-                    return;
-                }
-                
-                // Store previous totals to detect milestone crossings
+                if(!validation.valid) { UI.showToast(validation.error, 'error'); return; }
                 const previousTotals = {};
-                state.players.forEach(p => {
-                    previousTotals[p.id] = p.total;
-                });
-                
+                state.players.forEach(p => previousTotals[p.id] = p.total);
                 if(this.editIdx !== null) {
                     GameState.updateRound(state, this.editIdx, state.temp);
                     this.editIdx = null;
@@ -1121,86 +1238,66 @@
                     UI.showToast('✅ Manche modifiée', 'success');
                 } else {
                     GameState.addRound(state, state.temp);
-                    
                     const currentIdx = state.players.findIndex(p => p.id === state.dealerId);
                     state.dealerId = state.players[(currentIdx + 1) % state.players.length].id;
-                    
                     UI.showToast('✅ Manche enregistrée', 'success');
                 }
-                
-                // Check for milestones in STANDARD mode
                 if(this.currentGame.mode === 'standard') {
                     state.players.forEach(p => {
                         const milestones = [200, 500, 1000];
                         milestones.forEach(milestone => {
                             const key = `${p.id}-${milestone}`;
-                            if(!state.celebratedMilestones[key] && 
-                               previousTotals[p.id] < milestone && 
-                               p.total >= milestone) {
+                            if(!state.celebratedMilestones[key] && previousTotals[p.id] < milestone && p.total >= milestone) {
                                 state.celebratedMilestones[key] = true;
                                 setTimeout(() => UI.launchMilestoneConfetti(milestone), 300);
                             }
                         });
                     });
                 }
-                
-                // Check for victory in BELOTE mode (1000 points)
                 if(this.currentGame.mode === 'belote') {
                     const winner = state.players.find(p => p.total >= 1000);
                     if(winner) {
-                        // Save player names
-                        this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({
-                            name: p.name,
-                            color: p.color
-                        }));
+                        this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({ name: p.name, color: p.color }));
                         localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
-                        
                         this.currentGame.finished = true;
                         Storage.saveGame(this.currentGame);
-                        
-                        setTimeout(() => {
-                            UI.showVictory(winner, winner.total, state);
-                        }, 500);
+                        setTimeout(() => { UI.showVictory(winner, winner.total, state); }, 500);
                     }
                 }
-                
                 state.temp = {};
                 this.render();
             },
-
             startEdit(idx) {
+                SoundFX.click();
                 const state = this.currentGame.state;
-                
                 if(Object.keys(state.temp).length > 0) {
-                    if(!confirm('Abandonner la saisie en cours ?')) return;
+                    UI.confirm('Abandonner la saisie en cours ?', () => {
+                        this.editIdx = idx;
+                        state.temp = {...state.history[idx]};
+                        document.getElementById('save-btn').textContent = `MODIFIER MANCHE ${idx + 1}`;
+                        document.getElementById('save-btn').classList.add('editing');
+                        this.openSheet(state.players[0].id);
+                    });
+                    return;
                 }
-                
                 this.editIdx = idx;
                 state.temp = {...state.history[idx]};
-                
                 document.getElementById('save-btn').textContent = `MODIFIER MANCHE ${idx + 1}`;
                 document.getElementById('save-btn').classList.add('editing');
-                
                 this.openSheet(state.players[0].id);
             },
-
             delRound(idx) {
-                if(!confirm('Supprimer cette manche ?')) return;
-                
-                GameState.deleteRound(this.currentGame.state, idx);
-                UI.showToast('✅ Manche supprimée', 'success');
-                this.render();
+                UI.confirm('Supprimer cette manche ?', () => {
+                    GameState.deleteRound(this.currentGame.state, idx);
+                    UI.showToast('✅ Manche supprimée', 'success');
+                    this.render();
+                });
             },
-
             undo() {
                 const history = this.currentGame.state.history;
-                if(history.length > 0) {
-                    this.delRound(history.length - 1);
-                }
+                if(history.length > 0) { this.delRound(history.length - 1); }
             }
         };
-
-        // ==================== INIT ====================
         app.init();
     </script>
 </body>
