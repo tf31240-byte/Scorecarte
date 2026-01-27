@@ -1298,8 +1298,13 @@
                 if(history.length > 0) { this.delRound(history.length - 1); }
             }
         };
-document.addEventListener('DOMContentLoaded', () => app.init());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => app.init());
+} else {
+    app.init();
+}
     </script>
 </body>
 </html>
+
 
