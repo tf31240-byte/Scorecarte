@@ -219,17 +219,170 @@
         .toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; }
         .toast.error { border-color: var(--danger); background: var(--danger); color: white; }
 
-        /* --- VICTORY SCREEN --- */
-        .victory-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 6000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .victory-overlay.active { opacity: 1; pointer-events: auto; }
-        .victory-box { background: var(--card); border-radius: 32px; padding: 40px; text-align: center; max-width: 400px; animation: victoryPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .victory-title { font-size: 48px; margin-bottom: 20px; }
-        .victory-player { font-size: 32px; font-weight: 900; margin-bottom: 30px; }
-        .victory-stats { background: var(--bg); border-radius: 20px; padding: 20px; margin-bottom: 30px; text-align: left; }
-        .victory-stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .victory-stat-row:last-child { border-bottom: none; }
-        .victory-stat-label { color: var(--text-sec); font-size: 14px; font-weight: 600; }
-        .victory-stat-value { color: var(--text); font-size: 16px; font-weight: 900; }
+        /* --- VICTORY SCREEN AMÉLIORÉ --- */
+.victory-overlay { 
+    position: fixed; inset: 0; 
+    background: rgba(0,0,0,0.9); 
+    backdrop-filter: blur(10px); 
+    z-index: 6000; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    opacity: 0; 
+    pointer-events: none; 
+    transition: 0.3s; 
+    overflow-y: auto; 
+    padding: 20px; 
+}
+.victory-overlay.active { opacity: 1; pointer-events: auto; }
+.victory-box { 
+    background: var(--card); 
+    border-radius: 32px; 
+    padding: 30px; 
+    max-width: 500px; 
+    width: 100%; 
+    animation: victoryPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
+
+/* PODIUM */
+.podium-container { 
+    display: flex; 
+    align-items: flex-end; 
+    justify-content: center; 
+    gap: 8px; 
+    margin: 30px 0; 
+    height: 180px; 
+}
+.podium-place { 
+    flex: 1; 
+    max-width: 110px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    animation: podiumRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
+.podium-place.p1 { animation-delay: 0.2s; }
+.podium-place.p2 { animation-delay: 0s; }
+.podium-place.p3 { animation-delay: 0.1s; }
+.podium-avatar { 
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 28px; 
+    font-weight: 900; 
+    margin-bottom: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+    position: relative; 
+}
+.podium-crown { 
+    position: absolute; 
+    top: -15px; 
+    font-size: 24px; 
+    animation: badgeBounce 1s infinite; 
+}
+.podium-name { 
+    font-size: 11px; 
+    font-weight: 900; 
+    text-align: center; 
+    margin-bottom: 6px; 
+}
+.podium-score { 
+    font-size: 16px; 
+    font-weight: 900; 
+    margin-bottom: 8px; 
+}
+.podium-bar { 
+    width: 100%; 
+    border-radius: 12px 12px 0 0; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 32px; 
+    font-weight: 900; 
+    color: white; 
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1); 
+}
+.podium-place.p1 .podium-bar { background: var(--gold); height: 100px; }
+.podium-place.p2 .podium-bar { background: var(--silver); height: 70px; }
+.podium-place.p3 .podium-bar { background: var(--bronze); height: 50px; }
+
+/* TABS RÉCAPITULATIF */
+.victory-tabs { 
+    display: flex; 
+    gap: 8px; 
+    margin-bottom: 20px; 
+    border-bottom: 2px solid var(--border); 
+    padding-bottom: 8px; 
+}
+.victory-tab { 
+    flex: 1; 
+    text-align: center; 
+    padding: 10px 8px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 700; 
+    font-size: 13px; 
+    opacity: 0.5; 
+    transition: 0.2s; 
+}
+.victory-tab.active { 
+    opacity: 1; 
+    background: var(--primary); 
+    color: white; 
+}
+
+/* HIGHLIGHTS */
+.highlight-card { 
+    background: var(--bg); 
+    padding: 12px; 
+    border-radius: 12px; 
+    margin-bottom: 10px; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+}
+.highlight-icon { font-size: 28px; }
+.highlight-text { flex: 1; }
+.highlight-label { 
+    font-size: 11px; 
+    color: var(--text-sec); 
+    font-weight: 600; 
+}
+.highlight-value { 
+    font-size: 14px; 
+    font-weight: 900; 
+}
+
+/* PLAYER STATS DETAIL */
+.player-stats-row { 
+    display: flex; 
+    align-items: center; 
+    padding: 10px; 
+    border-bottom: 1px solid var(--border); 
+}
+.player-stats-row:last-child { border-bottom: none; }
+.player-stats-rank { 
+    width: 30px; 
+    font-size: 18px; 
+    font-weight: 900; 
+}
+.player-stats-info { flex: 1; }
+.player-stats-name { 
+    font-size: 14px; 
+    font-weight: 900; 
+}
+.player-stats-score { 
+    font-size: 16px; 
+    font-weight: 900; 
+}
+
+@keyframes podiumRise {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
 
         /* --- CUSTOM CONFIRM MODAL --- */
         #confirm-modal .modal-box { text-align: center; }
@@ -400,17 +553,37 @@
         </div>
     </div>
 
-    <!-- VICTORY SCREEN -->
-    <div id="victory" class="victory-overlay">
-        <div class="victory-box">
-            <div class="victory-title">🏆</div>
-            <div id="victory-player" class="victory-player"></div>
-            <div id="victory-score" style="font-size:18px; color:var(--text-sec); margin-bottom:20px;"></div>
-            <div id="victory-stats" class="victory-stats"></div>
-            <button class="btn-main" style="background:var(--primary); color:white; margin-bottom:12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
-            <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
+<!-- VICTORY SCREEN AMÉLIORÉ -->
+<div id="victory" class="victory-overlay">
+    <div class="victory-box">
+        <h2 style="text-align:center; margin:0 0 10px 0; font-size:28px;">🏆 PARTIE TERMINÉE</h2>
+        
+        <!-- TABS -->
+        <div class="victory-tabs">
+            <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')">🏆 Podium</div>
+            <div class="victory-tab" onclick="UI.switchVictoryTab('stats')">📊 Stats</div>
+            <div class="victory-tab" onclick="UI.switchVictoryTab('highlights')">⭐ Highlights</div>
         </div>
+
+        <!-- PODIUM TAB -->
+        <div id="victory-tab-podium">
+            <div class="podium-container" id="podium"></div>
+        </div>
+
+        <!-- STATS TAB -->
+        <div id="victory-tab-stats" class="hidden">
+            <div id="victory-all-players"></div>
+        </div>
+
+        <!-- HIGHLIGHTS TAB -->
+        <div id="victory-tab-highlights" class="hidden">
+            <div id="victory-highlights"></div>
+        </div>
+
+        <button class="btn-main" style="background:var(--primary); color:white; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
+        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
     </div>
+</div>
 
     <script>
         // ==================== SOUND ENGINE (WEB AUDIO API) ====================
@@ -665,7 +838,83 @@
                 return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
             }
         };
+// ✨ NOUVEAU : Calcul des highlights d'une partie
+calculateGameHighlights(state) {
+    const highlights = [];
+    
+    // Meilleure manche
+    let bestRound = { score: 0, player: null, roundIdx: 0 };
+    state.history.forEach((round, idx) => {
+        state.players.forEach(p => {
+            if(round[p.id] > bestRound.score) {
+                bestRound = { score: round[p.id], player: p, roundIdx: idx + 1 };
+            }
+        });
+    });
+    if(bestRound.player) {
+        highlights.push({
+            icon: '🔥',
+            label: 'Meilleure manche',
+            value: `${bestRound.player.name} - ${bestRound.score} pts (M${bestRound.roundIdx})`,
+            color: bestRound.player.color
+        });
+    }
 
+    // Comeback King (plus grosse remontée)
+    const rankProgression = {};
+    state.players.forEach(p => {
+        const ranks = [state.players.length];
+        state.history.forEach((round, histIdx) => {
+            const totals = state.players.map(pl => {
+                let c = 0;
+                state.history.slice(0, histIdx + 1).forEach(r => c += r[pl.id] || 0);
+                return { id: pl.id, total: c };
+            }).sort((a,b) => b.total - a.total);
+            ranks.push(totals.findIndex(t => t.id === p.id) + 1);
+        });
+        const maxRank = Math.max(...ranks);
+        const finalRank = ranks[ranks.length - 1];
+        rankProgression[p.id] = { player: p, improvement: maxRank - finalRank, maxRank, finalRank };
+    });
+    const comeback = Object.values(rankProgression).sort((a,b) => b.improvement - a.improvement)[0];
+    if(comeback && comeback.improvement > 0) {
+        highlights.push({
+            icon: '⚡',
+            label: 'Comeback King',
+            value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`,
+            color: comeback.player.color
+        });
+    }
+
+    // Régularité (écart-type le plus faible)
+    const consistency = state.players.map(p => {
+        const scores = state.history.map(r => r[p.id] || 0).filter(s => s > 0);
+        if(scores.length === 0) return { player: p, std: Infinity };
+        const mean = scores.reduce((a,b) => a+b, 0) / scores.length;
+        const variance = scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / scores.length;
+        return { player: p, std: Math.sqrt(variance), mean };
+    }).sort((a,b) => a.std - b.std)[0];
+    if(consistency && consistency.std !== Infinity) {
+        highlights.push({
+            icon: '🎯',
+            label: 'Joueur régulier',
+            value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`,
+            color: consistency.player.color
+        });
+    }
+
+    // Partie marathon
+    if(state.history.length >= 20) {
+        highlights.push({
+            icon: '🏃',
+            label: 'Partie Marathon',
+            value: `${state.history.length} manches jouées`,
+            color: 'var(--primary)'
+        });
+    }
+
+    return highlights;
+}
         // ==================== UI LAYER ====================
         const UI = {
             showToast(message, type = 'default') {
@@ -875,37 +1124,106 @@
                     }
                 });
             },
-            showVictory(winner, score, state) {
-                SoundFX.success();
-                const overlay = document.getElementById('victory');
-                document.getElementById('victory-player').textContent = winner.name;
-                document.getElementById('victory-player').style.color = winner.color;
-                document.getElementById('victory-score').textContent = `${score} points`;
-                const stats = this.calculateVictoryStats(winner, state);
-                const statsHtml = `
-                    <div class="victory-stat-row"><span class="victory-stat-label">Meilleur manche</span><span class="victory-stat-value" style="color:${winner.color}">${stats.bestRound} pts</span></div>
-                    <div class="victory-stat-row"><span class="victory-stat-label">Pire manche</span><span class="victory-stat-value">${stats.worstRound} pts</span></div>
-                    <div class="victory-stat-row"><span class="victory-stat-label">Moyenne / manche</span><span class="victory-stat-value">${stats.average} pts</span></div>
-                    <div class="victory-stat-row"><span class="victory-stat-label">Manches gagnées</span><span class="victory-stat-value">${stats.roundsWon}/${state.history.length}</span></div>
-                `;
-                document.getElementById('victory-stats').innerHTML = statsHtml;
-                overlay.classList.add('active');
-                this.launchFireworks();
-                if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-            },
-            calculateVictoryStats(winner, state) {
-                const winnerRounds = state.history.map(h => h[winner.id] || 0);
-                const nonZeroRounds = winnerRounds.filter(r => r > 0);
-                const bestRound = Math.max(...winnerRounds, 0);
-                const worstRound = nonZeroRounds.length > 0 ? Math.min(...nonZeroRounds) : 0;
-                const average = state.history.length > 0 ? Math.round(winner.total / state.history.length) : 0;
-                let roundsWon = 0;
-                state.history.forEach(round => {
-                    const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
-                    if(round[winner.id] === maxScore && maxScore > 0) roundsWon++;
-                });
-                return { bestRound, worstRound, average, roundsWon };
-            },
+            /* --- VICTORY UI AMÉLIORÉ --- */
+switchVictoryTab(tab) {
+    SoundFX.click();
+    document.querySelectorAll('.victory-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('[id^="victory-tab-"]').forEach(t => t.classList.add('hidden'));
+    
+    const tabIndex = { podium: 1, stats: 2, highlights: 3 };
+    document.querySelector(`.victory-tab:nth-child(${tabIndex[tab]})`).classList.add('active');
+    document.getElementById(`victory-tab-${tab}`).classList.remove('hidden');
+},
+
+showVictory(winner, score, state) {
+    SoundFX.success();
+    const overlay = document.getElementById('victory');
+    
+    // PODIUM
+    const sorted = [...state.players].sort((a,b) => b.total - a.total);
+    const podium = document.getElementById('podium');
+    podium.innerHTML = '';
+    
+    // Afficher top 3 (ou moins si moins de joueurs)
+    const top3 = [sorted[1], sorted[0], sorted[2]].filter(p => p); // Ordre: 2e, 1er, 3e
+    top3.forEach((p, idx) => {
+        if(!p) return;
+        const realRank = sorted.indexOf(p) + 1;
+        const place = document.createElement('div');
+        place.className = `podium-place p${realRank}`;
+        place.innerHTML = `
+            <div class="podium-avatar" style="background:${p.color}30; border:3px solid ${p.color};">
+                ${realRank === 1 ? '<div class="podium-crown">👑</div>' : ''}
+                <span style="color:${p.color}">${p.name.substring(0,2)}</span>
+            </div>
+            <div class="podium-name" style="color:${p.color}">${p.name}</div>
+            <div class="podium-score" style="color:${p.color}">${p.total}</div>
+            <div class="podium-bar">
+                ${realRank === 1 ? '🥇' : realRank === 2 ? '🥈' : '🥉'}
+            </div>
+        `;
+        podium.appendChild(place);
+    });
+
+    // STATS DÉTAILLÉES
+    const allPlayersDiv = document.getElementById('victory-all-players');
+    allPlayersDiv.innerHTML = '';
+    sorted.forEach((p, idx) => {
+        const stats = this.calculatePlayerGameStats(p, state);
+        const row = document.createElement('div');
+        row.className = 'player-stats-row';
+        row.innerHTML = `
+            <div class="player-stats-rank" style="color:${idx < 3 ? p.color : 'var(--text-sec)'}">${idx+1}</div>
+            <div class="player-stats-info">
+                <div class="player-stats-name" style="color:${p.color}">${p.name}</div>
+                <div style="font-size:11px; color:var(--text-sec);">
+                    Meilleur: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}
+                </div>
+            </div>
+            <div class="player-stats-score" style="color:${p.color}">${p.total}</div>
+        `;
+        allPlayersDiv.appendChild(row);
+    });
+
+    // HIGHLIGHTS
+    const highlights = StatsEngine.calculateGameHighlights(state);
+    const highlightsDiv = document.getElementById('victory-highlights');
+    highlightsDiv.innerHTML = '';
+    if(highlights.length === 0) {
+        highlightsDiv.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucun highlight pour cette partie.</p>';
+    } else {
+        highlights.forEach(h => {
+            const card = document.createElement('div');
+            card.className = 'highlight-card';
+            card.innerHTML = `
+                <div class="highlight-icon">${h.icon}</div>
+                <div class="highlight-text">
+                    <div class="highlight-label">${h.label}</div>
+                    <div class="highlight-value" style="color:${h.color}">${h.value}</div>
+                </div>
+            `;
+            highlightsDiv.appendChild(card);
+        });
+    }
+
+    overlay.classList.add('active');
+    this.switchVictoryTab('podium');
+    this.launchFireworks();
+    if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+},
+
+calculatePlayerGameStats(player, state) {
+    const scores = state.history.map(r => r[player.id] || 0);
+    const nonZero = scores.filter(s => s > 0);
+    const best = Math.max(...scores, 0);
+    const avg = nonZero.length > 0 ? Math.round(nonZero.reduce((a,b) => a+b, 0) / nonZero.length) : 0;
+    let roundsWon = 0;
+    state.history.forEach(round => {
+        const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
+        if(round[player.id] === maxScore && maxScore > 0) roundsWon++;
+    });
+    return { best, avg, roundsWon };
+},
             closeVictory() { document.getElementById('victory').classList.remove('active'); },
             launchFireworks() {
                 const duration = 5000;
@@ -1306,6 +1624,7 @@ if (document.readyState === 'loading') {
     </script>
 </body>
 </html>
+
 
 
 
