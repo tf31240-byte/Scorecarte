@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-    <title>ScoreMaster v12.3 (Final)</title>
+    <title>ScoreMaster v12.5 (Final)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -17,17 +17,12 @@
             --gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             --silver: linear-gradient(135deg, #C0C0C0 0%, #8E8E93 100%);
             --bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
-            
-            /* GLASSMORPHISM VARS */
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.4);
-            --glass-blur: 20px;
         }
         :root[data-theme="dark"] {
             --primary: #0A84FF; --bg: #000000; --card: #1C1C1E; --text: #F5F5F7;
             --text-sec: #98989D; --border: #38383A; --shadow: 0 8px 30px rgba(0,0,0,0.4);
-            
-            /* GLASSMORPHISM VARS DARK */
             --glass-bg: rgba(28, 28, 30, 0.75);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
@@ -40,43 +35,27 @@
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
-        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; transition: background-color 0.3s, color 0.3s; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 140px; transition: background-color 0.3s, color 0.3s; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); animation: slideIn 0.4s ease-out; }
         .hidden { display: none !important; }
         
-        /* --- ANIMATIONS --- */
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes rankPop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        @keyframes badgeBounce {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.3) rotate(-10deg); }
-            75% { transform: scale(1.3) rotate(10deg); }
-        }
-        @keyframes scoreBump {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-        @keyframes victoryPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        /* Typography Helpers */
+        .text-huge { font-size: 28px; font-weight: 900; }
+        .text-center { text-align: center; }
 
-        /* --- GLASSMORPHISM COMPONENTS --- */
+        /* --- ANIMATIONS --- */
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes rankPop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes badgeBounce { 0%, 100% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.3) rotate(-10deg); } 75% { transform: scale(1.3) rotate(10deg); } }
+        @keyframes scoreBump { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes victoryPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* --- UI COMPONENTS --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-box { 
             width: 100%; max-width: 340px; border-radius: 28px; padding: 25px; text-align: center; 
-            background: var(--card);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow);
         }
         .modal-box.large { max-width: 500px; text-align: left; max-height: 80vh; overflow-y: auto; }
         
@@ -85,17 +64,15 @@
         .sheet-content { 
             width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px calc(25px + env(safe-area-inset-bottom)); 
             transform: translateY(100%); transition: 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
-            background: var(--bg); 
-            border: 1px solid var(--border);
+            background: var(--bg); border: 1px solid var(--border);
         }
         .sheet-overlay.active .sheet-content { transform: translateY(0); }
 
-        /* --- UI ELEMENTS --- */
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .theme-toggle, .btn-stats, .btn-focus { 
             background: var(--card); border: 1px solid var(--border); width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; transition: all 0.3s; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .theme-toggle:active, .btn-stats:active, .btn-focus:active { transform: scale(0.9); }
+        .btn-stats:active, .theme-toggle:active, .btn-focus:active { transform: scale(0.9); }
         .btn-stats { color:var(--gold) }
         .btn-focus { color: var(--primary); }
 
@@ -155,54 +132,25 @@
         .btn-main.editing { background: var(--dealer); color: #000; }
 
         /* --- FOCUS MODE --- */
-        .focus-mode .chart-box,
-        .focus-mode .h-row,
-        .focus-mode #history,
-        .focus-mode #dock,
-        .focus-mode .header-controls {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(20px);
+        .focus-mode .chart-box, .focus-mode .h-row, .focus-mode #history, .focus-mode #dock, .focus-mode .header-controls {
+            opacity: 0; pointer-events: none; transform: translateY(20px);
         }
-
-        .focus-mode .players-grid {
-            transform: scale(1.15) translateY(10vh);
-            gap: 20px;
-        }
-
+        .focus-mode .players-grid { transform: scale(1.15) translateY(10vh); gap: 20px; }
         .focus-mode-cta {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--text);
-            color: var(--bg);
-            padding: 10px 15px;
-            border-radius: 20px;
-            font-weight: 700;
-            z-index: 9999;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
+            position: fixed; top: 20px; right: 20px; background: var(--text); color: var(--bg);
+            padding: 10px 15px; border-radius: 20px; font-weight: 700; z-index: 9999;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
-        .focus-mode .focus-mode-cta {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .focus-mode .focus-mode-cta { opacity: 1; pointer-events: auto; }
 
         /* --- STATS STYLES --- */
         .stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
         .stats-tab.active { opacity: 1; background: var(--card); color: var(--primary); }
-        
         .rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
         .rank-item:last-child { border-bottom: none; }
         .rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
-        .rank-1 .rank-num { color: #FFD700; }
-        .rank-2 .rank-num { color: #C0C0C0; }
-        .rank-3 .rank-num { color: #CD7F32; }
-        
+        .rank-1 .rank-num { color: #FFD700; } .rank-2 .rank-num { color: #C0C0C0; } .rank-3 .rank-num { color: #CD7F32; }
         .rank-info { flex: 1; }
         .rank-name { font-weight: 900; font-size: 16px; }
         .rank-sub { font-size: 12px; color: var(--text-sec); }
@@ -219,170 +167,55 @@
         .toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; }
         .toast.error { border-color: var(--danger); background: var(--danger); color: white; }
 
-        /* --- VICTORY SCREEN AMÉLIORÉ --- */
-.victory-overlay { 
-    position: fixed; inset: 0; 
-    background: rgba(0,0,0,0.9); 
-    backdrop-filter: blur(10px); 
-    z-index: 6000; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    opacity: 0; 
-    pointer-events: none; 
-    transition: 0.3s; 
-    overflow-y: auto; 
-    padding: 20px; 
-}
-.victory-overlay.active { opacity: 1; pointer-events: auto; }
-.victory-box { 
-    background: var(--card); 
-    border-radius: 32px; 
-    padding: 30px; 
-    max-width: 500px; 
-    width: 100%; 
-    animation: victoryPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
-}
+        /* --- VICTORY SCREEN --- */
+        .victory-overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 6000; 
+            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; 
+            transition: 0.3s; overflow-y: auto; padding: 20px; 
+        }
+        .victory-overlay.active { opacity: 1; pointer-events: auto; }
+        .victory-box { background: var(--card); border-radius: 32px; padding: 30px; max-width: 500px; width: 100%; animation: victoryPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        /* PODIUM */
+        .podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 8px; margin: 30px 0; height: 180px; }
+        .podium-place { flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; animation: podiumRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .podium-place.p1 { animation-delay: 0.2s; } .podium-place.p2 { animation-delay: 0s; } .podium-place.p3 { animation-delay: 0.1s; }
+        .podium-avatar { 
+            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 28px; font-weight: 900; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; 
+        }
+        .podium-crown { position: absolute; top: -15px; font-size: 24px; animation: badgeBounce 1s infinite; }
+        .podium-name { font-size: 11px; font-weight: 900; text-align: center; margin-bottom: 6px; }
+        .podium-score { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+        .podium-bar { 
+            width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; 
+            font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); 
+        }
+        .podium-place.p1 .podium-bar { background: var(--gold); height: 100px; }
+        .podium-place.p2 .podium-bar { background: var(--silver); height: 70px; }
+        .podium-place.p3 .podium-bar { background: var(--bronze); height: 50px; }
 
-/* PODIUM */
-.podium-container { 
-    display: flex; 
-    align-items: flex-end; 
-    justify-content: center; 
-    gap: 8px; 
-    margin: 30px 0; 
-    height: 180px; 
-}
-.podium-place { 
-    flex: 1; 
-    max-width: 110px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    animation: podiumRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-}
-.podium-place.p1 { animation-delay: 0.2s; }
-.podium-place.p2 { animation-delay: 0s; }
-.podium-place.p3 { animation-delay: 0.1s; }
-.podium-avatar { 
-    width: 60px; 
-    height: 60px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 28px; 
-    font-weight: 900; 
-    margin-bottom: 8px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-    position: relative; 
-}
-.podium-crown { 
-    position: absolute; 
-    top: -15px; 
-    font-size: 24px; 
-    animation: badgeBounce 1s infinite; 
-}
-.podium-name { 
-    font-size: 11px; 
-    font-weight: 900; 
-    text-align: center; 
-    margin-bottom: 6px; 
-}
-.podium-score { 
-    font-size: 16px; 
-    font-weight: 900; 
-    margin-bottom: 8px; 
-}
-.podium-bar { 
-    width: 100%; 
-    border-radius: 12px 12px 0 0; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 32px; 
-    font-weight: 900; 
-    color: white; 
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.1); 
-}
-.podium-place.p1 .podium-bar { background: var(--gold); height: 100px; }
-.podium-place.p2 .podium-bar { background: var(--silver); height: 70px; }
-.podium-place.p3 .podium-bar { background: var(--bronze); height: 50px; }
+        /* TABS RÉCAPITULATIF */
+        .victory-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+        .victory-tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; opacity: 0.5; transition: 0.2s; }
+        .victory-tab.active { opacity: 1; background: var(--primary); color: white; }
 
-/* TABS RÉCAPITULATIF */
-.victory-tabs { 
-    display: flex; 
-    gap: 8px; 
-    margin-bottom: 20px; 
-    border-bottom: 2px solid var(--border); 
-    padding-bottom: 8px; 
-}
-.victory-tab { 
-    flex: 1; 
-    text-align: center; 
-    padding: 10px 8px; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    font-weight: 700; 
-    font-size: 13px; 
-    opacity: 0.5; 
-    transition: 0.2s; 
-}
-.victory-tab.active { 
-    opacity: 1; 
-    background: var(--primary); 
-    color: white; 
-}
+        /* HIGHLIGHTS */
+        .highlight-card { background: var(--bg); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+        .highlight-icon { font-size: 28px; }
+        .highlight-text { flex: 1; }
+        .highlight-label { font-size: 11px; color: var(--text-sec); font-weight: 600; }
+        .highlight-value { font-size: 14px; font-weight: 900; }
 
-/* HIGHLIGHTS */
-.highlight-card { 
-    background: var(--bg); 
-    padding: 12px; 
-    border-radius: 12px; 
-    margin-bottom: 10px; 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; 
-}
-.highlight-icon { font-size: 28px; }
-.highlight-text { flex: 1; }
-.highlight-label { 
-    font-size: 11px; 
-    color: var(--text-sec); 
-    font-weight: 600; 
-}
-.highlight-value { 
-    font-size: 14px; 
-    font-weight: 900; 
-}
+        /* PLAYER STATS DETAIL */
+        .player-stats-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
+        .player-stats-row:last-child { border-bottom: none; }
+        .player-stats-rank { width: 30px; font-size: 18px; font-weight: 900; }
+        .player-stats-info { flex: 1; }
+        .player-stats-name { font-size: 14px; font-weight: 900; }
+        .player-stats-score { font-size: 16px; font-weight: 900; }
 
-/* PLAYER STATS DETAIL */
-.player-stats-row { 
-    display: flex; 
-    align-items: center; 
-    padding: 10px; 
-    border-bottom: 1px solid var(--border); 
-}
-.player-stats-row:last-child { border-bottom: none; }
-.player-stats-rank { 
-    width: 30px; 
-    font-size: 18px; 
-    font-weight: 900; 
-}
-.player-stats-info { flex: 1; }
-.player-stats-name { 
-    font-size: 14px; 
-    font-weight: 900; 
-}
-.player-stats-score { 
-    font-size: 16px; 
-    font-weight: 900; 
-}
-
-@keyframes podiumRise {
-    from { transform: translateY(100px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
+        @keyframes podiumRise { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* --- CUSTOM CONFIRM MODAL --- */
         #confirm-modal .modal-box { text-align: center; }
@@ -418,12 +251,10 @@
                 <h2 style="margin:0">📊 Statistiques</h2>
                 <button onclick="UI.closeStats()" style="background:none; border:none; font-size:24px;">✕</button>
             </div>
-            
             <div class="stats-tabs">
                 <div id="tab-rank" class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
                 <div id="tab-records" class="stats-tab" onclick="UI.switchStatsTab('records')">Records</div>
             </div>
-
             <div id="stats-content-rank"></div>
             <div id="stats-content-player" class="hidden">
                 <button onclick="UI.showRanking()" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:14px; margin-bottom:10px;">← Retour au classement</button>
@@ -474,15 +305,13 @@
             <span style="font-size:30px; margin-right:15px;">🎲</span>
             <div><h2 style="margin:0">Standard</h2><p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Scores libres • Jusqu'à 12 joueurs</p></div>
         </div>
-
         <div style="margin-top: 40px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3 style="margin:0; font-size:18px; font-weight:900;">📚 Historique des parties</h3>
-                <button onclick="Storage.clearAll()" style="background:none; border:none; color:var(--danger); font-weight:900; font-size:12px; cursor:pointer;">TOUT EFFACER</button>
+                <button onclick="app.clearAll()" style="background:none; border:none; color:var(--danger); font-weight:900; font-size:12px; cursor:pointer;">TOUT EFFACER</button>
             </div>
             <div id="games-list"></div>
         </div>
-
         <div class="guide-container">
             <b style="display:block; margin-bottom:8px; color:var(--text)">📖 Guide Rapide</b>
             • Cliquez sur le <b style="color:var(--text)">NOM</b> pour le donneur 🃏<br>
@@ -553,55 +382,44 @@
         </div>
     </div>
 
-<!-- VICTORY SCREEN AMÉLIORÉ -->
-<div id="victory" class="victory-overlay">
-    <div class="victory-box">
-        <h2 style="text-align:center; margin:0 0 10px 0; font-size:28px;">🏆 PARTIE TERMINÉE</h2>
-        
-        <!-- TABS -->
-        <div class="victory-tabs">
-            <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')">🏆 Podium</div>
-            <div class="victory-tab" onclick="UI.switchVictoryTab('stats')">📊 Stats</div>
-            <div class="victory-tab" onclick="UI.switchVictoryTab('highlights')">⭐ Highlights</div>
-        </div>
+    <!-- VICTORY SCREEN -->
+    <div id="victory" class="victory-overlay">
+        <div class="victory-box">
+            <h2 class="text-center" style="margin:0 0 10px 0; font-size:28px;">🏆 PARTIE TERMINÉE</h2>
+            
+            <div class="victory-tabs">
+                <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')">🏆 Podium</div>
+                <div class="victory-tab" onclick="UI.switchVictoryTab('stats')">📊 Stats</div>
+                <div class="victory-tab" onclick="UI.switchVictoryTab('highlights')">⭐ Highlights</div>
+            </div>
 
-        <!-- PODIUM TAB -->
-        <div id="victory-tab-podium">
-            <div class="podium-container" id="podium"></div>
-        </div>
+            <div id="victory-tab-podium">
+                <div class="podium-container" id="podium"></div>
+            </div>
 
-        <!-- STATS TAB -->
-        <div id="victory-tab-stats" class="hidden">
-            <div id="victory-all-players"></div>
-        </div>
+            <div id="victory-tab-stats" class="hidden">
+                <div id="victory-all-players"></div>
+            </div>
 
-        <!-- HIGHLIGHTS TAB -->
-        <div id="victory-tab-highlights" class="hidden">
-            <div id="victory-highlights"></div>
-        </div>
+            <div id="victory-tab-highlights" class="hidden">
+                <div id="victory-highlights"></div>
+            </div>
 
-        <button class="btn-main" style="background:var(--primary); color:white; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
-        <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
+            <button class="btn-main" style="background:var(--primary); color:white; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
+            <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
+        </div>
     </div>
-</div>
 
     <script>
-        // ==================== SOUND ENGINE (WEB AUDIO API) ====================
+        // ==================== SOUND ENGINE ====================
         const SoundFX = {
-            ctx: null,
-            enabled: true,
+            ctx: null, enabled: true,
             init() {
-                if (!this.ctx) {
+                if (!this.ctx && window.AudioContext) {
                     try {
-                        const AudioContext = window.AudioContext || window.webkitAudioContext;
-                        this.ctx = new AudioContext();
-                        if (this.ctx.state === 'suspended') {
-                            this.ctx.resume();
-                        }
-                    } catch (e) {
-                        console.warn("Audio not supported or blocked");
-                        this.enabled = false;
-                    }
+                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        if (this.ctx.state === 'suspended') this.ctx.resume();
+                    } catch (e) { console.warn("Audio API non supportée"); this.enabled = false; }
                 }
             },
             playTone(freq, type, duration) {
@@ -628,56 +446,36 @@
                     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                     const data = buffer.getChannelData(0);
                     for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
                     const noise = this.ctx.createBufferSource();
                     noise.buffer = buffer;
                     const gain = this.ctx.createGain();
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.value = 400;
-
                     gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
-
                     noise.connect(filter);
                     filter.connect(gain);
                     gain.connect(this.ctx.destination);
                     noise.start();
                 } catch (e) {}
             },
-            success() {
-                this.playTone(600, 'sine', 0.1);
-                setTimeout(() => this.playTone(900, 'sine', 0.2), 100);
-            },
-            error() {
-                this.playTone(150, 'sawtooth', 0.3);
-            },
-            toggle() {
-                this.enabled = !this.enabled;
-                if(this.enabled) this.click();
-            }
+            success() { this.playTone(600, 'sine', 0.1); setTimeout(() => this.playTone(900, 'sine', 0.2), 100); },
+            error() { this.playTone(150, 'sawtooth', 0.3); }
         };
 
         // ==================== DATA LAYER ====================
         const GameState = {
             create(mode, playerCount) {
-                const colors = [
-                    '#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6', 
-                    '#FF3B30', '#30B0C7', '#8E8E93', '#4CD964'
-                ];
+                const colors = ['#007AFF', '#FF2D55', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FFCC00', '#5856D6', '#FF3B30', '#30B0C7', '#8E8E93', '#4CD964'];
                 return {
-                    mode,
-                    players: Array.from({length: Math.min(playerCount, 12)}, (_, i) => ({
+                    mode, players: Array.from({length: Math.min(playerCount, 12)}, (_, i) => ({
                         id: i + 1, 
                         name: mode === 'belote' ? (i === 0 ? 'NOUS' : 'EUX') : `J${i + 1}`, 
                         color: colors[i] || '#000000',
-                        total: 0,
-                        previousRank: null
+                        total: 0, previousRank: null
                     })),
-                    history: [],
-                    temp: {},
-                    dealerId: 1,
-                    celebratedMilestones: {}
+                    history: [], temp: {}, dealerId: 1, celebratedMilestones: {}
                 };
             },
             addRound(state, scores) {
@@ -716,13 +514,10 @@
             }
         };
 
-        // ==================== STORAGE LAYER (UPDATED FOR MIGRATION) ====================
+        // ==================== STORAGE LAYER ====================
         const Storage = {
-            GAMES_KEY: 'sm_v12_games', // NEW KEY
-            CURRENT_KEY: 'sm_v12_current',
-            
+            GAMES_KEY: 'sm_v12_games', CURRENT_KEY: 'sm_v12_current',
             migrateData() {
-                // Try to migrate from v11 to v12 if v12 is empty
                 const v12Data = localStorage.getItem(this.GAMES_KEY);
                 if (!v12Data) {
                     const v11Data = localStorage.getItem('sm_v11_games');
@@ -731,23 +526,19 @@
                             const parsed = JSON.parse(v11Data);
                             if (Array.isArray(parsed) && parsed.length > 0) {
                                 localStorage.setItem(this.GAMES_KEY, v11Data);
-                                console.log("SM: Migrated v11 games to v12");
-                                // Also migrate current game
+                                console.log("SM: Migration v11->v12 OK");
                                 const v11Current = localStorage.getItem('sm_v11_current');
-                                if (v11Current) {
-                                    // Check if ID exists in migrated list
-                                    const exists = parsed.find(g => g.id === v11Current);
-                                    if (exists) localStorage.setItem(this.CURRENT_KEY, v11Current);
+                                if (v11Current && parsed.find(g => g.id === v11Current)) {
+                                    localStorage.setItem(this.CURRENT_KEY, v11Current);
                                 }
                             }
-                        } catch(e) { console.error("SM: Migration failed", e); }
+                        } catch(e) { console.error("SM: Migration échouée", e); }
                     }
                 }
             },
-
             saveGame(game) {
                 try {
-                    const games = this.loadGames() || []; // Safe fallback
+                    const games = this.loadGames() || [];
                     const existing = games.findIndex(g => g.id === game.id);
                     if(existing >= 0) games[existing] = game;
                     else games.push(game);
@@ -755,7 +546,7 @@
                     localStorage.setItem(this.CURRENT_KEY, game.id);
                     return true;
                 } catch(e) {
-                    if(e.name === 'QuotaExceededError') UI.showToast('⚠️ Mémoire pleine. Supprimez d\'anciennes parties.');
+                    console.error("SM: Save failed", e);
                     return false;
                 }
             },
@@ -763,17 +554,13 @@
                 try {
                     const data = localStorage.getItem(this.GAMES_KEY);
                     return data ? JSON.parse(data) : [];
-                } catch(e) { 
-                    console.error("SM: Corrupt game data", e);
-                    return []; 
-                }
+                } catch(e) { console.error("SM: Corrupt data", e); return []; }
             },
             loadCurrentGame() {
                 try {
                     const currentId = localStorage.getItem(this.CURRENT_KEY);
                     if(!currentId) return null;
-                    const games = this.loadGames();
-                    return games.find(g => g.id === currentId);
+                    return this.loadGames().find(g => g.id === currentId);
                 } catch(e) { return null; }
             },
             deleteGame(gameId) {
@@ -781,14 +568,6 @@
                 localStorage.setItem(this.GAMES_KEY, JSON.stringify(games));
                 const currentId = localStorage.getItem(this.CURRENT_KEY);
                 if(currentId === gameId) localStorage.removeItem(this.CURRENT_KEY);
-            },
-            clearAll() {
-                UI.confirm("⚠️ Supprimer TOUTES les parties ?", () => {
-                    localStorage.removeItem(this.GAMES_KEY);
-                    localStorage.removeItem(this.CURRENT_KEY);
-                    UI.showToast('✅ Historique effacé', 'success');
-                    app.renderGamesList();
-                });
             }
         };
 
@@ -801,9 +580,7 @@
                     const winner = game.state.players.sort((a,b) => b.total - a.total)[0];
                     game.state.players.forEach(p => {
                         const name = p.name.toUpperCase();
-                        if(!stats[name]) {
-                            stats[name] = { wins: 0, played: 0, totalScoreSum: 0, highestScore: 0, highestRound: 0 };
-                        }
+                        if(!stats[name]) stats[name] = { wins: 0, played: 0, totalScoreSum: 0, highestScore: 0, highestRound: 0 };
                         stats[name].played++;
                         stats[name].totalScoreSum += p.total;
                         if(p.total > stats[name].highestScore) stats[name].highestScore = p.total;
@@ -811,10 +588,7 @@
                             if(round[p.id] > stats[name].highestRound) stats[name].highestRound = round[p.id];
                         });
                     });
-                    if(winner) {
-                        const winnerName = winner.name.toUpperCase();
-                        if(stats[winnerName]) stats[winnerName].wins++;
-                    }
+                    if(winner && stats[winner.name.toUpperCase()]) stats[winner.name.toUpperCase()].wins++;
                 });
                 const sortedGames = games.sort((a,b) => new Date(b.date) - new Date(a.date));
                 Object.keys(stats).forEach(name => {
@@ -837,29 +611,16 @@
                 const stats = this.calculateStats();
                 return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
             },
-            // ✨ NOUVEAU : Calcul des highlights d'une partie
             calculateGameHighlights(state) {
                 const highlights = [];
-                
-                // Meilleure manche
                 let bestRound = { score: 0, player: null, roundIdx: 0 };
                 state.history.forEach((round, idx) => {
                     state.players.forEach(p => {
-                        if(round[p.id] > bestRound.score) {
-                            bestRound = { score: round[p.id], player: p, roundIdx: idx + 1 };
-                        }
+                        if(round[p.id] > bestRound.score) bestRound = { score: round[p.id], player: p, roundIdx: idx + 1 };
                     });
                 });
-                if(bestRound.player) {
-                    highlights.push({
-                        icon: '🔥',
-                        label: 'Meilleure manche',
-                        value: `${bestRound.player.name} - ${bestRound.score} pts (M${bestRound.roundIdx})`,
-                        color: bestRound.player.color
-                    });
-                }
-
-                // Comeback King (plus grosse remontée)
+                if(bestRound.player) highlights.push({ icon: '🔥', label: 'Meilleure manche', value: `${bestRound.player.name} - ${bestRound.score} pts (M${bestRound.roundIdx})`, color: bestRound.player.color });
+                
                 const rankProgression = {};
                 state.players.forEach(p => {
                     const ranks = [state.players.length];
@@ -876,16 +637,8 @@
                     rankProgression[p.id] = { player: p, improvement: maxRank - finalRank, maxRank, finalRank };
                 });
                 const comeback = Object.values(rankProgression).sort((a,b) => b.improvement - a.improvement)[0];
-                if(comeback && comeback.improvement > 0) {
-                    highlights.push({
-                        icon: '⚡',
-                        label: 'Comeback King',
-                        value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`,
-                        color: comeback.player.color
-                    });
-                }
+                if(comeback && comeback.improvement > 0) highlights.push({ icon: '⚡', label: 'Comeback King', value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`, color: comeback.player.color });
 
-                // Régularité (écart-type le plus faible)
                 const consistency = state.players.map(p => {
                     const scores = state.history.map(r => r[p.id] || 0).filter(s => s > 0);
                     if(scores.length === 0) return { player: p, std: Infinity };
@@ -893,25 +646,9 @@
                     const variance = scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / scores.length;
                     return { player: p, std: Math.sqrt(variance), mean };
                 }).sort((a,b) => a.std - b.std)[0];
-                if(consistency && consistency.std !== Infinity) {
-                    highlights.push({
-                        icon: '🎯',
-                        label: 'Joueur régulier',
-                        value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`,
-                        color: consistency.player.color
-                    });
-                }
-
-                // Partie marathon
-                if(state.history.length >= 20) {
-                    highlights.push({
-                        icon: '🏃',
-                        label: 'Partie Marathon',
-                        value: `${state.history.length} manches jouées`,
-                        color: 'var(--primary)'
-                    });
-                }
-
+                if(consistency && consistency.std !== Infinity) highlights.push({ icon: '🎯', label: 'Joueur régulier', value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`, color: consistency.player.color });
+                
+                if(state.history.length >= 20) highlights.push({ icon: '🏃', label: 'Partie Marathon', value: `${state.history.length} manches jouées`, color: 'var(--primary)' });
                 return highlights;
             }
         };
@@ -943,7 +680,6 @@
             },
             closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); },
             
-            /* --- STATS UI --- */
             showStats() {
                 SoundFX.click();
                 document.getElementById('stats-modal').classList.add('active');
@@ -978,7 +714,7 @@
                 const data = StatsEngine.calculateStats();
                 const container = document.getElementById('stats-content-rank');
                 container.innerHTML = '';
-                if(data.length === 0) { container.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucune statistique disponible (terminez des parties !)</p>'; return; }
+                if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune statistique disponible</p>'; return; }
                 data.forEach((p, idx) => {
                     const el = document.createElement('div');
                     el.className = `rank-item rank-${idx+1}`;
@@ -1003,7 +739,7 @@
                 document.getElementById('stats-content-records').classList.add('hidden');
                 const container = document.getElementById('player-detail-content');
                 container.innerHTML = `
-                    <h2 style="margin:0 0 15px 0; font-size:28px;">${name}</h2>
+                    <h2 class="text-huge" style="margin:0 0 15px 0;">${name}</h2>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                         <div class="stat-detail"><h4>Taux de victoire</h4><div class="value">${p.winRate}%</div></div>
                         <div class="stat-detail"><h4>Série actuelle</h4><div class="value" style="color:${p.streak > 0 ? 'var(--primary)' : 'var(--text)'}">${p.streak} 🏆</div></div>
@@ -1016,7 +752,7 @@
                 const data = StatsEngine.getRecordScores();
                 const container = document.getElementById('stats-content-records');
                 container.innerHTML = '';
-                if(data.length === 0) { container.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
+                if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
                 data.forEach((p, idx) => {
                     const el = document.createElement('div');
                     el.className = 'rank-item';
@@ -1030,16 +766,11 @@
                     container.appendChild(el);
                 });
             },
-            /* --- GAME UI --- */
             renderScoreCards(state) {
-                const sorted = [...state.players].sort((a,b) => {
-                    const aScore = a.total + (state.temp[a.id] || 0);
-                    const bScore = b.total + (state.temp[b.id] || 0);
-                    return bScore - aScore;
-                });
+                const sorted = [...state.players].sort((a,b) => (b.total + (state.temp[b.id]||0)) - (a.total + (state.temp[a.id]||0)));
                 const grid = document.getElementById('grid');
                 const rankChanges = new Set();
-                state.players.forEach((p, idx) => {
+                state.players.forEach(p => {
                     const newRank = sorted.findIndex(s => s.id === p.id);
                     if(p.previousRank !== null && p.previousRank !== newRank) rankChanges.add(p.id);
                     p.previousRank = newRank;
@@ -1095,7 +826,7 @@
             },
             renderChart(state, editIdx) {
                 const ctx = document.getElementById('chart');
-                if(!ctx) return;
+                if(!ctx || typeof Chart === 'undefined') return;
                 if(app.chart) app.chart.destroy();
                 const datasets = state.players.map(p => {
                     let cumul = 0;
@@ -1116,8 +847,7 @@
                     type: 'line',
                     data: { labels, datasets },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
                         plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 13 } } },
                         scales: { x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#86868B' } }, y: { beginAtZero: true, grid: { color: 'rgba(128,128,128,0.08)' }, ticks: { font: { size: 10, weight: '600' }, color: '#86868B' } } },
@@ -1125,106 +855,93 @@
                     }
                 });
             },
-            /* --- VICTORY UI AMÉLIORÉ --- */
-switchVictoryTab(tab) {
-    SoundFX.click();
-    document.querySelectorAll('.victory-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('[id^="victory-tab-"]').forEach(t => t.classList.add('hidden'));
-    
-    const tabIndex = { podium: 1, stats: 2, highlights: 3 };
-    document.querySelector(`.victory-tab:nth-child(${tabIndex[tab]})`).classList.add('active');
-    document.getElementById(`victory-tab-${tab}`).classList.remove('hidden');
-},
+            switchVictoryTab(tab) {
+                SoundFX.click();
+                document.querySelectorAll('.victory-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('[id^="victory-tab-"]').forEach(t => t.classList.add('hidden'));
+                const tabIndex = { podium: 1, stats: 2, highlights: 3 };
+                document.querySelector(`.victory-tab:nth-child(${tabIndex[tab]})`).classList.add('active');
+                document.getElementById(`victory-tab-${tab}`).classList.remove('hidden');
+            },
+            showVictory(winner, score, state) {
+                SoundFX.success();
+                const overlay = document.getElementById('victory');
+                const sorted = [...state.players].sort((a,b) => b.total - a.total);
+                const podium = document.getElementById('podium');
+                podium.innerHTML = '';
+                const top3 = [sorted[1], sorted[0], sorted[2]].filter(p => p);
+                top3.forEach((p) => {
+                    if(!p) return;
+                    const realRank = sorted.indexOf(p) + 1;
+                    const place = document.createElement('div');
+                    place.className = `podium-place p${realRank}`;
+                    place.innerHTML = `
+                        <div class="podium-avatar" style="background:${p.color}30; border:3px solid ${p.color};">
+                            ${realRank === 1 ? '<div class="podium-crown">👑</div>' : ''}
+                            <span style="color:${p.color}">${p.name.substring(0,2)}</span>
+                        </div>
+                        <div class="podium-name" style="color:${p.color}">${p.name}</div>
+                        <div class="podium-score" style="color:${p.color}">${p.total}</div>
+                        <div class="podium-bar">
+                            ${realRank === 1 ? '🥇' : realRank === 2 ? '🥈' : '🥉'}
+                        </div>
+                    `;
+                    podium.appendChild(place);
+                });
 
-showVictory(winner, score, state) {
-    SoundFX.success();
-    const overlay = document.getElementById('victory');
-    
-    // PODIUM
-    const sorted = [...state.players].sort((a,b) => b.total - a.total);
-    const podium = document.getElementById('podium');
-    podium.innerHTML = '';
-    
-    // Afficher top 3 (ou moins si moins de joueurs)
-    const top3 = [sorted[1], sorted[0], sorted[2]].filter(p => p); // Ordre: 2e, 1er, 3e
-    top3.forEach((p, idx) => {
-        if(!p) return;
-        const realRank = sorted.indexOf(p) + 1;
-        const place = document.createElement('div');
-        place.className = `podium-place p${realRank}`;
-        place.innerHTML = `
-            <div class="podium-avatar" style="background:${p.color}30; border:3px solid ${p.color};">
-                ${realRank === 1 ? '<div class="podium-crown">👑</div>' : ''}
-                <span style="color:${p.color}">${p.name.substring(0,2)}</span>
-            </div>
-            <div class="podium-name" style="color:${p.color}">${p.name}</div>
-            <div class="podium-score" style="color:${p.color}">${p.total}</div>
-            <div class="podium-bar">
-                ${realRank === 1 ? '🥇' : realRank === 2 ? '🥈' : '🥉'}
-            </div>
-        `;
-        podium.appendChild(place);
-    });
+                const allPlayersDiv = document.getElementById('victory-all-players');
+                allPlayersDiv.innerHTML = '';
+                sorted.forEach((p, idx) => {
+                    const stats = this.calculatePlayerGameStats(p, state);
+                    const row = document.createElement('div');
+                    row.className = 'player-stats-row';
+                    row.innerHTML = `
+                        <div class="player-stats-rank" style="color:${idx < 3 ? p.color : 'var(--text-sec)'}">${idx+1}</div>
+                        <div class="player-stats-info">
+                            <div class="player-stats-name" style="color:${p.color}">${p.name}</div>
+                            <div style="font-size:11px; color:var(--text-sec);">Meilleur: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}</div>
+                        </div>
+                        <div class="player-stats-score" style="color:${p.color}">${p.total}</div>
+                    `;
+                    allPlayersDiv.appendChild(row);
+                });
 
-    // STATS DÉTAILLÉES
-    const allPlayersDiv = document.getElementById('victory-all-players');
-    allPlayersDiv.innerHTML = '';
-    sorted.forEach((p, idx) => {
-        const stats = this.calculatePlayerGameStats(p, state);
-        const row = document.createElement('div');
-        row.className = 'player-stats-row';
-        row.innerHTML = `
-            <div class="player-stats-rank" style="color:${idx < 3 ? p.color : 'var(--text-sec)'}">${idx+1}</div>
-            <div class="player-stats-info">
-                <div class="player-stats-name" style="color:${p.color}">${p.name}</div>
-                <div style="font-size:11px; color:var(--text-sec);">
-                    Meilleur: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}
-                </div>
-            </div>
-            <div class="player-stats-score" style="color:${p.color}">${p.total}</div>
-        `;
-        allPlayersDiv.appendChild(row);
-    });
-
-    // HIGHLIGHTS
-    const highlights = StatsEngine.calculateGameHighlights(state);
-    const highlightsDiv = document.getElementById('victory-highlights');
-    highlightsDiv.innerHTML = '';
-    if(highlights.length === 0) {
-        highlightsDiv.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucun highlight pour cette partie.</p>';
-    } else {
-        highlights.forEach(h => {
-            const card = document.createElement('div');
-            card.className = 'highlight-card';
-            card.innerHTML = `
-                <div class="highlight-icon">${h.icon}</div>
-                <div class="highlight-text">
-                    <div class="highlight-label">${h.label}</div>
-                    <div class="highlight-value" style="color:${h.color}">${h.value}</div>
-                </div>
-            `;
-            highlightsDiv.appendChild(card);
-        });
-    }
-
-    overlay.classList.add('active');
-    this.switchVictoryTab('podium');
-    this.launchFireworks();
-    if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-},
-
-calculatePlayerGameStats(player, state) {
-    const scores = state.history.map(r => r[player.id] || 0);
-    const nonZero = scores.filter(s => s > 0);
-    const best = Math.max(...scores, 0);
-    const avg = nonZero.length > 0 ? Math.round(nonZero.reduce((a,b) => a+b, 0) / nonZero.length) : 0;
-    let roundsWon = 0;
-    state.history.forEach(round => {
-        const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
-        if(round[player.id] === maxScore && maxScore > 0) roundsWon++;
-    });
-    return { best, avg, roundsWon };
-},
+                const highlights = StatsEngine.calculateGameHighlights(state);
+                const highlightsDiv = document.getElementById('victory-highlights');
+                highlightsDiv.innerHTML = '';
+                if(highlights.length === 0) {
+                    highlightsDiv.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun highlight.</p>';
+                } else {
+                    highlights.forEach(h => {
+                        const card = document.createElement('div');
+                        card.className = 'highlight-card';
+                        card.innerHTML = `
+                            <div class="highlight-icon">${h.icon}</div>
+                            <div class="highlight-text">
+                                <div class="highlight-label">${h.label}</div>
+                                <div class="highlight-value" style="color:${h.color}">${h.value}</div>
+                            </div>
+                        `;
+                        highlightsDiv.appendChild(card);
+                    });
+                }
+                overlay.classList.add('active');
+                this.switchVictoryTab('podium');
+                this.launchFireworks();
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+            },
+            calculatePlayerGameStats(player, state) {
+                const scores = state.history.map(r => r[player.id] || 0);
+                const nonZero = scores.filter(s => s > 0);
+                const best = Math.max(...scores, 0);
+                const avg = nonZero.length > 0 ? Math.round(nonZero.reduce((a,b) => a+b, 0) / nonZero.length) : 0;
+                let roundsWon = 0;
+                state.history.forEach(round => {
+                    const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
+                    if(round[player.id] === maxScore && maxScore > 0) roundsWon++;
+                });
+                return { best, avg, roundsWon };
+            },
             closeVictory() { document.getElementById('victory').classList.remove('active'); },
             launchFireworks() {
                 const duration = 5000;
@@ -1258,17 +975,14 @@ calculatePlayerGameStats(player, state) {
             currentGame: null, activePlayerId: null, editIdx: null, chart: null, savedPlayers: {}, focusMode: false,
 
             init() {
-                // 1. Run Migration
                 Storage.migrateData();
-
                 const savedTheme = localStorage.getItem('sm_theme');
                 if(savedTheme) { document.documentElement.setAttribute('data-theme', savedTheme); this.updateThemeIcon(); }
                 
-                // Safe parsing of saved players
                 try {
                     const savedPlayersData = localStorage.getItem('sm_saved_players');
                     if(savedPlayersData) { this.savedPlayers = JSON.parse(savedPlayersData); }
-                } catch(e) { console.warn("Corrupt saved players data, resetting."); this.savedPlayers = {}; }
+                } catch(e) { console.warn("Corrupt saved players data", e); this.savedPlayers = {}; }
 
                 const game = Storage.loadCurrentGame();
                 if(game) { this.currentGame = game; this.showGame(); } else { this.showSetup(); }
@@ -1290,18 +1004,14 @@ calculatePlayerGameStats(player, state) {
                 document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
             },
             showSetup() {
-                // FIX : Fermer l'écran de victoire s'il est ouvert
                 UI.closeVictory();
-                
                 this.focusMode = false;
                 document.getElementById('game').classList.remove('focus-mode');
                 document.getElementById('dock').classList.add('hidden');
                 this.currentGame = null;
                 this.editIdx = null;
-                
                 document.getElementById('setup').classList.remove('hidden');
                 document.getElementById('game').classList.add('hidden');
-                
                 this.renderGamesList();
             },
             showModeSelection(mode) {
@@ -1334,14 +1044,16 @@ calculatePlayerGameStats(player, state) {
                         if(saved[idx]) { p.name = saved[idx].name; p.color = saved[idx].color; }
                     });
                 }
-                Storage.saveGame(this.currentGame);
+                if(!Storage.saveGame(this.currentGame)) {
+                    UI.showToast('⚠️ Erreur de sauvegarde (Mémoire pleine)', 'error');
+                    return;
+                }
                 this.showGame();
             },
             showGame() {
                 document.getElementById('setup').classList.add('hidden');
                 document.getElementById('game').classList.remove('hidden');
                 document.getElementById('dock').classList.remove('hidden');
-                
                 const isBelote = this.currentGame.mode === 'belote';
                 document.getElementById('mode-title').textContent = isBelote ? 'BELOTE' : 'STANDARD';
                 document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
@@ -1364,12 +1076,13 @@ calculatePlayerGameStats(player, state) {
                 UI.renderScoreCards(this.currentGame.state);
                 UI.renderHistory(this.currentGame.state, this.editIdx);
                 UI.renderChart(this.currentGame.state, this.editIdx);
-                Storage.saveGame(this.currentGame);
+                // We do NOT save on every render to avoid performance hits and QuotaExceeded spamming
+                // Save is done on explicit actions
             },
             renderGamesList() {
                 const games = Storage.loadGames();
                 const list = document.getElementById('games-list');
-                if(!games || games.length === 0) { list.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Aucune partie enregistrée</p>'; return; }
+                if(!games || games.length === 0) { list.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune partie enregistrée</p>'; return; }
                 list.innerHTML = '';
                 games.slice().reverse().forEach(game => {
                     const sortedPlayers = [...game.state.players].sort((a,b) => b.total - a.total);
@@ -1396,12 +1109,10 @@ calculatePlayerGameStats(player, state) {
             },
             loadGame(id) {
                 SoundFX.click();
-                const games = Storage.loadGames();
-                const game = games.find(g => g.id === id);
+                const game = Storage.loadGames().find(g => g.id === id);
                 if(game) {
                     this.savedPlayers[game.mode] = game.state.players.map(p => ({ name: p.name, color: p.color }));
                     localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
-                    
                     this.currentGame = game;
                     localStorage.setItem(Storage.CURRENT_KEY, id); 
                     this.showGame();
@@ -1416,10 +1127,16 @@ calculatePlayerGameStats(player, state) {
                     this.renderGamesList();
                 });
             },
+            clearAll() {
+                UI.confirm("⚠️ Supprimer TOUTES les parties ?", () => {
+                    localStorage.removeItem(Storage.GAMES_KEY);
+                    localStorage.removeItem(Storage.CURRENT_KEY);
+                    UI.showToast('✅ Historique effacé', 'success');
+                    this.renderGamesList();
+                });
+            },
             restartWithSamePlayers() {
-                // FIX : Fermer l'overlay AVANT de tout traiter
                 UI.closeVictory();
-
                 if(!this.currentGame) return;
                 if(!this.currentGame.finished) { this.currentGame.finished = true; Storage.saveGame(this.currentGame); }
                 const oldState = this.currentGame.state;
@@ -1431,7 +1148,10 @@ calculatePlayerGameStats(player, state) {
                     finished: false
                 };
                 this.currentGame = newGame;
-                Storage.saveGame(newGame);
+                if(!Storage.saveGame(newGame)) {
+                    UI.showToast('⚠️ Erreur de sauvegarde (Mémoire pleine)', 'error');
+                    return;
+                }
                 UI.showToast('🎮 Nouvelle partie lancée !', 'success');
                 this.render();
             },
@@ -1444,7 +1164,6 @@ calculatePlayerGameStats(player, state) {
                 const winner = [...this.currentGame.state.players].sort((a,b) => b.total - a.total)[0];
                 UI.showVictory(winner, winner.total, this.currentGame.state);
             },
-            // ==================== PLAYER MODAL ====================
             openModal(playerId) {
                 SoundFX.click();
                 this.editPlayerId = playerId;
@@ -1465,7 +1184,6 @@ calculatePlayerGameStats(player, state) {
                 this.closeModal();
                 this.render();
             },
-            // ==================== SCORE INPUT SHEET ====================
             openSheet(playerId) {
                 SoundFX.click();
                 this.activePlayerId = playerId;
@@ -1540,7 +1258,6 @@ calculatePlayerGameStats(player, state) {
                     this.render();
                 }
             },
-            // ==================== ROUND MANAGEMENT ====================
             validateRound() {
                 SoundFX.click();
                 const state = this.currentGame.state;
@@ -1583,6 +1300,10 @@ calculatePlayerGameStats(player, state) {
                         setTimeout(() => { UI.showVictory(winner, winner.total, state); }, 500);
                     }
                 }
+                // Save game state to storage
+                if(!Storage.saveGame(this.currentGame)) {
+                    UI.showToast('⚠️ Erreur de sauvegarde (Mémoire pleine)', 'error');
+                }
                 state.temp = {};
                 this.render();
             },
@@ -1617,11 +1338,11 @@ calculatePlayerGameStats(player, state) {
                 if(history.length > 0) { this.delRound(history.length - 1); }
             }
         };
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => app.init());
-} else {
-    app.init();
-}
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
     </script>
 </body>
 </html>
