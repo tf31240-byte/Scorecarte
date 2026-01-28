@@ -836,85 +836,86 @@
             getRecordScores() {
                 const stats = this.calculateStats();
                 return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
+            },
+            // ✨ NOUVEAU : Calcul des highlights d'une partie
+            calculateGameHighlights(state) {
+                const highlights = [];
+                
+                // Meilleure manche
+                let bestRound = { score: 0, player: null, roundIdx: 0 };
+                state.history.forEach((round, idx) => {
+                    state.players.forEach(p => {
+                        if(round[p.id] > bestRound.score) {
+                            bestRound = { score: round[p.id], player: p, roundIdx: idx + 1 };
+                        }
+                    });
+                });
+                if(bestRound.player) {
+                    highlights.push({
+                        icon: '🔥',
+                        label: 'Meilleure manche',
+                        value: `${bestRound.player.name} - ${bestRound.score} pts (M${bestRound.roundIdx})`,
+                        color: bestRound.player.color
+                    });
+                }
+
+                // Comeback King (plus grosse remontée)
+                const rankProgression = {};
+                state.players.forEach(p => {
+                    const ranks = [state.players.length];
+                    state.history.forEach((round, histIdx) => {
+                        const totals = state.players.map(pl => {
+                            let c = 0;
+                            state.history.slice(0, histIdx + 1).forEach(r => c += r[pl.id] || 0);
+                            return { id: pl.id, total: c };
+                        }).sort((a,b) => b.total - a.total);
+                        ranks.push(totals.findIndex(t => t.id === p.id) + 1);
+                    });
+                    const maxRank = Math.max(...ranks);
+                    const finalRank = ranks[ranks.length - 1];
+                    rankProgression[p.id] = { player: p, improvement: maxRank - finalRank, maxRank, finalRank };
+                });
+                const comeback = Object.values(rankProgression).sort((a,b) => b.improvement - a.improvement)[0];
+                if(comeback && comeback.improvement > 0) {
+                    highlights.push({
+                        icon: '⚡',
+                        label: 'Comeback King',
+                        value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`,
+                        color: comeback.player.color
+                    });
+                }
+
+                // Régularité (écart-type le plus faible)
+                const consistency = state.players.map(p => {
+                    const scores = state.history.map(r => r[p.id] || 0).filter(s => s > 0);
+                    if(scores.length === 0) return { player: p, std: Infinity };
+                    const mean = scores.reduce((a,b) => a+b, 0) / scores.length;
+                    const variance = scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / scores.length;
+                    return { player: p, std: Math.sqrt(variance), mean };
+                }).sort((a,b) => a.std - b.std)[0];
+                if(consistency && consistency.std !== Infinity) {
+                    highlights.push({
+                        icon: '🎯',
+                        label: 'Joueur régulier',
+                        value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`,
+                        color: consistency.player.color
+                    });
+                }
+
+                // Partie marathon
+                if(state.history.length >= 20) {
+                    highlights.push({
+                        icon: '🏃',
+                        label: 'Partie Marathon',
+                        value: `${state.history.length} manches jouées`,
+                        color: 'var(--primary)'
+                    });
+                }
+
+                return highlights;
             }
         };
-// ✨ NOUVEAU : Calcul des highlights d'une partie
-calculateGameHighlights(state) {
-    const highlights = [];
-    
-    // Meilleure manche
-    let bestRound = { score: 0, player: null, roundIdx: 0 };
-    state.history.forEach((round, idx) => {
-        state.players.forEach(p => {
-            if(round[p.id] > bestRound.score) {
-                bestRound = { score: round[p.id], player: p, roundIdx: idx + 1 };
-            }
-        });
-    });
-    if(bestRound.player) {
-        highlights.push({
-            icon: '🔥',
-            label: 'Meilleure manche',
-            value: `${bestRound.player.name} - ${bestRound.score} pts (M${bestRound.roundIdx})`,
-            color: bestRound.player.color
-        });
-    }
 
-    // Comeback King (plus grosse remontée)
-    const rankProgression = {};
-    state.players.forEach(p => {
-        const ranks = [state.players.length];
-        state.history.forEach((round, histIdx) => {
-            const totals = state.players.map(pl => {
-                let c = 0;
-                state.history.slice(0, histIdx + 1).forEach(r => c += r[pl.id] || 0);
-                return { id: pl.id, total: c };
-            }).sort((a,b) => b.total - a.total);
-            ranks.push(totals.findIndex(t => t.id === p.id) + 1);
-        });
-        const maxRank = Math.max(...ranks);
-        const finalRank = ranks[ranks.length - 1];
-        rankProgression[p.id] = { player: p, improvement: maxRank - finalRank, maxRank, finalRank };
-    });
-    const comeback = Object.values(rankProgression).sort((a,b) => b.improvement - a.improvement)[0];
-    if(comeback && comeback.improvement > 0) {
-        highlights.push({
-            icon: '⚡',
-            label: 'Comeback King',
-            value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`,
-            color: comeback.player.color
-        });
-    }
-
-    // Régularité (écart-type le plus faible)
-    const consistency = state.players.map(p => {
-        const scores = state.history.map(r => r[p.id] || 0).filter(s => s > 0);
-        if(scores.length === 0) return { player: p, std: Infinity };
-        const mean = scores.reduce((a,b) => a+b, 0) / scores.length;
-        const variance = scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / scores.length;
-        return { player: p, std: Math.sqrt(variance), mean };
-    }).sort((a,b) => a.std - b.std)[0];
-    if(consistency && consistency.std !== Infinity) {
-        highlights.push({
-            icon: '🎯',
-            label: 'Joueur régulier',
-            value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`,
-            color: consistency.player.color
-        });
-    }
-
-    // Partie marathon
-    if(state.history.length >= 20) {
-        highlights.push({
-            icon: '🏃',
-            label: 'Partie Marathon',
-            value: `${state.history.length} manches jouées`,
-            color: 'var(--primary)'
-        });
-    }
-
-    return highlights;
-}
         // ==================== UI LAYER ====================
         const UI = {
             showToast(message, type = 'default') {
@@ -1624,7 +1625,3 @@ if (document.readyState === 'loading') {
     </script>
 </body>
 </html>
-
-
-
-
