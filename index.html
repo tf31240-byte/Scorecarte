@@ -120,8 +120,25 @@
         .h-scores { display: flex; flex: 1; justify-content: space-between; align-items: center; min-width: max-content; padding-right: 5px; cursor: pointer; }
         .h-score-item { text-align: center; min-width: 50px; padding: 0 5px; }
 
-        .sel-box { background: var(--card); padding: 12px; border-radius: 18px; text-align: center; flex: 1; border: 3px solid transparent; min-width: 80px; transition: transform 0.2s; }
-        .sel-box.active { border-color: var(--p-color); transform: scale(1.05); }
+               .sel-box { 
+            background: var(--card); 
+            padding: 12px; 
+            border-radius: 18px; 
+            text-align: center; 
+            flex: 1; 
+            border: 3px solid transparent; 
+            min-width: 80px; 
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s; 
+            position: relative;
+            z-index: 1;
+            margin-bottom: 0;
+        }
+        .sel-box.active { 
+            border-color: var(--p-color); 
+            transform: scale(1.04); /* Réduit légèrement pour éviter le débordement */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            z-index: 2;
+        }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); cursor: pointer; }
         .btn-nb:active { transform: translateY(3px); box-shadow: none; }
@@ -361,7 +378,7 @@
     <!-- SHEET CLAVIER -->
     <div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
-            <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:5px;"></div>
+        <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding: 10px 20px 5px 20px; scroll-snap-type: x mandatory;"></div>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
                 <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
                 <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
@@ -1346,3 +1363,4 @@
     </script>
 </body>
 </html>
+
