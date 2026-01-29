@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-   <meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>ScoreMaster v12.5 (Final)</title>
+    <meta charset="UTF-8">
+    <!-- 1. META TAGS FIX (iPhone Dark Mode) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ScoreMaster v12.6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -44,15 +47,43 @@
             }
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
+        
+        /* 1. CSS FIX (HTML/BODY) */
+        html {
+            height: -webkit-fill-available;
+        }
         body { 
             margin: 0; 
-            background: var(--bg-gradient); /* Essentiel pour voir le verre */
+            background: var(--bg); 
             background-attachment: fixed;
             color: var(--text); 
             padding-bottom: 140px; 
-            transition: background 0.3s; 
+            transition: background 0.3s;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
         }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; padding-top: env(safe-area-inset-top); animation: slideIn 0.4s ease-out; position: relative; z-index: 1; }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-gradient);
+            z-index: -1;
+        }
+
+        /* 1. CSS FIX (CONTAINER) */
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            padding-top: max(20px, env(safe-area-inset-top)); /* MODIFIÉ */
+            animation: slideIn 0.4s ease-out; 
+            position: relative; 
+            z-index: 1; 
+        }
+        
         .hidden { display: none !important; }
         
         /* Typography Helpers */
@@ -69,7 +100,7 @@
         /* --- GLASSMORPHISM COMPONENTS --- */
         .modal-overlay { 
             position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.1); /* Overlay léger pour faire ressortir le verre */
+            background: rgba(0,0,0,0.1); 
             backdrop-filter: blur(8px); 
             -webkit-backdrop-filter: blur(8px);
             z-index: 4000; 
@@ -84,7 +115,6 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         
         .modal-box, .sheet-content, .victory-box { 
-            /* CORE GLASSMORPHISM */
             background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur)) saturate(180%);
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
@@ -108,7 +138,6 @@
         /* --- UI ELEMENTS --- */
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .theme-toggle, .btn-stats, .btn-focus { 
-            /* Slight glass feel for header buttons */
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border); 
@@ -178,9 +207,9 @@
         }
         .sel-box.active { 
             border-color: var(--p-color); 
-            transform: scale(1.04); /* FIX: Légèrement réduit pour éviter le débordement */
+            transform: scale(1.04); 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            z-index: 2; /* FIX: Assure que la bordure passe dessus */
+            z-index: 2; 
         }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .btn-nb { background: var(--card); border: none; height: 58px; border-radius: 16px; font-size: 22px; font-weight: 700; color: var(--text); box-shadow: 0 3px 0 var(--border); cursor: pointer; }
@@ -201,28 +230,111 @@
         .btn-main:active { transform: scale(0.98); }
         .btn-main.editing { background: var(--dealer); color: #000; }
 
-        /* --- FOCUS MODE --- */
-        .focus-mode .chart-box, .focus-mode .h-row, .focus-mode #history, .focus-mode #dock, .focus-mode .header-controls {
-            opacity: 0; pointer-events: none; transform: translateY(20px);
+        /* 2. CSS FIX (FOCUS MODE OPTIMIZED) */
+        /* --- FOCUS MODE (AMÉLIORÉ) --- */
+        .focus-mode .chart-box, 
+        .focus-mode .h-row, 
+        .focus-mode #history, 
+        .focus-mode #dock, 
+        .focus-mode .header-controls {
+            opacity: 0; 
+            pointer-events: none;
         }
-        .focus-mode .players-grid { transform: scale(1.15) translateY(10vh); gap: 20px; }
+
+        .focus-mode .players-grid { 
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) !important;
+            width: calc(100% - 40px);
+            max-width: 500px;
+            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            z-index: 100;
+        }
+
+        .focus-mode .p-card {
+            padding: 35px 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            border-width: 4px;
+            background: var(--card);
+        }
+
+        .focus-mode .p-score {
+            font-size: 64px !important;
+            letter-spacing: -3px;
+        }
+
+        .focus-mode .rank-badge {
+            font-size: 20px;
+            padding: 8px 16px;
+            top: -16px;
+            left: 16px;
+        }
+
+        .focus-mode .p-name-btn {
+            font-size: 14px;
+            padding: 6px 14px;
+        }
+
+        .focus-mode .p-temp {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
         .focus-mode-cta {
-            /* Glass Floating Button */
-            position: fixed; top: 20px; right: 20px; 
+            position: fixed; 
+            top: max(20px, env(safe-area-inset-top)); 
+            right: 20px; 
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            color: var(--bg);
-            padding: 10px 15px; border-radius: 20px; font-weight: 700; z-index: 9999;
-            cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            color: var(--text);
+            padding: 12px 18px; 
+            border-radius: 20px; 
+            font-weight: 700; 
+            font-size: 13px;
+            z-index: 9999;
+            cursor: pointer; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s;
         }
         .focus-mode .focus-mode-cta { opacity: 1; pointer-events: auto; }
 
-        /* --- STATS STYLES --- */
+        /* --- STATS STYLES & FILTERS (3A) --- */
         .stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
         .stats-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .mode-filter { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 15px; 
+            padding: 0 5px; 
+        }
+
+        .filter-btn, .filter-btn-records {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .filter-btn.active, .filter-btn-records.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
         .rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
         .rank-item:hover { background: rgba(0,0,0,0.03); }
         .rank-item:last-child { border-bottom: none; }
@@ -237,13 +349,24 @@
         .stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(--text-sec); }
         .stat-detail .value { font-size: 24px; font-weight: 900; color: var(--text); }
 
-        /* --- GLASS TOAST --- */
+        /* --- GLASS TOAST (2. UPDATE) --- */
         .toast { 
-            position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-100px); 
+            position: fixed; 
+            top: max(60px, calc(env(safe-area-inset-top) + 40px)); /* MODIFIÉ */
+            left: 50%; 
+            transform: translateX(-50%) translateY(-100px); 
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            padding: 16px 24px; border-radius: 20px; box-shadow: var(--glass-shadow); font-weight: 700; z-index: 5000; opacity: 0; transition: all 0.3s; white-space: nowrap;
+            padding: 16px 24px; 
+            border-radius: 20px; 
+            box-shadow: var(--glass-shadow); 
+            font-weight: 700; 
+            z-index: 5000; 
+            opacity: 0; 
+            transition: all 0.3s; 
+            white-space: nowrap;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast.success { border-color: var(--success); background: var(--success); color: white; border: none; } 
@@ -337,12 +460,27 @@
                 <div id="tab-rank" class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
                 <div id="tab-records" class="stats-tab" onclick="UI.switchStatsTab('records')">Records</div>
             </div>
-            <div id="stats-content-rank"></div>
+            <!-- 3B & 3C. HTML FILTERS UPDATE -->
+            <div id="stats-content-rank">
+                <div class="mode-filter">
+                    <button class="filter-btn active" onclick="UI.filterStats('all')">Tous</button>
+                    <button class="filter-btn" onclick="UI.filterStats('belote')">🃏 Belote</button>
+                    <button class="filter-btn" onclick="UI.filterStats('standard')">🎲 Standard</button>
+                </div>
+                <div id="ranking-list"></div>
+            </div>
             <div id="stats-content-player" class="hidden">
                 <button onclick="UI.showRanking()" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:14px; margin-bottom:10px;">← Retour au classement</button>
                 <div id="player-detail-content"></div>
             </div>
-            <div id="stats-content-records" class="hidden"></div>
+            <div id="stats-content-records" class="hidden">
+                <div class="mode-filter">
+                    <button class="filter-btn-records active" onclick="UI.filterRecords('all')">Tous</button>
+                    <button class="filter-btn-records" onclick="UI.filterRecords('belote')">🃏 Belote</button>
+                    <button class="filter-btn-records" onclick="UI.filterRecords('standard')">🎲 Standard</button>
+                </div>
+                <div id="records-list"></div>
+            </div>
         </div>
     </div>
 
@@ -655,8 +793,12 @@
 
         // ==================== STATS ENGINE ====================
         const StatsEngine = {
-            calculateStats() {
-                const games = Storage.loadGames().filter(g => g.finished); 
+            // 3D. MODIFIER calculateStats
+            calculateStats(filterMode = null) { 
+                const games = Storage.loadGames()
+                    .filter(g => g.finished)
+                    .filter(g => !filterMode || g.mode === filterMode); 
+                
                 const stats = {};
                 games.forEach(game => {
                     const winner = game.state.players.sort((a,b) => b.total - a.total)[0];
@@ -689,8 +831,9 @@
                     .filter(p => p.played >= 1)
                     .sort((a,b) => b.winRate - a.winRate);
             },
-            getRecordScores() {
-                const stats = this.calculateStats();
+            // 3E. MODIFIER getRecordScores
+            getRecordScores(filterMode = null) {
+                const stats = this.calculateStats(filterMode);
                 return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
             },
             calculateGameHighlights(state) {
@@ -737,6 +880,10 @@
 
         // ==================== UI LAYER ====================
         const UI = {
+            // 3F. PROPERTIES
+            currentStatsFilter: 'all',
+            currentRecordsFilter: 'all',
+
             showToast(message, type = 'default') {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
@@ -792,9 +939,26 @@
                 SoundFX.click();
                 this.switchStatsTab('rank');
             },
+            // 3G. FILTER METHODS
+            filterStats(mode) {
+                SoundFX.click();
+                this.currentStatsFilter = mode;
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                this.renderRanking();
+            },
+            filterRecords(mode) {
+                SoundFX.click();
+                this.currentRecordsFilter = mode;
+                document.querySelectorAll('.filter-btn-records').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                this.renderRecords();
+            },
+            // 3H. MODIFIER renderRanking
             renderRanking() {
-                const data = StatsEngine.calculateStats();
-                const container = document.getElementById('stats-content-rank');
+                const filterMode = this.currentStatsFilter === 'all' ? null : this.currentStatsFilter;
+                const data = StatsEngine.calculateStats(filterMode);
+                const container = document.getElementById('ranking-list');
                 container.innerHTML = '';
                 if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune statistique disponible</p>'; return; }
                 data.forEach((p, idx) => {
@@ -812,8 +976,10 @@
                     container.appendChild(el);
                 });
             },
+            // 3J. MODIFIER renderPlayerDetail
             renderPlayerDetail(name) {
-                const allStats = StatsEngine.calculateStats();
+                const filterMode = this.currentStatsFilter === 'all' ? null : this.currentStatsFilter;
+                const allStats = StatsEngine.calculateStats(filterMode);
                 const p = allStats.find(s => s.name === name);
                 if(!p) return;
                 document.getElementById('stats-content-rank').classList.add('hidden');
@@ -830,9 +996,11 @@
                     </div>
                 `;
             },
+            // 3I. MODIFIER renderRecords
             renderRecords() {
-                const data = StatsEngine.getRecordScores();
-                const container = document.getElementById('stats-content-records');
+                const filterMode = this.currentRecordsFilter === 'all' ? null : this.currentRecordsFilter;
+                const data = StatsEngine.getRecordScores(filterMode);
+                const container = document.getElementById('records-list');
                 container.innerHTML = '';
                 if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
                 data.forEach((p, idx) => {
@@ -1059,7 +1227,11 @@
             init() {
                 Storage.migrateData();
                 const savedTheme = localStorage.getItem('sm_theme');
-                if(savedTheme) { document.documentElement.setAttribute('data-theme', savedTheme); this.updateThemeIcon(); }
+                if(savedTheme) { 
+                    document.documentElement.setAttribute('data-theme', savedTheme); 
+                    this.updateThemeIcon(); 
+                    this.updateThemeColor(); // 3L. ADD CALL
+                }
                 
                 try {
                     const savedPlayersData = localStorage.getItem('sm_saved_players');
@@ -1077,7 +1249,18 @@
                 root.setAttribute('data-theme', newTheme);
                 localStorage.setItem('sm_theme', newTheme);
                 this.updateThemeIcon();
+                this.updateThemeColor(); // 3L. ADD CALL
                 if(navigator.vibrate) navigator.vibrate(30);
+            },
+            // 3K. ADD METHOD
+            updateThemeColor() {
+                const theme = document.documentElement.getAttribute('data-theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
+                const metaTheme = document.querySelector('meta[name="theme-color"]');
+                if(metaTheme) {
+                    metaTheme.setAttribute('content', isDark ? '#000000' : '#F5F5F7');
+                }
             },
             updateThemeIcon() {
                 const theme = document.documentElement.getAttribute('data-theme');
@@ -1158,8 +1341,6 @@
                 UI.renderScoreCards(this.currentGame.state);
                 UI.renderHistory(this.currentGame.state, this.editIdx);
                 UI.renderChart(this.currentGame.state, this.editIdx);
-                // We do NOT save on every render to avoid performance hits and QuotaExceeded spamming
-                // Save is done on explicit actions
             },
             renderGamesList() {
                 const games = Storage.loadGames();
@@ -1382,7 +1563,6 @@
                         setTimeout(() => { UI.showVictory(winner, winner.total, state); }, 500);
                     }
                 }
-                // Save game state to storage
                 if(!Storage.saveGame(this.currentGame)) {
                     UI.showToast('⚠️ Erreur de sauvegarde (Mémoire pleine)', 'error');
                 }
@@ -1428,4 +1608,3 @@
     </script>
 </body>
 </html>
-
