@@ -47,7 +47,9 @@
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, system-ui, sans-serif; }
         
-        html { height: -webkit-fill-available; }
+        html {
+            height: -webkit-fill-available;
+        }
         
         body { 
             margin: 0; 
@@ -63,7 +65,10 @@
         body::before {
             content: '';
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: var(--bg-gradient);
             z-index: -1;
         }
@@ -220,8 +225,7 @@
         .btn-main { width: 100%; background: var(--text); color: var(--bg); border: none; padding: 20px; border-radius: 20px; font-size: 16px; font-weight: 900; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s; }
         .btn-main:active { transform: scale(0.98); }
         .btn-main.editing { background: var(--dealer); color: #000; }
-
-        /* --- OVERLAY FOND MODE ZEN --- */
+/* --- OVERLAY FOND MODE ZEN --- */
         .zen-overlay {
             position: fixed;
             inset: 0;
@@ -231,183 +235,278 @@
             pointer-events: none;
             transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .focus-mode .zen-overlay { opacity: 1; pointer-events: auto; }
 
-        @keyframes zoomIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes zoomOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.8); } }
+        .focus-mode .zen-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-        /* --- FOCUS MODE --- */
-        .focus-mode .chart-box, 
-        .focus-mode .h-row, 
-        .focus-mode #history {
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transform: translateY(20px) scale(0.95) !important;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        .focus-mode #dock {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: translateX(-50%) !important;
+            z-index: 200;
+            animation: dockSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards;
         }
-        .focus-mode .header-controls {
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transform: translateY(-20px) !important;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+        @keyframes dockSlideUp {
+            0% { opacity: 0; transform: translateX(-50%) translateY(50px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-    .focus-mode #dock {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: translateX(-50%) !important;
-    z-index: 200;
-    /* Remonte le bouton au-dessus de la barre de menu iPhone */
-    bottom: calc(30px + env(safe-area-inset-bottom)); 
-    animation: dockSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards;
+/* --- LE BOUTON OEIL EN MODE ZEN --- */
+.focus-mode .btn-focus {
+    position: fixed;
+    top: max(15px, env(safe-area-inset-top)); 
+    right: 15px;
+    z-index: 2000; 
+    background: var(--card);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transform: scale(1.1); 
 }
-        @keyframes dockSlideUp { 0% { opacity: 0; transform: translateX(-50%) translateY(50px); } 100% { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+.focus-mode header > *:not(.btn-focus) {
+    opacity: 0;
+    pointer-events: none;
+}
+/* --- CORRECTION DE LA GRILLE (Plus de fond noir vide) --- */
+.focus-mode .players-grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 280px); 
+    padding: max(20px, env(safe-area-inset-top)) 15px 0 15px;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-content: start; 
+    gap: 15px;
+    z-index: 100; 
+    background: var(--bg); 
+    transform: none !important;
+    opacity: 1 !important;
+    animation: simpleFadeIn 0.3s ease-out backwards;
+}
+
+@keyframes simpleFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
 .focus-mode .p-card {
-    padding: 28px 15px; /* Plus compact verticalement (était 38px) */
-    box-shadow: 0 25px 70px rgba(0,0,0,0.2);
-    border-width: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%; 
+    min-height: 140px; 
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    border-width: 0; 
     background: var(--card);
-    animation: cardZoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    animation: none !important; 
     transition: none !important;
 }
-        .focus-mode .p-card {
-            padding: 38px 18px;
-            box-shadow: 0 25px 70px rgba(0,0,0,0.2);
-            border-width: 4px;
-            background: var(--card);
-            animation: cardZoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-            transition: none !important;
-        }
-        .focus-mode .p-card:nth-child(1) { animation-delay: 0.2s; }
-        .focus-mode .p-card:nth-child(2) { animation-delay: 0.3s; }
-        .focus-mode .p-card:nth-child(3) { animation-delay: 0.4s; }
-        .focus-mode .p-card:nth-child(4) { animation-delay: 0.5s; }
-        @keyframes cardZoomIn { 0% { opacity: 0; transform: scale(0.6) rotate(-5deg); } 70% { transform: scale(1.05) rotate(1deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
 
-        .focus-mode .rank-change { animation: none !important; }
+.focus-mode .p-card:nth-child(n) { animation-delay: 0s; }
+
+.focus-mode .rank-change { animation: none !important; }
+
 .focus-mode .p-score {
-    font-size: 58px !important; /* Plus petit pour tenir (était 68px) */
+    font-size: 68px !important;
     letter-spacing: -3px;
 }
-        .focus-mode .p-score:active { animation: scoreClick 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes scoreClick { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
 
-        .focus-mode .rank-badge {
-            font-size: 22px; padding: 10px 18px; top: -18px; left: 18px;
-            animation: badgePopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards;
-        }
-        @keyframes badgePopIn { 0% { opacity: 0; transform: scale(0) rotate(-180deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+.focus-mode .p-score:active {
+    animation: scoreClick 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
-        .focus-mode .p-name-btn { font-size: 15px; padding: 7px 16px; }
-        .focus-mode .p-temp { font-size: 20px; margin-top: 12px; }
+@keyframes scoreClick {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
 
-        .focus-mode-cta {
-            position: fixed; top: max(25px, calc(env(safe-area-inset-top) + 5px)); right: 25px; 
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-            color: var(--text); padding: 14px 22px; border-radius: 24px; font-weight: 800; font-size: 14px;
-            z-index: 9999; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            animation: ctaSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s backwards;
-        }
-        @keyframes ctaSlideIn { 0% { opacity: 0; transform: translateX(100px); } 100% { opacity: 1; transform: translateX(0); } }
-        .focus-mode .focus-mode-cta { opacity: 1; pointer-events: auto; }
-        .focus-mode-cta:active { transform: scale(0.95); }
+.focus-mode .rank-badge {
+    font-size: 22px;
+    padding: 10px 18px;
+    top: -18px;
+    left: 18px;
+    animation: badgePopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards;
+}
 
-        /* --- STATS STYLES --- */
-        .stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
-        .stats-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        .mode-filter { display: flex; gap: 8px; margin-bottom: 15px; padding: 0 5px; }
-        
-        .filter-btn, .filter-btn-records {
-            flex: 1; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border);
-            background: var(--card); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text);
-        }
-        .filter-btn.active, .filter-btn-records.active { background: var(--primary); color: white; border-color: var(--primary); }
-        
-        .rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
-        .rank-item:hover { background: rgba(0,0,0,0.03); }
-        .rank-item:last-child { border-bottom: none; }
-        .rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
-        .rank-1 .rank-num { color: #FFD700; } .rank-2 .rank-num { color: #C0C0C0; } .rank-3 .rank-num { color: #CD7F32; }
-        .rank-info { flex: 1; }
-        .rank-name { font-weight: 900; font-size: 16px; }
-        .rank-sub { font-size: 12px; color: var(--text-sec); }
-        .rank-val { font-weight: 800; font-size: 18px; }
+@keyframes badgePopIn {
+    0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
 
-        .stat-detail { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(--text-sec); }
-        .stat-detail .value { font-size: 24px; font-weight: 900; color: var(--text); }
+.focus-mode .p-name-btn {
+    font-size: 15px;
+    padding: 7px 16px;
+}
 
-        .toast { 
-            position: fixed; top: max(60px, calc(env(safe-area-inset-top) + 40px)); left: 50%; 
-            transform: translateX(-50%) translateY(-100px); background: var(--glass-bg);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); padding: 16px 24px; border-radius: 20px; 
-            box-shadow: var(--glass-shadow); font-weight: 700; z-index: 5000; opacity: 0; 
-            transition: all 0.3s; white-space: nowrap;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .toast.success { border-color: var(--success); background: var(--success); color: white; border: none; } 
-        .toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; border: none; }
-        .toast.error { border-color: var(--danger); background: var(--danger); color: white; border: none; }
+.focus-mode .p-temp {
+    font-size: 20px;
+    margin-top: 12px;
+}
 
-        .victory-overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 6000; 
-            display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; 
-            transition: 0.3s; overflow-y: auto; padding: 20px; 
-        }
-        .victory-overlay.active { opacity: 1; pointer-events: auto; }
-        
-        .podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 8px; margin: 30px 0; height: 180px; }
-        .podium-place { flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; animation: podiumRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .podium-place.p1 { animation-delay: 0.2s; } .podium-place.p2 { animation-delay: 0s; } .podium-place.p3 { animation-delay: 0.1s; }
-        .podium-avatar { 
-            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 28px; font-weight: 900; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; 
-        }
-        .podium-crown { position: absolute; top: -15px; font-size: 24px; animation: badgeBounce 1s infinite; }
-        .podium-name { font-size: 11px; font-weight: 900; text-align: center; margin-bottom: 6px; }
-        .podium-score { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
-        .podium-bar { 
-            width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; 
-            font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); 
-        }
-        .podium-place.p1 .podium-bar { background: #FFD700; height: 100px; }
-        .podium-place.p2 .podium-bar { background: #C0C0C0; height: 70px; }
-        .podium-place.p3 .podium-bar { background: #CD7F32; height: 50px; }
+.focus-mode-cta {
+    position: fixed;
+    bottom: 300px; 
+    right: 20px;
+    top: auto; 
+    background: var(--primary); 
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: none;
+    padding: 12px 20px; 
+    border-radius: 30px; 
+    font-weight: 800; 
+    font-size: 13px;
+    z-index: 9999;
+    cursor: pointer;
+    opacity: 0; 
+    pointer-events: none; 
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(20px) scale(0.9); 
+}
 
-        .victory-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
-        .victory-tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; opacity: 0.5; transition: 0.2s; }
-        .victory-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+@keyframes ctaSlideIn {
+    0% { opacity: 0; transform: translateX(100px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
 
-        .highlight-card { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
-        .highlight-icon { font-size: 28px; }
-        .highlight-text { flex: 1; }
-        .highlight-label { font-size: 11px; color: var(--text-sec); font-weight: 600; }
-        .highlight-value { font-size: 14px; font-weight: 900; }
+.focus-mode .focus-mode-cta { 
+    opacity: 1;
+    pointer-events: auto; 
+    transform: translateY(0) scale(1);
+}
+.focus-mode-cta:active { transform: scale(0.95); }
 
-        .player-stats-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
-        .player-stats-row:last-child { border-bottom: none; }
-        .player-stats-rank { width: 30px; font-size: 18px; font-weight: 900; }
-        .player-stats-info { flex: 1; }
-        .player-stats-name { font-size: 14px; font-weight: 900; }
-        .player-stats-score { font-size: 16px; font-weight: 900; }
+/* --- STATS STYLES --- */
+.stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
+.stats-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        @keyframes podiumRise { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.mode-filter { 
+    display: flex; 
+    gap: 8px; 
+    margin-bottom: 15px; 
+    padding: 0 5px; 
+}
 
-        #confirm-modal .modal-box { text-align: center; }
-        #confirm-msg { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
-        .confirm-actions { display: flex; gap: 10px; }
-        .btn-confirm-no { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-        .btn-confirm-yes { background: var(--danger); color: white; border: 1px solid var(--danger); }
+.filter-btn, .filter-btn-records {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+}
+
+.filter-btn.active, .filter-btn-records.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
+.rank-item:hover { background: rgba(0,0,0,0.03); }
+.rank-item:last-child { border-bottom: none; }
+.rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
+.rank-1 .rank-num { color: #FFD700; } .rank-2 .rank-num { color: #C0C0C0; } .rank-3 .rank-num { color: #CD7F32; }
+.rank-info { flex: 1; }
+.rank-name { font-weight: 900; font-size: 16px; }
+.rank-sub { font-size: 12px; color: var(--text-sec); }
+.rank-val { font-weight: 800; font-size: 18px; }
+
+.stat-detail { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
+.stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(--text-sec); }
+.stat-detail .value { font-size: 24px; font-weight: 900; color: var(--text); }
+
+.toast { 
+    position: fixed; 
+    top: max(60px, calc(env(safe-area-inset-top) + 40px)); 
+    left: 50%; 
+    transform: translateX(-50%) translateY(-100px); 
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    padding: 16px 24px; 
+    border-radius: 20px; 
+    box-shadow: var(--glass-shadow); 
+    font-weight: 700; 
+    z-index: 5000; 
+    opacity: 0; 
+    transition: all 0.3s; 
+    white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--success); background: var(--success); color: white; border: none; } 
+.toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; border: none; }
+.toast.error { border-color: var(--danger); background: var(--danger); color: white; border: none; }
+
+.victory-overlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 6000; 
+    display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; 
+    transition: 0.3s; overflow-y: auto; padding: 20px; 
+}
+.victory-overlay.active { opacity: 1; pointer-events: auto; }
+
+.podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 8px; margin: 30px 0; height: 180px; }
+.podium-place { flex: 1; max-width: 110px; display: flex; flex-direction: column; align-items: center; animation: podiumRise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.podium-place.p1 { animation-delay: 0.2s; } .podium-place.p2 { animation-delay: 0s; } .podium-place.p3 { animation-delay: 0.1s; }
+.podium-avatar { 
+    width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+    font-size: 28px; font-weight: 900; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; 
+}
+.podium-crown { position: absolute; top: -15px; font-size: 24px; animation: badgeBounce 1s infinite; }
+.podium-name { font-size: 11px; font-weight: 900; text-align: center; margin-bottom: 6px; }
+.podium-score { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+.podium-bar { 
+    width: 100%; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: center; 
+    font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); 
+}
+.podium-place.p1 .podium-bar { background: #FFD700; height: 100px; }
+.podium-place.p2 .podium-bar { background: #C0C0C0; height: 70px; }
+.podium-place.p3 .podium-bar { background: #CD7F32; height: 50px; }
+
+.victory-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+.victory-tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; opacity: 0.5; transition: 0.2s; }
+.victory-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+.highlight-card { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
+.highlight-icon { font-size: 28px; }
+.highlight-text { flex: 1; }
+.highlight-label { font-size: 11px; color: var(--text-sec); font-weight: 600; }
+.highlight-value { font-size: 14px; font-weight: 900; }
+
+.player-stats-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
+.player-stats-row:last-child { border-bottom: none; }
+.player-stats-rank { width: 30px; font-size: 18px; font-weight: 900; }
+.player-stats-info { flex: 1; }
+.player-stats-name { font-size: 14px; font-weight: 900; }
+.player-stats-score { font-size: 16px; font-weight: 900; }
+
+@keyframes podiumRise { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+#confirm-modal .modal-box { text-align: center; }
+#confirm-msg { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
+.confirm-actions { display: flex; gap: 10px; }
+.btn-confirm-no { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-confirm-yes { background: var(--danger); color: white; border: 1px solid var(--danger); }
     </style>
 </head>
 <body>
-
     <div id="toast" class="toast"></div>
-    <div id="zen-overlay" class="zen-overlay"></div>
+    
 
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-box">
@@ -419,43 +518,38 @@
         </div>
     </div>
 
-   <div id="stats-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeStats()">
-    <div class="modal-box large">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0">📊 Statistiques</h2>
-            <button onclick="UI.closeStats()" style="background:none; border:none; font-size:24px; color:var(--text); cursor:pointer;">✕</button>
-        </div>
-        <div class="stats-tabs">
-            <div id="tab-rank" class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
-            <div id="tab-records" class="stats-tab" onclick="UI.switchStatsTab('records')">Records</div>
-        </div>
-        
-        <!-- ONGLET CLASSEMENT -->
-        <div id="stats-content-rank">
-            <div class="mode-filter">
-                <!-- Bouton Tous supprimé -->
-                <button class="filter-btn active" onclick="UI.filterStats('belote')">🃏 Belote</button>
-                <button class="filter-btn" onclick="UI.filterStats('standard')">🎲 Standard</button>
+    <div id="stats-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeStats()">
+        <div class="modal-box large">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0">📊 Statistiques</h2>
+                <button onclick="UI.closeStats()" style="background:none; border:none; font-size:24px; color:var(--text); cursor:pointer;">✕</button>
             </div>
-            <div id="ranking-list"></div>
-        </div>
-        
-        <div id="stats-content-player" class="hidden">
-            <button onclick="UI.showRanking()" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:14px; margin-bottom:10px; cursor:pointer;">← Retour au classement</button>
-            <div id="player-detail-content"></div>
-        </div>
-        
-        <!-- ONGLET RECORDS -->
-        <div id="stats-content-records" class="hidden">
-            <div class="mode-filter">
-                <!-- Bouton Tous supprimé -->
-                <button class="filter-btn-records active" onclick="UI.filterRecords('belote')">🃏 Belote</button>
-                <button class="filter-btn-records" onclick="UI.filterRecords('standard')">🎲 Standard</button>
+            <div class="stats-tabs">
+                <div id="tab-rank" class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
+                <div id="tab-records" class="stats-tab" onclick="UI.switchStatsTab('records')">Records</div>
             </div>
-            <div id="records-list"></div>
+            <div id="stats-content-rank">
+                <div class="mode-filter">
+                    <button class="filter-btn active" onclick="UI.filterStats('all')">Tous</button>
+                    <button class="filter-btn" onclick="UI.filterStats('belote')">🃏 Belote</button>
+                    <button class="filter-btn" onclick="UI.filterStats('standard')">🎲 Standard</button>
+                </div>
+                <div id="ranking-list"></div>
+            </div>
+            <div id="stats-content-player" class="hidden">
+                <button onclick="UI.showRanking()" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:14px; margin-bottom:10px; cursor:pointer;">← Retour au classement</button>
+                <div id="player-detail-content"></div>
+            </div>
+            <div id="stats-content-records" class="hidden">
+                <div class="mode-filter">
+                    <button class="filter-btn-records active" onclick="UI.filterRecords('all')">Tous</button>
+                    <button class="filter-btn-records" onclick="UI.filterRecords('belote')">🃏 Belote</button>
+                    <button class="filter-btn-records" onclick="UI.filterRecords('standard')">🎲 Standard</button>
+                </div>
+                <div id="records-list"></div>
+            </div>
         </div>
     </div>
-</div>
 
     <div id="modal-player-count" class="modal-overlay" onclick="if(event.target===this) document.getElementById('modal-player-count').classList.remove('active')">
         <div class="modal-box">
@@ -548,7 +642,7 @@
 
     <div id="sheet" class="sheet-overlay" onclick="app.closeSheet()">
         <div class="sheet-content" onclick="event.stopPropagation()">
-        <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding: 10px 20px 5px 20px; scroll-snap-type: x mandatory;"></div>
+            <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding: 10px 20px 5px 20px; scroll-snap-type: x mandatory;"></div>
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
                 <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
                 <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
@@ -596,7 +690,7 @@
         </div>
     </div>
 
-      <script>
+    <script>
         // ==================== SOUND ENGINE ====================
         const SoundFX = {
             ctx: null, enabled: true,
@@ -759,66 +853,120 @@
 
         // ==================== STATS ENGINE ====================
         const StatsEngine = {
-            calculateStats(filterMode) {
-                if (!filterMode) return []; // Séparation stricte des modes
-
-                const games = Storage.loadGames()
-                    .filter(g => g.finished)
-                    .filter(g => g.mode === filterMode); 
+            calculateStats(mode = 'all') {
+                const games = Storage.loadGames().filter(g =>
+                    g.finished && (mode === 'all' || g.mode === mode)
+                );
 
                 const stats = {};
+
                 games.forEach(game => {
-                    const sortedPlayers = [...game.state.players].sort((a, b) => b.total - a.total);
+                    const sortedPlayers = [...game.state.players].sort((a,b)=>b.total-a.total);
                     const winner = sortedPlayers[0];
 
                     game.state.players.forEach(p => {
-                        const name = p.name.toUpperCase();
-                        if (!stats[name]) {
-                            stats[name] = { 
-                                wins: 0, played: 0, totalScoreSum: 0, highestScore: 0, highestRound: 0, mode: filterMode 
+                        const key = p.name.toUpperCase();
+                        if(!stats[key]) {
+                            stats[key] = { 
+                                wins: 0, 
+                                played: 0, 
+                                totalScoreSum: 0, 
+                                highestScore: 0, 
+                                highestRound: 0,
+                                lowestRound: Infinity,
+                                roundScores: [],
+                                totalRounds: 0,
+                                gameScores: [],
+                                currentStreak: 0,
+                                bestStreak: 0
                             };
                         }
-                        stats[name].played++;
-                        stats[name].totalScoreSum += p.total;
-                        if (p.total > stats[name].highestScore) stats[name].highestScore = p.total;
 
+                        stats[key].played++;
+                        stats[key].totalScoreSum += p.total;
+                        stats[key].highestScore = Math.max(stats[key].highestScore, p.total);
+                        stats[key].gameScores.push(p.total);
+
+                        // Collecter tous les scores de manches
                         game.state.history.forEach(round => {
-                            if ((round[p.id] || 0) > stats[name].highestRound) {
-                                stats[name].highestRound = round[p.id];
+                            const roundScore = round[p.id] || 0;
+                            stats[key].roundScores.push(roundScore);
+                            stats[key].totalRounds++;
+                            stats[key].highestRound = Math.max(stats[key].highestRound, roundScore);
+                            if(roundScore > 0) {
+                                stats[key].lowestRound = Math.min(stats[key].lowestRound, roundScore);
                             }
                         });
                     });
 
-                    if (winner && stats[winner.name.toUpperCase()]) {
+                    if(winner && stats[winner.name.toUpperCase()]) {
                         stats[winner.name.toUpperCase()].wins++;
                     }
                 });
 
-                const sortedGames = games.sort((a, b) => new Date(b.date) - new Date(a.date));
+                // Calculer les séries de victoires
+                const sortedGames = games.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const streaks = {};
                 
-                return Object.entries(stats)
-                    .map(([name, data]) => {
-                        data.winRate = data.played > 0 ? Math.round((data.wins / data.played) * 100) : 0;
-                        data.streak = 0;
-                        for (let g of sortedGames) {
-                            const pInGame = g.state.players.find(p => p.name.toUpperCase() === name);
-                            if (!pInGame) break;
-                            const gWinner = [...g.state.players].sort((a,b) => b.total - a.total)[0];
-                            if (gWinner.name.toUpperCase() === name) data.streak++;
-                            else break;
+                sortedGames.forEach(game => {
+                    const sortedPlayers = [...game.state.players].sort((a,b)=>b.total-a.total);
+                    const winner = sortedPlayers[0];
+                    
+                    game.state.players.forEach(p => {
+                        const key = p.name.toUpperCase();
+                        if(!streaks[key]) streaks[key] = { current: 0, best: 0, counting: true };
+                        
+                        if(p.id === winner.id && streaks[key].counting) {
+                            streaks[key].current++;
+                            streaks[key].best = Math.max(streaks[key].best, streaks[key].current);
+                        } else {
+                            streaks[key].counting = false;
                         }
-                        return { name, ...data };
-                    })
-                    .filter(p => p.played >= 1)
-                    .sort((a, b) => b.winRate - a.winRate);
-            },
+                    });
+                });
 
-            getRecordScores(filterMode) {
-                if (!filterMode) return [];
-                const stats = this.calculateStats(filterMode);
-                return stats.sort((a, b) => b.highestScore - a.highestScore).slice(0, 10);
+                return Object.entries(stats).map(([name, data]) => {
+                    // Calculer la moyenne par manche
+                    const avgPerRound = data.totalRounds > 0 ? Math.round(data.roundScores.reduce((a,b)=>a+b,0) / data.totalRounds) : 0;
+                    
+                    // Calculer la régularité (écart-type)
+                    const mean = avgPerRound;
+                    const variance = data.roundScores.length > 0 
+                        ? data.roundScores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / data.roundScores.length 
+                        : 0;
+                    const stdDev = Math.sqrt(variance);
+                    
+                    // Convertir l'écart-type en score de régularité (0-5 étoiles)
+                    const maxStdDev = 50;
+                    const regularityScore = Math.max(0, Math.min(5, 5 - Math.floor((stdDev / maxStdDev) * 5)));
+                    
+                    // Calculer la forme récente (5 dernières parties)
+                    const recentGames = data.gameScores.slice(-5);
+                    const olderGames = data.gameScores.slice(0, -5);
+                    const recentAvg = recentGames.length > 0 ? recentGames.reduce((a,b)=>a+b,0) / recentGames.length : 0;
+                    const olderAvg = olderGames.length > 0 ? olderGames.reduce((a,b)=>a+b,0) / olderGames.length : recentAvg;
+                    const formPercent = olderAvg > 0 ? Math.round(((recentAvg - olderAvg) / olderAvg) * 100) : 0;
+                    
+                    return {
+                        name,
+                        ...data,
+                        winRate: data.played ? Math.round((data.wins / data.played) * 100) : 0,
+                        avgPerRound,
+                        lowestRound: data.lowestRound === Infinity ? 0 : data.lowestRound,
+                        regularityScore,
+                        regularityStars: '⭐'.repeat(regularityScore) + '☆'.repeat(5 - regularityScore),
+                        currentStreak: streaks[name]?.current || 0,
+                        bestStreak: streaks[name]?.best || 0,
+                        formPercent,
+                        formTrend: formPercent > 0 ? '↗️' : formPercent < 0 ? '↘️' : '➡️'
+                    };
+                })
+                .sort((a,b)=>b.winRate - a.winRate);
             },
-            
+            getRecordScores(mode = 'all') {
+                const stats = this.calculateStats(mode);
+                return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
+            },
             calculateGameHighlights(state) {
                 const highlights = [];
                 let bestRound = { score: 0, player: null, roundIdx: 0 };
@@ -846,15 +994,24 @@
                 });
                 const comeback = Object.values(rankProgression).sort((a,b) => b.improvement - a.improvement)[0];
                 if(comeback && comeback.improvement > 0) highlights.push({ icon: '⚡', label: 'Comeback King', value: `${comeback.player.name} (${comeback.maxRank}e → ${comeback.finalRank}e)`, color: comeback.player.color });
+
+                const consistency = state.players.map(p => {
+                    const scores = state.history.map(r => r[p.id] || 0).filter(s => s > 0);
+                    if(scores.length === 0) return { player: p, std: Infinity };
+                    const mean = scores.reduce((a,b) => a+b, 0) / scores.length;
+                    const variance = scores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / scores.length;
+                    return { player: p, std: Math.sqrt(variance), mean };
+                }).sort((a,b) => a.std - b.std)[0];
+                if(consistency && consistency.std !== Infinity) highlights.push({ icon: '🎯', label: 'Joueur régulier', value: `${consistency.player.name} (${Math.round(consistency.mean)} pts/manche)`, color: consistency.player.color });
+                
+                if(state.history.length >= 20) highlights.push({ icon: '🏃', label: 'Partie Marathon', value: `${state.history.length} manches jouées`, color: 'var(--primary)' });
                 return highlights;
             }
         };
 
-        // ==================== UI LAYER (FUSIONNÉ) ====================
+        // ==================== UI LAYER ====================
         const UI = {
-            currentStatsFilter: 'belote', // Filtre par défaut
-            currentRecordsFilter: 'belote', // Filtre par défaut
-
+            currentStatsMode: 'all',
             showToast(message, type = 'default') {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
@@ -880,133 +1037,220 @@
             },
             closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); },
             
-            // --- STATS METHODS (NOUVEAUX) ---
             showStats() {
                 SoundFX.click();
                 document.getElementById('stats-modal').classList.add('active');
-                // Force l'ouverture sur l'onglet classement avec le filtre Belote par défaut
-                this.switchStatsTab('rank');
-                this.filterStats('belote');
+                this.switchStatsTab('rank'); 
             },
             closeStats() { document.getElementById('stats-modal').classList.remove('active'); },
-
-            switchStatsTab(tabId) {
+            switchStatsTab(tab) {
                 SoundFX.click();
-                document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
-                document.getElementById(`tab-${tabId}`).classList.add('active');
-
+                document.getElementById('tab-rank').classList.remove('active');
+                document.getElementById('tab-records').classList.remove('active');
                 document.getElementById('stats-content-rank').classList.add('hidden');
                 document.getElementById('stats-content-records').classList.add('hidden');
                 document.getElementById('stats-content-player').classList.add('hidden');
 
-                document.getElementById(`stats-content-${tabId}`).classList.remove('hidden');
-
-                // Si on va sur Records, on rafraichit avec le bon filtre
-                if(tabId === 'records') {
-                    this.filterRecords(this.currentRecordsFilter || 'belote');
+                if(tab === 'rank') {
+                    document.getElementById('tab-rank').classList.add('active');
+                    this.renderRanking();
+                    document.getElementById('stats-content-rank').classList.remove('hidden');
+                } else if (tab === 'records') {
+                    document.getElementById('tab-records').classList.add('active');
+                    this.renderRecords();
+                    document.getElementById('stats-content-records').classList.remove('hidden');
                 }
             },
-
-            filterStats(mode) {
-                this.currentStatsFilter = mode;
-                // Mise à jour visuelle des boutons
-                document.querySelectorAll('#stats-content-rank .filter-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${mode}'`));
-                });
-                const stats = StatsEngine.calculateStats(mode);
-                this.renderRanking(stats);
-            },
-
-            filterRecords(mode) {
-                this.currentRecordsFilter = mode;
-                document.querySelectorAll('#stats-content-records .filter-btn-records').forEach(btn => {
-                    btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${mode}'`));
-                });
-                const records = StatsEngine.getRecordScores(mode);
-                this.renderRecords(records);
-            },
-
-            renderRanking(stats) {
-                const container = document.getElementById('ranking-list');
-                container.innerHTML = '';
-                if(stats.length === 0) { 
-                    container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune statistique disponible pour ce mode.</p>'; 
-                    return; 
-                }
-                stats.forEach((p, idx) => {
-                    const el = document.createElement('div');
-                    el.className = `rank-item rank-${idx+1}`;
-                    el.onclick = () => this.renderPlayerDetail(p.name, this.currentStatsFilter);
-                    el.innerHTML = `
-                        <div class="rank-num">#${idx+1}</div>
-                        <div class="rank-info">
-                            <div class="rank-name">${p.name}</div>
-                            <div class="rank-sub">${p.wins} victoires • Série: ${p.streak}</div>
-                        </div>
-                        <div class="rank-val">${p.winRate}%</div>
-                    `;
-                    container.appendChild(el);
-                });
-            },
-
-            renderRecords(records) {
-                const container = document.getElementById('records-list');
-                container.innerHTML = '';
-                if(records.length === 0) { 
-                    container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun record pour ce mode.</p>'; 
-                    return; 
-                }
-                records.forEach((p, idx) => {
-                    const el = document.createElement('div');
-                    el.className = 'rank-item';
-                    el.innerHTML = `
-                        <div class="rank-num" style="color:var(--text-sec)">${idx + 1}</div>
-                        <div class="rank-info">
-                            <div class="rank-name">${p.name}</div>
-                            <div class="rank-sub">Meilleure manche: ${p.highestRound} pts</div>
-                        </div>
-                        <div class="rank-val" style="color:var(--primary)">${p.highestScore}</div>
-                    `;
-                    container.appendChild(el);
-                });
-            },
-
             showRanking() {
                 SoundFX.click();
                 this.switchStatsTab('rank');
             },
-
-            renderPlayerDetail(name, mode) {
-                const allStats = StatsEngine.calculateStats(mode);
+            filterStats(mode) {
+                this.currentStatsMode = mode;
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`.filter-btn[onclick="UI.filterStats('${mode}')"]`)?.classList.add('active');
+                this.renderRanking();
+            },
+            renderRanking() {
+                const data = StatsEngine.calculateStats(this.currentStatsMode);
+                const container = document.getElementById('stats-content-rank');
+                container.innerHTML = '';
+                if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune statistique disponible</p>'; return; }
+                data.forEach((p, idx) => {
+                    const streakEmoji = p.currentStreak >= 3 ? '🔥' : p.currentStreak > 0 ? '⚡' : '';
+                    const formIndicator = p.formPercent > 10 ? '↗️' : p.formPercent < -10 ? '↘️' : '';
+                    
+                    const el = document.createElement('div');
+                    el.className = `rank-item rank-${idx+1}`;
+                    el.onclick = () => this.renderPlayerDetail(p.name);
+                    el.innerHTML = `
+                        <div class="rank-num">${idx+1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${p.name} ${streakEmoji}${p.currentStreak > 0 ? p.currentStreak : ''}</div>
+                            <div class="rank-sub">${p.played} parties • Moy. ${p.avgPerRound} pts/manche ${formIndicator}</div>
+                        </div>
+                        <div class="rank-val" style="color:${p.winRate >= 50 ? 'var(--success)' : 'var(--text)'}">${p.winRate}%</div>
+                    `;
+                    container.appendChild(el);
+                });
+            },
+            renderPlayerDetail(name) {
+                const allStats = StatsEngine.calculateStats();
                 const p = allStats.find(s => s.name === name);
                 if(!p) return;
                 document.getElementById('stats-content-rank').classList.add('hidden');
                 document.getElementById('stats-content-player').classList.remove('hidden');
                 document.getElementById('stats-content-records').classList.add('hidden');
                 const container = document.getElementById('player-detail-content');
+                
+                const streakColor = p.currentStreak >= 3 ? 'var(--danger)' : p.currentStreak > 0 ? 'var(--primary)' : 'var(--text)';
+                const formColor = p.formPercent > 10 ? 'var(--success)' : p.formPercent < -10 ? 'var(--danger)' : 'var(--text)';
+                
                 container.innerHTML = `
-                    <h2 class="text-huge" style="margin:0 0 15px 0;">${name}</h2>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div class="stat-detail"><h4>Taux de victoire</h4><div class="value">${p.winRate}%</div></div>
-                        <div class="stat-detail"><h4>Série actuelle</h4><div class="value" style="color:${p.streak > 0 ? 'var(--primary)' : 'var(--text)'}">${p.streak} 🏆</div></div>
-                        <div class="stat-detail"><h4>Victoires</h4><div class="value">${p.wins}</div></div>
-                        <div class="stat-detail"><h4>Parties</h4><div class="value">${p.played}</div></div>
+                    <h2 class="text-huge" style="margin:0 0 20px 0;">${name}</h2>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px;">
+                        <div class="stat-detail">
+                            <h4 style="font-size:11px; color:var(--text-sec); margin:0 0 5px 0; font-weight:600;">TAUX VICTOIRE</h4>
+                            <div class="value" style="font-size:32px; font-weight:900; color:var(--primary);">${p.winRate}%</div>
+                        </div>
+                        <div class="stat-detail">
+                            <h4 style="font-size:11px; color:var(--text-sec); margin:0 0 5px 0; font-weight:600;">SÉRIE ACTUELLE</h4>
+                            <div class="value" style="font-size:32px; font-weight:900; color:${streakColor};">${p.currentStreak > 0 ? '🔥 ' : ''}${p.currentStreak}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px;">
+                        <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">📊 Statistiques Détaillées</h3>
+                        <div style="display:grid; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Score moyen/manche</span>
+                                <span style="font-size:15px; font-weight:700;">${p.avgPerRound} pts</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Meilleur score (manche)</span>
+                                <span style="font-size:15px; font-weight:700; color:var(--success);">🏆 ${p.highestRound} pts</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Pire score (manche)</span>
+                                <span style="font-size:15px; font-weight:700; color:var(--danger);">${p.lowestRound} pts</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Régularité</span>
+                                <span style="font-size:15px; font-weight:700;">${p.regularityStars}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Meilleure série</span>
+                                <span style="font-size:15px; font-weight:700;">🏅 ${p.bestStreak} victoire${p.bestStreak > 1 ? 's' : ''}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Forme récente</span>
+                                <span style="font-size:15px; font-weight:700; color:${formColor};">${p.formTrend} ${p.formPercent > 0 ? '+' : ''}${p.formPercent}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px;">
+                        <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">🎮 Historique</h3>
+                        <div style="display:grid; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Victoires</span>
+                                <span style="font-size:15px; font-weight:700; color:var(--success);">${p.wins} 🏆</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Parties jouées</span>
+                                <span style="font-size:15px; font-weight:700;">${p.played}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Manches jouées</span>
+                                <span style="font-size:15px; font-weight:700;">${p.totalRounds}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:13px; color:var(--text-sec);">Record (partie)</span>
+                                <span style="font-size:15px; font-weight:700; color:var(--primary);">${p.highestScore} pts</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             },
-            
-            // --- GAME UI METHODS ---
+            filterRecords(mode) {
+                this.currentStatsMode = mode;
+                document.querySelectorAll('.filter-btn-records').forEach(b => b.classList.remove('active'));
+                document.querySelector(`.filter-btn-records[onclick="UI.filterRecords('${mode}')"]`)?.classList.add('active');
+                this.renderRecords();
+            },
+            renderRecords() {
+                const data = StatsEngine.getRecordScores(this.currentStatsMode || 'all');
+                const container = document.getElementById('stats-content-records');
+                container.innerHTML = '';
+                if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
+                
+                // Trouver les records spéciaux
+                const bestAvg = [...data].sort((a,b) => b.avgPerRound - a.avgPerRound)[0];
+                const bestStreak = [...data].sort((a,b) => b.bestStreak - a.bestStreak)[0];
+                const mostRegular = [...data].sort((a,b) => b.regularityScore - a.regularityScore)[0];
+                
+                // Afficher les records spéciaux en haut
+                container.innerHTML += `
+                    <div style="margin-bottom:20px;">
+                        <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">🏆 Records Spéciaux</h3>
+                        <div style="display:grid; gap:8px;">
+                            <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-size:11px; color:var(--text-sec); font-weight:600;">MEILLEURE MOYENNE</div>
+                                    <div style="font-size:15px; font-weight:700; margin-top:3px;">${bestAvg.name}</div>
+                                </div>
+                                <div style="font-size:20px; font-weight:900; color:var(--primary);">${bestAvg.avgPerRound}</div>
+                            </div>
+                            <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-size:11px; color:var(--text-sec); font-weight:600;">MEILLEURE SÉRIE</div>
+                                    <div style="font-size:15px; font-weight:700; margin-top:3px;">${bestStreak.name}</div>
+                                </div>
+                                <div style="font-size:20px; font-weight:900; color:var(--danger);">🔥 ${bestStreak.bestStreak}</div>
+                            </div>
+                            <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-size:11px; color:var(--text-sec); font-weight:600;">PLUS RÉGULIER</div>
+                                    <div style="font-size:15px; font-weight:700; margin-top:3px;">${mostRegular.name}</div>
+                                </div>
+                                <div style="font-size:18px; font-weight:900;">${mostRegular.regularityStars}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">🎯 Meilleurs Scores (Partie)</h3>
+                `;
+                
+                data.forEach((p, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'rank-item';
+                    el.innerHTML = `
+                        <div class="rank-info">
+                            <div class="rank-name">${p.name}</div>
+                            <div class="rank-sub">Meilleure manche: ${p.highestRound} pts</div>
+                        </div>
+                        <div class="rank-val">${p.highestScore}</div>
+                    `;
+                    container.appendChild(el);
+                });
+            },
             renderScoreCards(state) {
-                const sorted = [...state.players].sort((a,b) => (b.total + (state.temp[b.id]||0)) - (a.total + (state.temp[a.id]||0)));
+                const sorted = app.focusMode ? [...state.players] : [...state.players].sort((a,b) => (b.total + (state.temp[b.id]||0)) - (a.total + (state.temp[a.id]||0)));
                 const grid = document.getElementById('grid');
                 const rankChanges = new Set();
+                app.lastRanks = app.lastRanks || {};
+
                 state.players.forEach(p => {
                     const newRank = sorted.findIndex(s => s.id === p.id);
-                    if(p.previousRank !== null && p.previousRank !== newRank) rankChanges.add(p.id);
-                    p.previousRank = newRank;
+                    if(app.lastRanks[p.id] !== undefined && app.lastRanks[p.id] !== newRank) {
+                        rankChanges.add(p.id);
+                    }
+                    app.lastRanks[p.id] = newRank;
                 });
                 grid.innerHTML = '';
-                state.players.forEach(p => {
+                const displayOrder = app.focusMode ? state.players : sorted;
+                displayOrder.forEach(p => {
                     const tempScore = state.temp[p.id] || 0;
                     const totalScore = p.total + tempScore;
                     const rankIdx = sorted.findIndex(s => s.id === p.id);
@@ -1233,6 +1477,15 @@
                 const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
                 document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
             },
+            updateThemeColor() {
+                const theme = document.documentElement.getAttribute('data-theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
+                const metaTheme = document.querySelector('meta[name="theme-color"]');
+                if(metaTheme) {
+                    metaTheme.setAttribute('content', isDark ? '#000000' : '#F5F5F7');
+                }
+            },
             showSetup() {
                 UI.closeVictory();
                 this.focusMode = false;
@@ -1295,16 +1548,21 @@
             toggleFocusMode() {
                 SoundFX.click();
                 this.focusMode = !this.focusMode;
-                const gameEl = document.getElementById('game');
+                const root = document.body; 
                 const dockEl = document.getElementById('dock');
-                
+                const overlay = document.getElementById('zen-overlay');
+
                 if(this.focusMode) { 
-                    gameEl.classList.add('focus-mode'); 
+                    root.classList.add('focus-mode');
+                    dockEl.classList.remove('hidden');
+                    if(overlay) overlay.classList.add('active');
+                    if(navigator.vibrate) navigator.vibrate(20);
+                }
+                else { 
+                    root.classList.remove('focus-mode');
                     dockEl.classList.remove('hidden'); 
-                } else { 
-                    gameEl.classList.remove('focus-mode'); 
-                    dockEl.classList.remove('hidden'); 
-                } 
+                    if(overlay) overlay.classList.remove('active');
+                }
             },
             showStats() { UI.showStats(); },
             render() {
@@ -1571,7 +1829,6 @@
                 if(history.length > 0) { this.delRound(history.length - 1); }
             }
         };
-        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => app.init());
         } else {
