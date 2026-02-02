@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>ScoreMaster v12.6 Final</title>
+    <title>ScoreMaster v13 - Objectifs flexibles</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -168,12 +168,39 @@
         
         .players-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-bottom: 30px; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         
-        .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: 0 8px 20px rgba(0,0,0,0.05); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s; }
+        .p-card { background: var(--card); padding: 22px 10px; border-radius: 26px; text-align: center; position: relative; border: 3px solid transparent; box-shadow: 0 8px 20px rgba(0,0,0,0.05); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s; overflow: visible; }
         .p-card.is-dealer { border-color: var(--dealer); }
         .p-card.rank-change { animation: rankPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
         
-        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; }
         .rank-badge.bounce { animation: badgeBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        /* Cacher complètement le badge en mode Zen */
+        .focus-mode .rank-badge {
+            display: none;
+        }
+        
+        /* Ajuster les cartes en mode Zen pour que le nom soit visible et le score temp pas coupé */
+        .focus-mode .p-card {
+            padding: 12px 8px 22px 8px;
+            overflow: visible;
+        }
+        
+        .focus-mode .p-name-btn {
+            font-size: 11px;
+            margin-bottom: 6px;
+            padding: 3px 8px;
+        }
+        
+        .focus-mode .p-score {
+            font-size: 38px;
+        }
+        
+        .focus-mode .p-temp {
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
         .badge-1 { background: #FFD700; }
         .badge-2 { background: #C0C0C0; }
         .badge-3 { background: #CD7F32; }
@@ -270,24 +297,36 @@
     opacity: 0;
     pointer-events: none;
 }
+
+/* Masquer les éléments non essentiels en mode Zen */
+.focus-mode .chart-box,
+.focus-mode #history,
+.focus-mode #history-header {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
 /* --- CORRECTION DE LA GRILLE (Plus de fond noir vide) --- */
 .focus-mode .players-grid {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100vh - 280px); 
-    padding: max(20px, env(safe-area-inset-top)) 15px 0 15px;
+    height: 100vh;
+    height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top)) 15px calc(100px + env(safe-area-inset-bottom)) 15px;
     margin: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    align-content: start; 
+    align-content: center;
     gap: 15px;
     z-index: 100; 
-    background: var(--bg); 
     transform: none !important;
     opacity: 1 !important;
     animation: simpleFadeIn 0.3s ease-out backwards;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 @keyframes simpleFadeIn {
@@ -552,10 +591,10 @@
     </div>
 
     <div id="modal-player-count" class="modal-overlay" onclick="if(event.target===this) document.getElementById('modal-player-count').classList.remove('active')">
-        <div class="modal-box">
-            <h2 style="margin:0 0 10px 0">Mode Standard</h2>
+        <div class="modal-box" style="max-width: 400px;">
+            <h2 style="margin:0 0 10px 0" id="mode-setup-title">Mode Standard</h2>
             <p style="color:var(--text-sec); margin-bottom:20px;">Combien de joueurs ?</p>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:25px;">
                 <button class="btn-nb" onclick="app.selectPlayerCount(2)">2</button>
                 <button class="btn-nb" onclick="app.selectPlayerCount(3)">3</button>
                 <button class="btn-nb" onclick="app.selectPlayerCount(4)">4</button>
@@ -569,6 +608,38 @@
                     <button class="btn-nb" onclick="app.selectPlayerCount(10)">10</button>
                     <button class="btn-nb" onclick="app.selectPlayerCount(11)">11</button>
                     <button class="btn-nb" onclick="app.selectPlayerCount(12)">12</button>
+                </div>
+            </div>
+            
+            <!-- Nouvelles options -->
+            <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: block;">🎯 Objectif de victoire</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <label style="display: flex; align-items: center; justify-content: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s;" id="victory-highest-label">
+                            <input type="radio" name="victory-condition" value="highest" checked style="margin-right: 8px; accent-color: var(--primary);" onchange="app.updateVictoryCondition()">
+                            <span style="font-size: 12px; font-weight: 700;">⬆️ Plus HAUT</span>
+                        </label>
+                        <label style="display: flex; align-items: center; justify-content: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s;" id="victory-lowest-label">
+                            <input type="radio" name="victory-condition" value="lowest" style="margin-right: 8px; accent-color: var(--primary);" onchange="app.updateVictoryCondition()">
+                            <span style="font-size: 12px; font-weight: 700;">⬇️ Plus BAS</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: block;">🏁 Condition de fin</label>
+                    <div style="display: grid; gap: 8px;">
+                        <label style="display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer;" id="end-free-label">
+                            <input type="radio" name="end-condition" value="free" checked style="margin-right: 10px; accent-color: var(--primary);" onchange="app.updateEndCondition()">
+                            <span style="font-size: 12px; font-weight: 700; flex: 1;">♾️ Partie libre</span>
+                        </label>
+                        <label style="display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer;" id="end-score-label">
+                            <input type="radio" name="end-condition" value="score" style="margin-right: 10px; accent-color: var(--primary);" onchange="app.updateEndCondition()">
+                            <span style="font-size: 12px; font-weight: 700; flex: 1;" id="score-label-text">🎯 Score objectif :</span>
+                            <input type="number" id="score-target" value="100" min="10" max="9999" style="width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; background: var(--bg); color: var(--text);" onclick="event.stopPropagation(); document.querySelector('input[name=end-condition][value=score]').checked = true; app.updateEndCondition();">
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -610,12 +681,13 @@
             <button onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px; color:var(--text); cursor:pointer;">⬅️</button>
             <div style="flex:1; text-align:center;">
                 <h1 id="mode-title" style="margin:0; font-size:22px; font-weight:900;">SCORE</h1>
+                <div id="game-info" style="font-size:10px; color:var(--text-sec); font-weight:700; margin-top:3px;"></div>
             </div>
             <button class="btn-focus" onclick="app.toggleFocusMode()" title="Mode Zen">👁️</button>
         </header>
         <div class="chart-box"><canvas id="chart"></canvas></div>
         <div id="grid" class="players-grid"></div>
-        <div style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
+        <div id="history-header" style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
             <span>HISTORIQUE DES MANCHES</span>
             <div style="display:flex; gap:12px;">
                 <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer;">✓ TERMINER</button>
@@ -626,7 +698,7 @@
     </div>
 
     <div id="dock" class="dock hidden">
-        <button id="save-btn" class="btn-main" onclick="app.validateRound()">ENREGISTRER LA MANCHE</button>
+        <button id="save-btn" class="btn-main" onclick="app.validateRound()">ENREGISTRER MANCHE 1</button>
     </div>
 
     <div id="modal-player" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
@@ -1236,7 +1308,12 @@
                 });
             },
             renderScoreCards(state) {
-                const sorted = app.focusMode ? [...state.players] : [...state.players].sort((a,b) => (b.total + (state.temp[b.id]||0)) - (a.total + (state.temp[a.id]||0)));
+                const isLowest = app.currentGame.victoryCondition === 'lowest';
+                const sorted = app.focusMode ? [...state.players] : [...state.players].sort((a,b) => {
+                    const scoreA = a.total + (state.temp[a.id]||0);
+                    const scoreB = b.total + (state.temp[b.id]||0);
+                    return isLowest ? scoreA - scoreB : scoreB - scoreA;
+                });
                 const grid = document.getElementById('grid');
                 const rankChanges = new Set();
                 app.lastRanks = app.lastRanks || {};
@@ -1459,7 +1536,19 @@
                 } catch(e) { console.warn("Corrupt saved players data", e); this.savedPlayers = {}; }
 
                 const game = Storage.loadCurrentGame();
-                if(game) { this.currentGame = game; this.showGame(); } else { this.showSetup(); }
+                if(game) { 
+                    // Migration des anciennes parties
+                    if(!game.victoryCondition) {
+                        game.victoryCondition = 'highest';
+                    }
+                    if(!game.endCondition) {
+                        game.endCondition = game.mode === 'belote' ? { type: 'score', value: 1000 } : { type: 'free', value: null };
+                    }
+                    this.currentGame = game; 
+                    this.showGame(); 
+                } else { 
+                    this.showSetup(); 
+                }
                 this.renderGamesList();
             },
             toggleTheme() {
@@ -1500,7 +1589,37 @@
             showModeSelection(mode) {
                 SoundFX.click();
                 if(mode === 'belote') { this.createGame(mode, 2); }
-                else { document.getElementById('modal-player-count').classList.add('active'); }
+                else { 
+                    document.getElementById('mode-setup-title').textContent = 'Mode Standard';
+                    document.getElementById('modal-player-count').classList.add('active'); 
+                    this.updateVictoryCondition();
+                    this.updateEndCondition();
+                }
+            },
+            updateVictoryCondition() {
+                const isLowest = document.querySelector('input[name="victory-condition"]:checked')?.value === 'lowest';
+                const scoreLabel = document.getElementById('score-label-text');
+                const highestLabel = document.getElementById('victory-highest-label');
+                const lowestLabel = document.getElementById('victory-lowest-label');
+                
+                // Mettre à jour les bordures
+                highestLabel.style.borderColor = !isLowest ? 'var(--primary)' : 'var(--border)';
+                lowestLabel.style.borderColor = isLowest ? 'var(--primary)' : 'var(--border)';
+                
+                // Mettre à jour le texte du label score
+                if(isLowest) {
+                    scoreLabel.textContent = '⚠️ Limite de défaite :';
+                } else {
+                    scoreLabel.textContent = '🎯 Score objectif :';
+                }
+            },
+            updateEndCondition() {
+                const endType = document.querySelector('input[name="end-condition"]:checked')?.value;
+                const freeLabel = document.getElementById('end-free-label');
+                const scoreLabel = document.getElementById('end-score-label');
+                
+                freeLabel.style.borderColor = endType === 'free' ? 'var(--primary)' : 'var(--border)';
+                scoreLabel.style.borderColor = endType === 'score' ? 'var(--primary)' : 'var(--border)';
             },
             toggleMorePlayers() {
                 const extraDiv = document.getElementById('extra-players');
@@ -1509,17 +1628,26 @@
                 else { extraDiv.classList.add('hidden'); btn.textContent = 'Plus ▼'; }
             },
             selectPlayerCount(count) {
+                const victoryCondition = document.querySelector('input[name="victory-condition"]:checked')?.value || 'highest';
+                const endType = document.querySelector('input[name="end-condition"]:checked')?.value || 'free';
+                const scoreTarget = endType === 'score' ? parseInt(document.getElementById('score-target').value) || 100 : null;
+                
                 document.getElementById('modal-player-count').classList.remove('active');
                 document.getElementById('extra-players').classList.add('hidden');
                 document.getElementById('btn-toggle-players').textContent = 'Plus ▼';
-                this.createGame('standard', count);
+                
+                this.createGame('standard', count, victoryCondition, endType, scoreTarget);
             },
-            createGame(mode, playerCount) {
+            createGame(mode, playerCount, victoryCondition = 'highest', endType = 'free', scoreTarget = null) {
                 this.currentGame = {
                     id: Date.now().toString(),
                     name: mode === 'belote' ? 'Belote' : 'Partie Standard',
-                    mode, date: new Date().toISOString(),
-                    state: GameState.create(mode, playerCount), finished: false
+                    mode, 
+                    date: new Date().toISOString(),
+                    victoryCondition: mode === 'belote' ? 'highest' : victoryCondition,
+                    endCondition: mode === 'belote' ? { type: 'score', value: 1000 } : { type: endType, value: scoreTarget },
+                    state: GameState.create(mode, playerCount), 
+                    finished: false
                 };
                 if(this.savedPlayers[mode]) {
                     const saved = this.savedPlayers[mode];
@@ -1539,6 +1667,23 @@
                 document.getElementById('dock').classList.remove('hidden');
                 const isBelote = this.currentGame.mode === 'belote';
                 document.getElementById('mode-title').textContent = isBelote ? 'BELOTE' : 'STANDARD';
+                
+                // Afficher les infos de la partie
+                const gameInfo = document.getElementById('game-info');
+                const isLowest = this.currentGame.victoryCondition === 'lowest';
+                const endCond = this.currentGame.endCondition;
+                let infoText = '';
+                
+                if(isBelote) {
+                    infoText = '🎯 Premier à 1000 pts';
+                } else {
+                    infoText = isLowest ? '⬇️ Score le plus BAS' : '⬆️ Score le plus HAUT';
+                    if(endCond.type === 'score') {
+                        infoText += isLowest ? ` • Limite ${endCond.value} pts` : ` • Objectif ${endCond.value} pts`;
+                    }
+                }
+                gameInfo.textContent = infoText;
+                
                 document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
                 document.getElementById('btn-82').classList.toggle('hidden', !isBelote);
                 document.getElementById('btn-50').classList.toggle('hidden', isBelote);
@@ -1570,6 +1715,13 @@
                 UI.renderScoreCards(this.currentGame.state);
                 UI.renderHistory(this.currentGame.state, this.editIdx);
                 UI.renderChart(this.currentGame.state, this.editIdx);
+                
+                // Mettre à jour le texte du bouton avec le numéro de manche
+                const saveBtn = document.getElementById('save-btn');
+                if(saveBtn && this.editIdx === null) {
+                    const nextRound = this.currentGame.state.history.length + 1;
+                    saveBtn.textContent = `ENREGISTRER MANCHE ${nextRound}`;
+                }
             },
             renderGamesList() {
                 const games = Storage.loadGames();
@@ -1758,17 +1910,22 @@
                 if(!validation.valid) { UI.showToast(validation.error, 'error'); return; }
                 const previousTotals = {};
                 state.players.forEach(p => previousTotals[p.id] = p.total);
+                
+                let roundNumber;
+                
                 if(this.editIdx !== null) {
+                    roundNumber = this.editIdx + 1;
                     GameState.updateRound(state, this.editIdx, state.temp);
                     this.editIdx = null;
-                    document.getElementById('save-btn').textContent = 'ENREGISTRER LA MANCHE';
+                    document.getElementById('save-btn').textContent = `ENREGISTRER MANCHE ${state.history.length + 1}`;
                     document.getElementById('save-btn').classList.remove('editing');
-                    UI.showToast('✅ Manche modifiée', 'success');
+                    UI.showToast(`✅ Manche ${roundNumber} modifiée`, 'success');
                 } else {
+                    roundNumber = state.history.length + 1;
                     GameState.addRound(state, state.temp);
                     const currentIdx = state.players.findIndex(p => p.id === state.dealerId);
                     state.dealerId = state.players[(currentIdx + 1) % state.players.length].id;
-                    UI.showToast('✅ Manche enregistrée', 'success');
+                    UI.showToast(`✅ Manche ${roundNumber} enregistrée`, 'success');
                 }
                 if(this.currentGame.mode === 'standard') {
                     state.players.forEach(p => {
@@ -1782,16 +1939,45 @@
                         });
                     });
                 }
+                
+                // Vérifier les conditions de fin de partie
+                const endCond = this.currentGame.endCondition;
+                const victCond = this.currentGame.victoryCondition;
+                let gameEnded = false;
+                let winner = null;
+                
                 if(this.currentGame.mode === 'belote') {
-                    const winner = state.players.find(p => p.total >= 1000);
-                    if(winner) {
-                        this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({ name: p.name, color: p.color }));
-                        localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
-                        this.currentGame.finished = true;
-                        Storage.saveGame(this.currentGame);
-                        setTimeout(() => { UI.showVictory(winner, winner.total, state); }, 500);
+                    winner = state.players.find(p => p.total >= 1000);
+                    if(winner) gameEnded = true;
+                } else if(endCond.type === 'score') {
+                    if(victCond === 'highest') {
+                        // Premier à atteindre l'objectif gagne
+                        winner = state.players.find(p => p.total >= endCond.value);
+                        if(winner) gameEnded = true;
+                    } else {
+                        // Premier à dépasser la limite perd, le plus petit score parmi les autres gagne
+                        const overLimit = state.players.filter(p => p.total >= endCond.value);
+                        if(overLimit.length > 0) {
+                            gameEnded = true;
+                            const remaining = state.players.filter(p => p.total < endCond.value);
+                            if(remaining.length > 0) {
+                                winner = remaining.sort((a,b) => a.total - b.total)[0];
+                            } else {
+                                // Tous ont dépassé, le plus petit gagne
+                                winner = [...state.players].sort((a,b) => a.total - b.total)[0];
+                            }
+                        }
                     }
                 }
+                
+                if(gameEnded && winner) {
+                    this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({ name: p.name, color: p.color }));
+                    localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
+                    this.currentGame.finished = true;
+                    Storage.saveGame(this.currentGame);
+                    setTimeout(() => { UI.showVictory(winner, winner.total, state); }, 500);
+                }
+                
                 if(!Storage.saveGame(this.currentGame)) {
                     UI.showToast('⚠️ Erreur de sauvegarde (Mémoire pleine)', 'error');
                 }
