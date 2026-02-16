@@ -297,9 +297,9 @@ position: fixed;
 top: max(15px, env(safe-area-inset-top));
 right: 15px;
 z-index: 2000;
-background: var(–card);
-border: 1px solid var(–primary);
-color: var(–primary);
+background: var(--card);
+border: 1px solid var(--primary);
+color: var(--primary);
 box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 transform: scale(1.1);
 }
@@ -355,7 +355,7 @@ min-height: 140px;
 padding: 20px;
 box-shadow: 0 10px 40px rgba(0,0,0,0.15);
 border-width: 0;
-background: var(–card);
+background: var(--card);
 animation: none !important;
 transition: none !important;
 }
@@ -407,7 +407,7 @@ position: fixed;
 bottom: 300px;
 right: 20px;
 top: auto;
-background: var(–primary);
+background: var(--primary);
 color: white;
 box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 border: none;
@@ -436,9 +436,9 @@ transform: translateY(0) scale(1);
 .focus-mode-cta:active { transform: scale(0.95); }
 
 /* — STATS STYLES — */
-.stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(–border); padding-bottom: 10px; }
+.stats-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .stats-tab { flex: 1; text-align: center; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 14px; opacity: 0.5; transition: 0.3s; }
-.stats-tab.active { opacity: 1; background: var(–primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.stats-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .mode-filter {
 display: flex;
@@ -451,47 +451,47 @@ padding: 0 5px;
 flex: 1;
 padding: 8px 12px;
 border-radius: 10px;
-border: 1px solid var(–border);
-background: var(–card);
+border: 1px solid var(--border);
+background: var(--card);
 font-size: 12px;
 font-weight: 700;
 cursor: pointer;
 transition: all 0.2s;
-color: var(–text);
+color: var(--text);
 }
 
 .filter-btn.active, .filter-btn-records.active {
-background: var(–primary);
+background: var(--primary);
 color: white;
-border-color: var(–primary);
+border-color: var(--primary);
 }
 
-.rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(–border); cursor: pointer; transition: background 0.2s; }
+.rank-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
 .rank-item:hover { background: rgba(0,0,0,0.03); }
 .rank-item:last-child { border-bottom: none; }
-.rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(–text-sec); font-style: italic; }
+.rank-num { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
 .rank-1 .rank-num { color: #FFD700; } .rank-2 .rank-num { color: #C0C0C0; } .rank-3 .rank-num { color: #CD7F32; }
 .rank-info { flex: 1; }
 .rank-name { font-weight: 900; font-size: 16px; }
-.rank-sub { font-size: 12px; color: var(–text-sec); }
+.rank-sub { font-size: 12px; color: var(--text-sec); }
 .rank-val { font-weight: 800; font-size: 18px; }
 
-.stat-detail { background: var(–card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(–border); }
-.stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(–text-sec); }
-.stat-detail .value { font-size: 24px; font-weight: 900; color: var(–text); }
+.stat-detail { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
+.stat-detail h4 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; color: var(--text-sec); }
+.stat-detail .value { font-size: 24px; font-weight: 900; color: var(--text); }
 
 .toast {
 position: fixed;
 top: max(60px, calc(env(safe-area-inset-top) + 40px));
 left: 50%;
 transform: translateX(-50%) translateY(-100px);
-background: var(–glass-bg);
+background: var(--glass-bg);
 backdrop-filter: blur(20px);
 -webkit-backdrop-filter: blur(20px);
-border: 1px solid var(–glass-border);
+border: 1px solid var(--glass-border);
 padding: 16px 24px;
 border-radius: 20px;
-box-shadow: var(–glass-shadow);
+box-shadow: var(--glass-shadow);
 font-weight: 700;
 z-index: 5000;
 opacity: 0;
@@ -499,9 +499,10 @@ transition: all 0.3s;
 white-space: nowrap;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.success { border-color: var(–success); background: var(–success); color: white; border: none; }
-.toast.warning { border-color: var(–dealer); background: var(–dealer); color: white; border: none; }
-.toast.error { border-color: var(–danger); background: var(–danger); color: white; border: none; }
+.toast.success { border-color: var(--success); background: var(--success); color: white; border: none; }
+.toast.warning { border-color: var(--dealer); background: var(--dealer); color: white; border: none; }
+.toast.error { border-color: var(--danger); background: var(--danger); color: white; border: none; }
+.toast.info { border-color: var(--primary); background: var(--primary); color: white; border: none; }
 
 .victory-overlay {
 position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 6000;
@@ -528,17 +529,17 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
 .podium-place.p2 .podium-bar { background: #C0C0C0; height: 70px; }
 .podium-place.p3 .podium-bar { background: #CD7F32; height: 50px; }
 
-.victory-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(–border); padding-bottom: 8px; }
+.victory-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
 .victory-tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; opacity: 0.5; transition: 0.2s; }
-.victory-tab.active { opacity: 1; background: var(–primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+.victory-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
-.highlight-card { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid var(–border); }
+.highlight-card { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); }
 .highlight-icon { font-size: 28px; }
 .highlight-text { flex: 1; }
-.highlight-label { font-size: 11px; color: var(–text-sec); font-weight: 600; }
+.highlight-label { font-size: 11px; color: var(--text-sec); font-weight: 600; }
 .highlight-value { font-size: 14px; font-weight: 900; }
 
-.player-stats-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(–border); }
+.player-stats-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
 .player-stats-row:last-child { border-bottom: none; }
 .player-stats-rank { width: 30px; font-size: 18px; font-weight: 900; }
 .player-stats-info { flex: 1; }
@@ -548,10 +549,10 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
 @keyframes podiumRise { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 #confirm-modal .modal-box { text-align: center; }
-#confirm-msg { font-size: 18px; margin: 0 0 25px 0; color: var(–text); }
+#confirm-msg { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
 .confirm-actions { display: flex; gap: 10px; }
-.btn-confirm-no { background: var(–card); color: var(–text); border: 1px solid var(–border); }
-.btn-confirm-yes { background: var(–danger); color: white; border: 1px solid var(–danger); }
+.btn-confirm-no { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-confirm-yes { background: var(--danger); color: white; border: 1px solid var(--danger); }
 </style>
 
 </head>
@@ -963,7 +964,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             const stats = {};
 
             games.forEach(game => {
-                const sortedPlayers = [...game.state.players].sort((a,b)=>b.total-a.total);
+                const isLowest = game.victoryCondition === 'lowest';
+                const sortedPlayers = [...game.state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
                 const winner = sortedPlayers[0];
 
                 game.state.players.forEach(p => {
@@ -1011,7 +1013,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             const streaks = {};
             
             sortedGames.forEach(game => {
-                const sortedPlayers = [...game.state.players].sort((a,b)=>b.total-a.total);
+                const isLowest = game.victoryCondition === 'lowest';
+                const sortedPlayers = [...game.state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
                 const winner = sortedPlayers[0];
                 
                 game.state.players.forEach(p => {
@@ -1069,7 +1072,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             const stats = this.calculateStats(mode);
             return stats.sort((a,b) => b.highestScore - a.highestScore).slice(0, 10);
         },
-        calculateGameHighlights(state) {
+        calculateGameHighlights(state, victoryCondition = 'highest') {
+            const isLowest = victoryCondition === 'lowest';
             const highlights = [];
             let bestRound = { score: 0, player: null, roundIdx: 0 };
             state.history.forEach((round, idx) => {
@@ -1087,7 +1091,7 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                         let c = 0;
                         state.history.slice(0, histIdx + 1).forEach(r => c += r[pl.id] || 0);
                         return { id: pl.id, total: c };
-                    }).sort((a,b) => b.total - a.total);
+                    }).sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
                     ranks.push(totals.findIndex(t => t.id === p.id) + 1);
                 });
                 const maxRank = Math.max(...ranks);
@@ -1447,7 +1451,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
         showVictory(winner, score, state) {
             SoundFX.success();
             const overlay = document.getElementById('victory');
-            const sorted = [...state.players].sort((a,b) => b.total - a.total);
+            const isLowest = app.currentGame.victoryCondition === 'lowest';
+            const sorted = [...state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
             const podium = document.getElementById('podium');
             podium.innerHTML = '';
             const top3 = [sorted[1], sorted[0], sorted[2]].filter(p => p);
@@ -1487,7 +1492,7 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 allPlayersDiv.appendChild(row);
             });
 
-            const highlights = StatsEngine.calculateGameHighlights(state);
+            const highlights = StatsEngine.calculateGameHighlights(state, app.currentGame.victoryCondition);
             const highlightsDiv = document.getElementById('victory-highlights');
             highlightsDiv.innerHTML = '';
             if(highlights.length === 0) {
@@ -1632,8 +1637,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             const highestLabel = document.getElementById('victory-highest-label');
             const lowestLabel = document.getElementById('victory-lowest-label');
             
-            if (game.currentGame?.state) {
-                game.currentGame.state.victoryCondition = isLowest ? 'lowest' : 'highest';
+            if (this.currentGame?.state) {
+                this.currentGame.state.victoryCondition = isLowest ? 'lowest' : 'highest';
             }
             
             highestLabel.style.borderColor = !isLowest ? 'var(--primary)' : 'var(--border)';
@@ -1755,7 +1760,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             if(!games || games.length === 0) { list.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune partie enregistrée</p>'; return; }
             list.innerHTML = '';
             games.slice().reverse().forEach(game => {
-                const sortedPlayers = [...game.state.players].sort((a,b) => b.total - a.total);
+                const isLowest = game.victoryCondition === 'lowest';
+                const sortedPlayers = [...game.state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
                 const winner = sortedPlayers[0];
                 const date = new Date(game.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 const modeBadge = game.mode === 'belote' ? '<span class="game-mode-badge badge-belote">🃏 BELOTE</span>' : '<span class="game-mode-badge badge-standard">🎲 STANDARD</span>';
@@ -1824,6 +1830,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 id: Date.now().toString(),
                 name: this.currentGame.mode === 'belote' ? 'Belote' : 'Partie Standard',
                 mode: this.currentGame.mode, date: new Date().toISOString(),
+                victoryCondition: this.currentGame.victoryCondition || 'highest',
+                endCondition: this.currentGame.endCondition || { type: 'free', value: null },
                 state: { mode: oldState.mode, players: oldState.players.map(p => ({ ...p, total: 0, previousRank: null })), history: [], temp: {}, dealerId: oldState.dealerId, celebratedMilestones: {} },
                 finished: false
             };
@@ -1848,7 +1856,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 console.error('localStorage error:', e);
             }
             
-            const winner = [...this.currentGame.state.players].sort((a,b) => b.total - a.total)[0];
+            const isLowest = this.currentGame.victoryCondition === 'lowest';
+            const winner = [...this.currentGame.state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total)[0];
             UI.showVictory(winner, winner.total, this.currentGame.state);
         },
         async shareRecapPNG() {
@@ -1861,7 +1870,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             
             try {
                 UI.showToast('📸 Génération PNG...', 'info');
-                const canvas = await RecapGenerator.generate(this.currentGame.state);
+                const gameStateWithConfig = { ...this.currentGame.state, victoryCondition: this.currentGame.victoryCondition };
+                const canvas = await RecapGenerator.generate(gameStateWithConfig);
                 
                 if(!canvas) return;
                 
@@ -2892,7 +2902,7 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             let yLeft = y;
             let yRight = y;
             
-            yLeft = this.drawPodium3DImproved(ctx, leftCol, yLeft, colWidth, gameState.players, colors);
+            yLeft = this.drawPodium3DImproved(ctx, leftCol, yLeft, colWidth, gameState.players, colors, gameState.victoryCondition);
             yLeft += sp.BETWEEN_SECTIONS;
             yLeft = this.drawReactionsClean(ctx, leftCol, yLeft, colWidth, ai, colors);
             
@@ -3199,8 +3209,9 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             return y + h + 20;
         },
         
-        drawPodium3DImproved(ctx, x, y, w, players, colors) {
-            const sorted = [...players].sort((a,b) => b.total - a.total);
+        drawPodium3DImproved(ctx, x, y, w, players, colors, victoryCondition = 'highest') {
+            const isLowest = victoryCondition === 'lowest';
+            const sorted = [...players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
             
             ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
             ctx.shadowBlur = 10;
