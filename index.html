@@ -145,6 +145,73 @@
     }
     .modal-box.large { max-width: 500px; text-align: left; max-height: 80vh; overflow-y: auto; }
     
+    /* Suggestions de joueurs récents */
+    .modal-player-wrapper { 
+        position: relative; 
+        display: flex;
+        justify-content: center;
+    }
+    .recent-suggestions {
+        position: absolute;
+        left: calc(50% + 180px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 2000;
+    }
+    .recent-suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .recent-suggestion-item:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateX(-4px);
+        box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+    }
+    .recent-suggestion-item .add-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--success);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 900;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .recent-suggestion-item:hover .add-icon {
+        background: white;
+        color: var(--primary);
+    }
+    .recent-suggestions-title {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--text-sec);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        padding-left: 6px;
+    }
     .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
     .sheet-overlay.active { opacity: 1; pointer-events: auto; }
     .sheet-content { 
@@ -710,13 +777,16 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
 </div>
 
 <div id="modal-player" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
-    <div class="modal-box">
-        <h2 id="modal-title" style="margin:0 0 20px 0">Joueur</h2>
-        <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); font-size:18px; font-weight:700; margin-bottom:20px; outline:none; background:var(--bg); color:var(--text);">
-        <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:12px; font-weight:700; cursor:pointer;">
-            Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:20px; height:20px; accent-color:var(--dealer);">
-        </label>
-        <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
+    <div class="modal-player-wrapper">
+        <div class="modal-box" style="max-width: 340px;">
+            <h2 id="modal-title" style="margin:0 0 20px 0">Joueur</h2>
+            <input type="text" id="edit-name" style="width:100%; padding:15px; border-radius:12px; border:2px solid var(--border); font-size:18px; font-weight:700; outline:none; background:var(--bg); color:var(--text);" placeholder="Nom du joueur">
+            <label style="display:flex; align-items:center; justify-content:space-between; background:var(--bg); padding:15px; border-radius:12px; font-weight:700; cursor:pointer; margin-top:20px;">
+                Donneur 🃏 <input type="checkbox" id="edit-dealer" style="width:20px; height:20px; accent-color:var(--dealer);">
+            </label>
+            <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
+        </div>
+        <div id="recent-players-suggestions" class="recent-suggestions"></div>
     </div>
 </div>
 
@@ -1568,6 +1638,10 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
     // ==================== APP CONTROLLER ====================
     const app = {
         currentGame: null, activePlayerId: null, editIdx: null, chart: null, savedPlayers: {}, focusMode: false,
+        recentPlayers: [], // Les 8 derniers noms de joueurs utilisés
+
+        // Noms par défaut à ne pas suggérer
+        defaultNames: ['NOUS', 'EUX', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'J8', 'J9', 'J10', 'J11', 'J12'],
 
         init() {
             Storage.migrateData();
@@ -1578,6 +1652,12 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 const savedPlayersData = localStorage.getItem('sm_saved_players');
                 if(savedPlayersData) { this.savedPlayers = JSON.parse(savedPlayersData); }
             } catch(e) { console.warn("Corrupt saved players data", e); this.savedPlayers = {}; }
+
+            // Charger les joueurs récents
+            try {
+                const recentData = localStorage.getItem('sm_recent_players');
+                if(recentData) { this.recentPlayers = JSON.parse(recentData); }
+            } catch(e) { console.warn("Corrupt recent players data", e); this.recentPlayers = []; }
 
             const game = Storage.loadCurrentGame();
             if(game) { 
@@ -1978,14 +2058,76 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             document.getElementById('modal-title').style.color = player.color;
             document.getElementById('edit-name').value = player.name;
             document.getElementById('edit-dealer').checked = (this.currentGame.state.dealerId === playerId);
+            this.renderRecentSuggestions(player.name);
             document.getElementById('modal-player').classList.add('active');
+        },
+        renderRecentSuggestions(currentName) {
+            const container = document.getElementById('recent-players-suggestions');
+            container.innerHTML = '';
+            
+            // Noms déjà dans la partie
+            const namesInGame = this.currentGame.state.players.map(p => p.name);
+            
+            // Filtrer les suggestions : pas les noms par défaut, pas le nom actuel, pas déjà dans la partie
+            const suggestions = this.recentPlayers
+                .filter(name => 
+                    !this.defaultNames.includes(name) && 
+                    name !== currentName &&
+                    !namesInGame.includes(name)
+                )
+                .slice(0, 5);
+            
+            if(suggestions.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            
+            // Titre de la section
+            const title = document.createElement('div');
+            title.className = 'recent-suggestions-title';
+            title.textContent = 'Récents';
+            container.appendChild(title);
+            
+            suggestions.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'recent-suggestion-item';
+                item.innerHTML = `<span class="add-icon">+</span><span>${name}</span>`;
+                item.onclick = () => this.selectSuggestion(name);
+                container.appendChild(item);
+            });
+        },
+        selectSuggestion(name) {
+            SoundFX.click();
+            document.getElementById('edit-name').value = name;
+            this.renderRecentSuggestions(name);
+        },
+        addRecentPlayer(name) {
+            // Ne pas ajouter les noms par défaut
+            if(this.defaultNames.includes(name)) return;
+            
+            // Retirer si déjà présent, puis ajouter en premier
+            this.recentPlayers = this.recentPlayers.filter(n => n !== name);
+            this.recentPlayers.unshift(name);
+            
+            // Garder seulement les 8 derniers
+            this.recentPlayers = this.recentPlayers.slice(0, 8);
+            
+            // Sauvegarder
+            try {
+                localStorage.setItem('sm_recent_players', JSON.stringify(this.recentPlayers));
+            } catch(e) { console.warn('Erreur sauvegarde recentPlayers', e); }
         },
         closeModal() { document.getElementById('modal-player').classList.remove('active'); },
         savePlayer() {
             SoundFX.click();
             const player = this.currentGame.state.players.find(p => p.id === this.editPlayerId);
             const newName = document.getElementById('edit-name').value.trim().toUpperCase();
-            if(newName) player.name = newName;
+            if(newName) {
+                player.name = newName;
+                this.addRecentPlayer(newName);
+            }
             if(document.getElementById('edit-dealer').checked) { this.currentGame.state.dealerId = player.id; }
             this.closeModal();
             this.render();
