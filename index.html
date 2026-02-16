@@ -194,12 +194,15 @@
     
     .rank-badge { position: absolute; top: -12px; left: 12px; font-size: 13px; padding: 4px 10px; border-radius: 12px; font-weight: 900; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; }
     .rank-badge.bounce { animation: badgeBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    
-    /* Cacher complètement le badge en mode Zen */
+
+    /* Afficher les badges en mode Zen avec style adapté */
     .focus-mode .rank-badge {
-        display: none;
+        top: 8px;
+        left: 8px;
+        font-size: 16px;
+        padding: 4px 8px;
     }
-    
+
     /* Ajuster les cartes en mode Zen pour que le nom soit visible et le score temp pas coupé */
     .focus-mode .p-card {
         padding: 12px 8px 22px 8px;
@@ -209,6 +212,7 @@
     .focus-mode .p-name-btn {
         font-size: 11px;
         margin-bottom: 6px;
+        margin-top: 24px;
         padding: 3px 8px;
     }
     
@@ -377,14 +381,6 @@ animation: scoreClick 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 0% { transform: scale(1); }
 50% { transform: scale(0.92); }
 100% { transform: scale(1); }
-}
-
-.focus-mode .rank-badge {
-font-size: 22px;
-padding: 10px 18px;
-top: -18px;
-left: 18px;
-animation: badgePopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards;
 }
 
 @keyframes badgePopIn {
@@ -1343,7 +1339,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
         },
         renderScoreCards(state) {
             const isLowest = app.currentGame.victoryCondition === 'lowest';
-            const sorted = app.focusMode ? [...state.players] : [...state.players].sort((a,b) => {
+            // Toujours trier selon victoryCondition, même en mode Zen
+            const sorted = [...state.players].sort((a,b) => {
                 const scoreA = a.total + (state.temp[a.id]||0);
                 const scoreB = b.total + (state.temp[b.id]||0);
                 return isLowest ? scoreA - scoreB : scoreB - scoreA;
@@ -1360,7 +1357,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 app.lastRanks[p.id] = newRank;
             });
             grid.innerHTML = '';
-            const displayOrder = app.focusMode ? state.players : sorted;
+            // En mode Zen, afficher dans l'ordre trié pour que les badges soient corrects
+            const displayOrder = sorted;
             displayOrder.forEach(p => {
                 const tempScore = state.temp[p.id] || 0;
                 const totalScore = p.total + tempScore;
@@ -1455,10 +1453,18 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             const sorted = [...state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
             const podium = document.getElementById('podium');
             podium.innerHTML = '';
+            // Ordre podium: 2ème (gauche), 1er (centre), 3ème (droite)
             const top3 = [sorted[1], sorted[0], sorted[2]].filter(p => p);
             top3.forEach((p) => {
                 if(!p) return;
-                const realRank = sorted.indexOf(p) + 1;
+                // Calculer le rang correct en tenant compte des égalités
+                let realRank = 1;
+                for(let i = 0; i < sorted.length; i++) {
+                    if(sorted[i].id === p.id) {
+                        realRank = i + 1;
+                        break;
+                    }
+                }
                 const place = document.createElement('div');
                 place.className = `podium-place p${realRank}`;
                 place.innerHTML = `
@@ -1479,13 +1485,14 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             allPlayersDiv.innerHTML = '';
             sorted.forEach((p, idx) => {
                 const stats = this.calculatePlayerGameStats(p, state);
+                const bestLabel = isLowest ? 'Pire' : 'Meilleur';
                 const row = document.createElement('div');
                 row.className = 'player-stats-row';
                 row.innerHTML = `
                     <div class="player-stats-rank" style="color:${idx < 3 ? p.color : 'var(--text-sec)'}">${idx+1}</div>
                     <div class="player-stats-info">
                         <div class="player-stats-name" style="color:${p.color}">${p.name}</div>
-                        <div style="font-size:11px; color:var(--text-sec);">Meilleur: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}</div>
+                        <div style="font-size:11px; color:var(--text-sec);">${bestLabel}: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}</div>
                     </div>
                     <div class="player-stats-score" style="color:${p.color}">${p.total}</div>
                 `;
@@ -1517,14 +1524,16 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
         },
         calculatePlayerGameStats(player, state) {
+            const isLowest = app.currentGame?.victoryCondition === 'lowest';
             const scores = state.history.map(r => r[player.id] || 0);
             const nonZero = scores.filter(s => s > 0);
-            const best = Math.max(...scores, 0);
+            const best = isLowest ? Math.min(...scores.filter(s => s > 0), 0) : Math.max(...scores, 0);
             const avg = nonZero.length > 0 ? Math.round(nonZero.reduce((a,b) => a+b, 0) / nonZero.length) : 0;
             let roundsWon = 0;
             state.history.forEach(round => {
-                const maxScore = Math.max(...state.players.map(p => round[p.id] || 0));
-                if(round[player.id] === maxScore && maxScore > 0) roundsWon++;
+                const roundScores = state.players.map(p => round[p.id] || 0);
+                const targetScore = isLowest ? Math.min(...roundScores.filter(s => s > 0)) : Math.max(...roundScores);
+                if(round[player.id] === targetScore && targetScore > 0) roundsWon++;
             });
             return { best, avg, roundsWon };
         },
@@ -1686,8 +1695,10 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 state: GameState.create(mode, playerCount), 
                 finished: false
             };
-            if(this.savedPlayers[mode]) {
-                const saved = this.savedPlayers[mode];
+            // Appliquer les joueurs sauvegardés uniquement si le nombre correspond
+            const savedKey = `${mode}_${playerCount}`;
+            if(this.savedPlayers[savedKey]) {
+                const saved = this.savedPlayers[savedKey];
                 this.currentGame.state.players.forEach((p, idx) => {
                     if(saved[idx]) { p.name = saved[idx].name; p.color = saved[idx].color; }
                 });
@@ -1789,7 +1800,9 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             if(game) {
                 // CORRECTION BUG #3 : Protection localStorage
                 try {
-                    this.savedPlayers[game.mode] = game.state.players.map(p => ({ name: p.name, color: p.color }));
+                    const playerCount = game.state.players.length;
+                    const savedKey = `${game.mode}_${playerCount}`;
+                    this.savedPlayers[savedKey] = game.state.players.map(p => ({ name: p.name, color: p.color }));
                     localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
                     localStorage.setItem(Storage.CURRENT_KEY, id);
                 } catch(e) {
@@ -1850,7 +1863,9 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             
             // CORRECTION BUG #3 : Protection localStorage
             try {
-                this.savedPlayers[this.currentGame.mode] = this.currentGame.state.players.map(p => ({ name: p.name, color: p.color }));
+                const playerCount = this.currentGame.state.players.length;
+                const savedKey = `${this.currentGame.mode}_${playerCount}`;
+                this.savedPlayers[savedKey] = this.currentGame.state.players.map(p => ({ name: p.name, color: p.color }));
                 localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
             } catch(e) {
                 console.error('localStorage error:', e);
@@ -2082,7 +2097,8 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                 
                 UI.showToast(`✅ Manche ${roundNumber} enregistrée`, 'success');
             }
-            if(this.currentGame.mode === 'standard') {
+            // Milestones uniquement en mode 'highest' (pas en mode lowest)
+            if(this.currentGame.mode === 'standard' && this.currentGame.victoryCondition === 'highest') {
                 state.players.forEach(p => {
                     const milestones = [200, 500, 1000];
                     milestones.forEach(milestone => {
@@ -2128,7 +2144,9 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
             if(gameEnded && winner) {
                 // CORRECTION BUG #3 : Protection localStorage
                 try {
-                    this.savedPlayers[this.currentGame.mode] = state.players.map(p => ({ name: p.name, color: p.color }));
+                    const playerCount = state.players.length;
+                    const savedKey = `${this.currentGame.mode}_${playerCount}`;
+                    this.savedPlayers[savedKey] = state.players.map(p => ({ name: p.name, color: p.color }));
                     localStorage.setItem('sm_saved_players', JSON.stringify(this.savedPlayers));
                 } catch(e) {
                     console.error('localStorage error:', e);
@@ -2183,13 +2201,22 @@ font-size: 32px; font-weight: 900; color: white; box-shadow: 0 -2px 8px rgba(0,0
                     }
                 }
                 
+                // Sauvegarder après suppression
+                Storage.saveGame(this.currentGame);
                 UI.showToast('✅ Manche supprimée', 'success');
                 this.render();
             });
         },
         undo() {
             const history = this.currentGame.state.history;
-            if(history.length > 0) { this.delRound(history.length - 1); }
+            if(history.length > 0) {
+                // Undo direct sans confirmation pour une action plus fluide
+                GameState.deleteRound(this.currentGame.state, history.length - 1);
+                this.lastRanks = {}; // Reset les ranks pour éviter les animations incorrectes
+                Storage.saveGame(this.currentGame);
+                UI.showToast('↩️ Manche annulée', 'success');
+                this.render();
+            }
         }
     };
     
