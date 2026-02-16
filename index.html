@@ -149,68 +149,96 @@
     .modal-player-wrapper { 
         position: relative; 
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
     }
     .recent-suggestions {
-        position: absolute;
-        left: calc(50% + 180px);
-        top: 50%;
-        transform: translateY(-50%);
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 8px;
-        z-index: 2000;
+        margin-top: 16px;
+        padding: 12px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid var(--glass-border);
     }
     .recent-suggestion-item {
         display: flex;
         align-items: center;
         gap: 8px;
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        border-radius: 14px;
-        padding: 12px 16px;
-        font-size: 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
         font-weight: 700;
         color: var(--text);
         cursor: pointer;
         white-space: nowrap;
-        transition: all 0.25s ease;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transition: all 0.2s ease;
     }
-    .recent-suggestion-item:hover {
+    .recent-suggestion-item:active {
         background: var(--primary);
         color: white;
         border-color: var(--primary);
-        transform: translateX(-4px);
-        box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+        transform: scale(0.95);
     }
     .recent-suggestion-item .add-icon {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         background: var(--success);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 900;
         flex-shrink: 0;
-        transition: all 0.2s;
     }
-    .recent-suggestion-item:hover .add-icon {
+    .recent-suggestion-item:active .add-icon {
         background: white;
         color: var(--primary);
     }
     .recent-suggestions-title {
+        width: 100%;
+        text-align: center;
         font-size: 11px;
         font-weight: 800;
         color: var(--text-sec);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 4px;
-        padding-left: 6px;
+        margin-bottom: 8px;
+    }
+    
+    /* Sur grand écran : afficher à droite */
+    @media (min-width: 700px) {
+        .modal-player-wrapper {
+            flex-direction: row;
+            align-items: flex-start;
+        }
+        .recent-suggestions {
+            position: absolute;
+            left: calc(50% + 180px);
+            top: 0;
+            margin-top: 0;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+        .recent-suggestion-item:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateX(-4px);
+            box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+        }
+        .recent-suggestion-item:hover .add-icon {
+            background: white;
+            color: var(--primary);
+        }
     }
     .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 3000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
     .sheet-overlay.active { opacity: 1; pointer-events: auto; }
