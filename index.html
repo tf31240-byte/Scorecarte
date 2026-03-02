@@ -1047,21 +1047,6 @@ body::before {
 .game-item-players  { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .game-item-actions  { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
 
-/* Badges de jeu */
-.game-preset-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 9px;
-    font-weight: 800;
-    margin-left: 6px;
-    background: var(--primary);
-    color: white;
-}
-.game-preset-badge.belote  { background: #FF9500; }
-.game-preset-badge.skyjo   { background: #007AFF; }
-.game-preset-badge.tarot   { background: #5856D6; }
-
 /* Legacy game-item (conservé pour compatibilité) */
 .game-item {
     background: var(--card);
@@ -1077,9 +1062,6 @@ body::before {
 }
 .game-item:hover { border-color: var(--primary); transform: translateX(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 .game-player-score { font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: 700; }
-.game-actions      { display: flex; gap: 8px; }
-.game-actions button { background: none; border: none; font-size: 18px; padding: 8px; cursor: pointer; transition: transform 0.2s; }
-.game-actions button:active { transform: scale(0.9); }
 
 /* Message historique vide */
 .history-empty-msg {
@@ -1444,11 +1426,73 @@ body::before {
 /* CTA Zen */
 
 /* Transitions générales des cartes */
-.p-card                   { transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .focus-mode .p-card        { transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .btn-focus                 { transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .focus-mode .btn-focus     { transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
+
+/* En-tête de modal : titre à gauche, bouton close à droite */
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+/* Bouton icône close / action rapide */
+.btn-icon     { background: none; border: none; font-size: 24px; color: var(--text); cursor: pointer; }
+
+
+/* Style partagé des boutons radio (setup) */
+input[type="radio"].radio-sm   { margin-right: 8px;  accent-color: var(--primary); }
+input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary); }
+
+
+/* Boutons de confirmation dans les modaux (flex-1 / flex-2) */
+.btn-modal-cancel  { flex: 1; padding: 14px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-modal-confirm { flex: 2; padding: 14px; background: var(--success); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+/* Bouton pleine largeur CTA (preset modal) */
+.btn-full-cta      { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* Bouton pleine largeur secondaire (close, annuler) */
+.btn-full-secondary{ width: 100%; margin-top: 15px; padding: 14px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+
+/* Bouton action primaire compact (jeux / liste) */
+.btn-action-primary { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; }
+/* Bouton action succès compact (restore preset) */
+.btn-action-success { padding: 8px 16px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+
+/* Flexbox utilitaires fréquents */
+.flex-gap10  { display: flex; gap: 10px; }
+.flex-ai-gap10 { display: flex; align-items: center; gap: 10px; }
+/* Titre de section centré avec marge basse */
+.centered-title { margin: 0 0 15px; text-align: center; }
+
+
+/* Icône emoji dans les boutons mode (quickstart / presets) */
+.mode-btn-icon { font-size: 30px; margin-right: 15px; }
+/* Sous-titre descriptif d'un bouton mode */
+.mode-btn-sub  { margin: 4px 0 0; font-size: 12px; color: var(--text-sec); }
+/* H2/H3 sans marges pour en-têtes de section inline */
+.section-title { margin: 0; font-size: 16px; font-weight: 900; }
+/* Label KPI (taux victoire, série…) */
+.kpi-label     { font-size: 11px; color: var(--text-sec); margin: 0 0 5px; font-weight: 600; }
+
+
+/* Label titre de section setup (Victory / End condition) */
+.setup-section-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: block; }
+/* Conteneur radio option : centré (victoire) */
+.radio-option-center  { display: flex; align-items: center; justify-content: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+/* Conteneur radio option : aligné gauche (fin de partie) */
+.radio-option-left    { display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; }
+/* Texte d'option radio */
+.radio-option-text     { font-size: 12px; font-weight: 700; }
+.radio-option-text-flex{ font-size: 12px; font-weight: 700; flex: 1; }
+
+
+/* Variante petit bouton numpad (Belote / setup) */
+.btn-nb-sm  { background: rgba(120,120,128,0.12); font-size: 14px; box-shadow: none; }
+
+/* Message d'état vide (classement, records, historique) */
+.text-empty { color: var(--text-sec); padding: 20px; text-align: center; margin: 0; }
+
+/* Titre de carte stats (détail joueur, records) */
+.card-title  { font-size: 14px; font-weight: 700; margin: 0 0 12px; color: var(--text); }
 </style>
 </head>
 <body>
@@ -1480,9 +1524,9 @@ body::before {
     <!-- Stats modal -->
     <div id="stats-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeStats()">
         <div class="modal-box large">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div class="modal-header">
                 <h2 style="margin:0">📊 Statistiques</h2>
-                <button onclick="UI.closeStats()" style="background:none; border:none; font-size:24px; color:var(--text); cursor:pointer;">✕</button>
+                <button onclick="UI.closeStats()" class="btn-icon" >✕</button>
             </div>
             <div class="stats-tabs">
                 <div id="tab-rank"    class="stats-tab active" onclick="UI.switchStatsTab('rank')">Classement</div>
@@ -1506,7 +1550,7 @@ body::before {
                     <button class="filter-btn-records"        onclick="UI.filterRecords('belote')">🃏 Belote</button>
                     <button class="filter-btn-records"        onclick="UI.filterRecords('standard')">🎲 Standard</button>
                 </div>
-                <div id="stats-content-records-inner" id="records-list"></div>
+                <div id="records-list"></div>
             </div>
         </div>
     </div>
@@ -1514,9 +1558,9 @@ body::before {
     <!-- Settings modal -->
     <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeSettings()">
         <div class="modal-box large" style="max-height:80vh; overflow-y:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div class="modal-header">
                 <h2 style="margin:0">⚙️ Paramètres</h2>
-                <button onclick="UI.closeSettings()" style="background:none; border:none; font-size:24px; color:var(--text); cursor:pointer;">✕</button>
+                <button onclick="UI.closeSettings()" class="btn-icon" >✕</button>
             </div>
 
             <div class="settings-section">
@@ -1678,36 +1722,36 @@ body::before {
 
             <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
                 <div style="margin-bottom: 20px;">
-                    <label style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: block;">🎯 Objectif de victoire</label>
+                    <label class="setup-section-label">🎯 Objectif de victoire</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <label style="display: flex; align-items: center; justify-content: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s;" id="victory-highest-label">
-                            <input type="radio" name="victory-condition" value="highest" checked style="margin-right: 8px; accent-color: var(--primary);" onchange="app.updateVictoryCondition()">
-                            <span style="font-size: 12px; font-weight: 700;">⬆️ Plus HAUT</span>
+                        <label class="radio-option-center" id="victory-highest-label">
+                            <input type="radio" name="victory-condition" value="highest" checked class="radio-sm" onchange="app.updateVictoryCondition()">
+                            <span class="radio-option-text">⬆️ Plus HAUT</span>
                         </label>
-                        <label style="display: flex; align-items: center; justify-content: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s;" id="victory-lowest-label">
-                            <input type="radio" name="victory-condition" value="lowest" style="margin-right: 8px; accent-color: var(--primary);" onchange="app.updateVictoryCondition()">
-                            <span style="font-size: 12px; font-weight: 700;">⬇️ Plus BAS</span>
+                        <label class="radio-option-center" id="victory-lowest-label">
+                            <input type="radio" name="victory-condition" value="lowest" class="radio-sm" onchange="app.updateVictoryCondition()">
+                            <span class="radio-option-text">⬇️ Plus BAS</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: block;">🏁 Condition de fin</label>
+                    <label class="setup-section-label">🏁 Condition de fin</label>
                     <div style="display: grid; gap: 8px;">
-                        <label style="display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer;" id="end-free-label">
-                            <input type="radio" name="end-condition" value="free" checked style="margin-right: 10px; accent-color: var(--primary);" onchange="app.updateEndCondition()">
-                            <span style="font-size: 12px; font-weight: 700; flex: 1;">♾️ Partie libre</span>
+                        <label class="radio-option-left" id="end-free-label">
+                            <input type="radio" name="end-condition" value="free" checked class="radio-md" onchange="app.updateEndCondition()">
+                            <span class="radio-option-text-flex">♾️ Partie libre</span>
                         </label>
-                        <label style="display: flex; align-items: center; background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer;" id="end-score-label">
-                            <input type="radio" name="end-condition" value="score" style="margin-right: 10px; accent-color: var(--primary);" onchange="app.updateEndCondition()">
-                            <span style="font-size: 12px; font-weight: 700; flex: 1;" id="score-label-text">🎯 Score objectif :</span>
+                        <label class="radio-option-left" id="end-score-label">
+                            <input type="radio" name="end-condition" value="score" class="radio-md" onchange="app.updateEndCondition()">
+                            <span class="radio-option-text-flex" id="score-label-text">🎯 Score objectif :</span>
                             <input type="number" id="score-target" value="100" min="10" max="9999" style="width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; background: var(--bg); color: var(--text);" onclick="event.stopPropagation(); document.querySelector('input[name=end-condition][value=score]').checked = true; app.updateEndCondition();">
                         </label>
                     </div>
                 </div>
 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border);">
-                    <button onclick="app.openSaveCustomModal()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <button onclick="app.openSaveCustomModal()" class="btn-full-cta">
                         <span>💾</span> Sauvegarder ce mode
                     </button>
                 </div>
@@ -1716,7 +1760,7 @@ body::before {
     </div>
 
     <!-- Save custom mode modal -->
-    <div id="save-custom-modal" class="modal-overlay" onclick="if(event.target===this) document.getElementById('save-custom-modal').classList.remove('active')">
+    <div id="save-custom-modal" class="modal-overlay" onclick="if(event.target===this) UI._close('save-custom-modal')">
         <div class="modal-box" style="max-width: 340px;">
             <h2 style="margin:0 0 20px 0">💾 Sauvegarder le mode</h2>
             <div style="margin-bottom: 15px;">
@@ -1745,8 +1789,8 @@ body::before {
                 <input type="text" id="custom-mode-emoji" value="🎮" maxlength="2" style="display:none;">
             </div>
             <div style="display: flex; gap: 10px;">
-                <button onclick="document.getElementById('save-custom-modal').classList.remove('active')" style="flex: 1; padding: 14px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer;">Annuler</button>
-                <button onclick="app.saveCustomMode()" style="flex: 2; padding: 14px; background: var(--success); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer;">✓ Sauvegarder</button>
+                <button onclick="UI._close('save-custom-modal')" class="btn-modal-cancel">Annuler</button>
+                <button onclick="app.saveCustomMode()" class="btn-modal-confirm">✓ Sauvegarder</button>
             </div>
         </div>
     </div>
@@ -1757,32 +1801,32 @@ body::before {
     <div id="setup" class="container">
         <div class="header-controls">
             <h1 class="welcome-title" style="margin:0; flex:1;">ScoreMaster</h1>
-            <div style="display:flex; gap:10px;">
+            <div class="flex-gap10">
                 <button class="btn-stats"     onclick="app.showStats()"    title="Statistiques">📊</button>
                 <button class="theme-toggle"  onclick="UI.showSettings()"  title="Paramètres">⚙️</button>
             </div>
         </div>
 
         <div class="mode-btn" onclick="app.quickStartBelote()">
-            <span style="font-size:30px; margin-right:15px;">🃏</span>
+            <span class="mode-btn-icon">🃏</span>
             <div>
                 <h2 style="margin:0">Belote / Coinche</h2>
-                <p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Démarrage rapide • 2 équipes</p>
+                <p class="mode-btn-sub">Démarrage rapide • 2 équipes</p>
             </div>
         </div>
 
         <div class="mode-btn" onclick="app.openPresets()">
-            <span style="font-size:30px; margin-right:15px;">🎮</span>
+            <span class="mode-btn-icon">🎮</span>
             <div>
                 <h2 style="margin:0">Nouvelle partie</h2>
-                <p style="margin:4px 0 0; font-size:12px; color:var(--text-sec)">Uno, Skyjo, Flip 7, Rami...</p>
+                <p class="mode-btn-sub">Uno, Skyjo, Flip 7, Rami...</p>
             </div>
         </div>
 
         <!-- Parties en cours -->
         <div id="current-games-section" style="margin-top: 30px; display:none;">
             <div class="row-between" style="margin-bottom:12px;">
-                <h3 style="margin:0; font-size:16px; font-weight:900;">▶️ Parties en cours</h3>
+                <h3 class="section-title">▶️ Parties en cours</h3>
             </div>
             <div id="current-games-list"></div>
         </div>
@@ -1790,7 +1834,7 @@ body::before {
         <!-- Historique des parties -->
         <div id="history-section" style="margin-top: 30px;">
             <div class="row-between" style="margin-bottom:12px;">
-                <h3 style="margin:0; font-size:16px; font-weight:900;">📚 Historique</h3>
+                <h3 class="section-title">📚 Historique</h3>
                 <button id="clear-all-btn" onclick="app.clearAll()" style="background:none; border:none; color:var(--danger); font-weight:900; font-size:11px; cursor:pointer; display:none;">TOUT EFFACER</button>
             </div>
             <div id="history-filters" class="history-filters"></div>
@@ -1815,7 +1859,7 @@ body::before {
          GAME SCREEN
          =================================================================== -->
     <div id="game" class="container hidden">
-        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <header class="modal-header">
             <button class="btn-back" onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px; color:var(--text); cursor:pointer;">⬅️</button>
             <div style="flex:1; text-align:center;">
                 <h1 id="mode-title" style="margin:0; font-size:22px; font-weight:900;">SCORE</h1>
@@ -1873,10 +1917,10 @@ body::before {
 
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
                 <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(10)">+10</button>
-                <button class="btn-nb" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(20)">+20</button>
-                <button id="btn-82"   class="btn-nb hidden" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(82)">+82</button>
-                <button id="btn-50"   class="btn-nb hidden" style="background:rgba(120,120,128,0.12); font-size:14px; box-shadow:none;" onclick="app.addVal(50)">+50</button>
+                <button class="btn-nb btn-nb-sm" onclick="app.addVal(10)">+10</button>
+                <button class="btn-nb btn-nb-sm" onclick="app.addVal(20)">+20</button>
+                <button id="btn-82" class="btn-nb btn-nb-sm hidden" onclick="app.addVal(82)">+82</button>
+                <button id="btn-50" class="btn-nb btn-nb-sm hidden" onclick="app.addVal(50)">+50</button>
                 <button id="smart-btn" class="btn-nb" style="background:var(--text); color:var(--bg); font-size:14px; box-shadow:none;" onclick="app.handleSmart()">+/-</button>
             </div>
 
@@ -1981,6 +2025,14 @@ body::before {
     const BELOTE_WIN_SCORE = 1000;
     /** Seuils de milestone confetti */
     const MILESTONE_SCORES = [200, 500, 1000];
+
+    /** Valeurs de condition de victoire (victoryCondition) */
+    const VC_HIGHEST = 'highest'; // Le plus haut score gagne
+    const VC_LOWEST  = 'lowest';  // Le plus bas score gagne
+
+    /** Valeurs de type de fin de partie (endType / endCondition.type) */
+    const END_FREE  = 'free';  // Partie libre, pas de limite
+    const END_SCORE = 'score'; // Fin quand un joueur atteint scoreTarget
 
     /** Palette de couleurs pour les joueurs (ordre de priorité) */
     const PLAYER_COLORS = [
@@ -2127,7 +2179,7 @@ body::before {
             const validPlayerCount = Math.max(2, Math.min(playerCount, 12));
             return {
                 mode,
-                victoryCondition: 'highest',
+                victoryCondition: VC_HIGHEST,
                 players: this._defaultPlayers(mode, validPlayerCount, colors),
                 history: [], temp: {}, dealerId: 1, celebratedMilestones: {}
             };
@@ -2200,7 +2252,7 @@ body::before {
          * @returns {Array}
          */
         getSortedPlayers(state) {
-            const isLowest = state.victoryCondition === 'lowest';
+            const isLowest = state.victoryCondition === VC_LOWEST;
             return [...state.players].sort((a, b) => 
                 isLowest ? a.total - b.total : b.total - a.total
             );
@@ -2296,7 +2348,7 @@ body::before {
         },
 
         migrateData() {
-            if (!this.storageAvailable && !this.checkStorageAvailability()) return;
+            if (!this._requireStorage()) return;
             
             if (!localStorage.getItem(this.GAMES_KEY)) this._migrateV11ToV12();
         },
@@ -2362,7 +2414,7 @@ body::before {
         _buildSanitizedState(game) {
             return {
                 mode:                 game.state?.mode || game.mode || 'standard',
-                victoryCondition:     game.state?.victoryCondition || game.victoryCondition || 'highest',
+                victoryCondition:     game.state?.victoryCondition || game.victoryCondition || VC_HIGHEST,
                 players:              [],
                 history:              [],
                 temp:                 {},
@@ -2377,8 +2429,8 @@ body::before {
                 name:             String(game.name || 'Partie'),
                 mode:             game.mode || 'standard',
                 date:             game.date || new Date().toISOString(),
-                victoryCondition: game.victoryCondition || 'highest',
-                endCondition:     game.endCondition || { type: 'free', value: null },
+                victoryCondition: game.victoryCondition || VC_HIGHEST,
+                endCondition:     game.endCondition || { type: END_FREE, value: null },
                 finished:         Boolean(game.finished),
                 preset:           game.preset || null,
                 state: this._buildSanitizedState(game)
@@ -2498,7 +2550,7 @@ body::before {
             game = this._validateOrRepair(game);
             if (!game) return false;
             
-            if (!this.storageAvailable && !this.checkStorageAvailability()) return this._saveToMemory(game);
+            if (!this._requireStorage()) return this._saveToMemory(game);
             return this._trySave(game);
         },
         
@@ -2524,7 +2576,7 @@ body::before {
 
         loadGames() {
             // Utiliser le fallback mémoire si localStorage indisponible
-            if (!this.storageAvailable && !this.checkStorageAvailability()) {
+            if (!this._requireStorage()) {
                 return this.memoryFallback?.games || [];
             }
             
@@ -2542,7 +2594,7 @@ body::before {
         
         loadCurrentGame() {
             // Utiliser le fallback mémoire si localStorage indisponible
-            if (!this.storageAvailable && !this.checkStorageAvailability()) {
+            if (!this._requireStorage()) {
                 if (!this.memoryFallback) return null;
                 return this.memoryFallback.games.find(g => g.id === this.memoryFallback.current);
             }
@@ -2589,6 +2641,23 @@ body::before {
         },
 
         /** Efface toutes les parties et la partie courante (localStorage + fallback). */
+        /** Persiste this.savedPlayers dans localStorage. */
+        saveSavedPlayers(savedPlayers) {
+            try {
+                localStorage.setItem(this.SAVED_PLAYERS_KEY, JSON.stringify(savedPlayers));
+            } catch(e) {
+                if (this.memoryFallback) this.memoryFallback.savedPlayers = savedPlayers;
+            }
+        },
+
+        /**
+         * Vérifie la disponibilité du stockage, l'initialise si besoin.
+         * @returns {boolean} true si le stockage est utilisable
+         */
+        _requireStorage() {
+            return this.storageAvailable || this.checkStorageAvailability();
+        },
+
         clearGames() {
             try {
                 localStorage.removeItem(this.GAMES_KEY);
@@ -2598,7 +2667,7 @@ body::before {
         },
 
         deleteGame(gameId) {
-            if (!this.storageAvailable && !this.checkStorageAvailability()) {
+            if (!this._requireStorage()) {
                 this._deleteFromMemory(gameId); return;
             }
             this._deleteFromStorage(gameId);
@@ -2675,11 +2744,6 @@ body::before {
          * Appelé une fois par partie terminée par calculateStats.
          */
 
-        /**
-         * Accumule les stats brutes d'un joueur pour une partie donnée.
-         * Initialise l'entrée si absente.
-         */
-
         // --- _accumulatePlayerStats helpers ---
 
         /**
@@ -2729,8 +2793,7 @@ body::before {
         },
 
         _accumulateGameStats(game, stats, streaks) {
-            const isLowest = game.victoryCondition === 'lowest';
-            const sorted   = [...game.state.players].sort((a, b) => isLowest ? a.total - b.total : b.total - a.total);
+            const sorted   = GameState.getSortedPlayers(game.state);
             const winner   = sorted[0];
 
             game.state.players.forEach(p => this._accumulatePlayerStats(p, game.state.history, winner, stats, streaks));
@@ -2841,8 +2904,8 @@ body::before {
             });
         },
 
-        calculateGameHighlights(state, victoryCondition = 'highest') {
-            const isLowest = victoryCondition === 'lowest';
+        calculateGameHighlights(state, victoryCondition = VC_HIGHEST) {
+            const isLowest = victoryCondition === VC_LOWEST;
             const highlights = [];
             this._hlBestRound(state, highlights);
             
@@ -2865,35 +2928,55 @@ body::before {
 
         // --- Helpers modaux ---
         /** Ouvre un modal par son ID. */
+        /**
+         * Crée un élément HTML avec une classe CSS et un innerHTML optionnel.
+         * @param {string} tag  Tag HTML (ex: 'div')
+         * @param {string} cls  className de l'élément
+         * @param {string} html innerHTML optionnel
+         */
+        _makeEl(tag, cls, html = '') {
+            const el = document.createElement(tag);
+            el.className = cls;
+            if (html) el.innerHTML = html;
+            return el;
+        },
+
         _open(id)  { document.getElementById(id)?.classList.add('active'); },
         /** Ferme un modal par son ID. */
         _close(id) { document.getElementById(id)?.classList.remove('active'); },
+        /** Rend visible un élément en retirant la classe 'hidden'. */
+        _show(id)  { document.getElementById(id)?.classList.remove('hidden'); },
+        /** Masque un élément en ajoutant la classe 'hidden'. */
+        _hide(id)  { document.getElementById(id)?.classList.add('hidden'); },
 
         // --- Loading & Toasts ---
         /**
          * Affiche l'overlay de chargement avec un message.
          * @param {string} [message]
          */
+        /** @private Éléments de l'overlay de chargement (récupérés à la demande). */
+        _loadingEl() {
+            return {
+                overlay:  document.getElementById('loading-overlay'),
+                text:     document.getElementById('loading-text'),
+                progress: document.getElementById('loading-progress'),
+            };
+        },
+
         showLoading(message = 'Génération en cours...') {
-            const overlay = document.getElementById('loading-overlay');
-            const textEl = document.getElementById('loading-text');
-            const progressEl = document.getElementById('loading-progress');
-            if (overlay) {
-                if (textEl) textEl.textContent = message;
-                if (progressEl) progressEl.textContent = '';
-                overlay.classList.add('active');
-            }
+            const { overlay, text, progress } = this._loadingEl();
+            if (!overlay) return;
+            if (text) text.textContent = message;
+            if (progress) progress.textContent = '';
+            overlay.classList.add('active');
         },
-        
-        updateLoadingProgress(progress, message = null) {
-            const textEl = document.getElementById('loading-text');
-            const progressEl = document.getElementById('loading-progress');
-            if (textEl && message) textEl.textContent = message;
-            if (progressEl && progress !== null) {
-                progressEl.textContent = `${Math.round(progress)}%`;
-            }
+
+        updateLoadingProgress(pct, message = null) {
+            const { text, progress } = this._loadingEl();
+            if (text && message) text.textContent = message;
+            if (progress && pct !== null) progress.textContent = `${Math.round(pct)}%`;
         },
-        
+
         hideLoading() {
             const overlay = document.getElementById('loading-overlay');
             if (overlay) overlay.classList.remove('active');
@@ -2955,45 +3038,39 @@ body::before {
         },
         closeSettings() { this._close('settings-modal'); },
         updateSettingsUI() {
-            const themeBtn = document.getElementById('settings-theme-btn');
-            const soundBtn = document.getElementById('settings-sound-btn');
-            const vibrationBtn = document.getElementById('settings-vibration-btn');
-            const confettiBtn = document.getElementById('settings-confetti-btn');
-            const milestonesBtn = document.getElementById('settings-milestones-btn');
-            const chartBtn = document.getElementById('settings-chart-btn');
-            const tempScoreBtn = document.getElementById('settings-tempScore-btn');
-            
-            // Vérifier si le mode sombre est actif
-            const theme = document.documentElement.getAttribute('data-theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
-            
-            if (themeBtn) themeBtn.classList.toggle('active', isDark);
-            if (soundBtn) soundBtn.classList.toggle('active', SoundFX.enabled);
-            if (vibrationBtn) vibrationBtn.classList.toggle('active', app.settings.vibration);
-            if (confettiBtn) confettiBtn.classList.toggle('active', app.settings.confetti);
-            if (milestonesBtn) milestonesBtn.classList.toggle('active', app.settings.milestones);
-            if (chartBtn) chartBtn.classList.toggle('active', app.settings.showChart);
-            if (tempScoreBtn) tempScoreBtn.classList.toggle('active', app.settings.showTempScore);
+            const theme    = document.documentElement.getAttribute('data-theme');
+            const isDark   = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const s        = app.settings;
+            [
+                ['settings-theme-btn',     isDark],
+                ['settings-sound-btn',     SoundFX.enabled],
+                ['settings-vibration-btn', s.vibration],
+                ['settings-confetti-btn',  s.confetti],
+                ['settings-milestones-btn',s.milestones],
+                ['settings-chart-btn',     s.showChart],
+                ['settings-tempScore-btn', s.showTempScore],
+            ].forEach(([id, val]) => document.getElementById(id)?.classList.toggle('active', val));
         },
-        switchStatsTab(tab) {
-            SoundFX.click();
-            document.getElementById('tab-rank').classList.remove('active');
-            document.getElementById('tab-records').classList.remove('active');
-            document.getElementById('stats-content-rank').classList.add('hidden');
-            document.getElementById('stats-content-records').classList.add('hidden');
-            document.getElementById('stats-content-player').classList.add('hidden');
+        /** @private Masque tous les panneaux de stats puis affiche l'onglet sélectionné. */
+        _applyStatsTab(tab) {
+            ['rank', 'records'].forEach(t => {
+                document.getElementById(`tab-${t}`)?.classList.remove('active');
+                UI._hide(`stats-content-${t}`);
+            });
+            UI._hide('stats-content-player');
 
-            if(tab === 'rank') {
-                document.getElementById('tab-rank').classList.add('active');
+            if (tab === 'rank') {
+                document.getElementById('tab-rank')?.classList.add('active');
                 this.renderRanking();
-                document.getElementById('stats-content-rank').classList.remove('hidden');
+                UI._show('stats-content-rank');
             } else if (tab === 'records') {
-                document.getElementById('tab-records').classList.add('active');
+                document.getElementById('tab-records')?.classList.add('active');
                 this.renderRecords();
-                document.getElementById('stats-content-records').classList.remove('hidden');
+                UI._show('stats-content-records');
             }
         },
+
+        switchStatsTab(tab) { SoundFX.click(); this._applyStatsTab(tab); },
         showRanking() {
             SoundFX.click();
             this.switchStatsTab('rank');
@@ -3011,8 +3088,7 @@ body::before {
         _buildRankingRow(p, idx) {
             const streakEmoji  = p.currentStreak >= 3 ? '🔥' : p.currentStreak > 0 ? '⚡' : '';
             const formIndicator = p.formPercent > 10 ? '↗️' : p.formPercent < -10 ? '↘️' : '';
-            const el = document.createElement('div');
-            el.className = `rank-item rank-${idx + 1}`;
+            const el = UI._makeEl('div', `rank-item rank-${idx + 1}`);
             el.onclick = () => this.renderPlayerDetail(p.name);
             el.innerHTML = `
                 <div class="rank-num">${idx + 1}</div>
@@ -3028,7 +3104,7 @@ body::before {
             const data = StatsEngine.calculateStats(this.currentStatsMode);
             const container = document.getElementById('ranking-list');
             container.innerHTML = '';
-            if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune statistique disponible</p>'; return; }
+            if(data.length === 0) { container.innerHTML = '<p class="text-empty">Aucune statistique disponible</p>'; return; }
             data.forEach((p, idx) => container.appendChild(this._buildRankingRow(p, idx)));
         },
 
@@ -3065,11 +3141,11 @@ body::before {
                 <h2 class="text-huge" style="margin:0 0 20px 0;">${p.name}</h2>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
                     <div class="stat-detail">
-                        <h4 style="font-size:11px; color:var(--text-sec); margin:0 0 5px 0; font-weight:600;">TAUX VICTOIRE</h4>
+                        <h4 class="kpi-label">TAUX VICTOIRE</h4>
                         <div class="value" style="font-size:32px; font-weight:900; color:var(--primary);">${p.winRate}%</div>
                     </div>
                     <div class="stat-detail">
-                        <h4 style="font-size:11px; color:var(--text-sec); margin:0 0 5px 0; font-weight:600;">SÉRIE ACTUELLE</h4>
+                        <h4 class="kpi-label">SÉRIE ACTUELLE</h4>
                         <div class="value" style="font-size:32px; font-weight:900; color:${streakColor};">${p.currentStreak > 0 ? '🔥 ' : ''}${p.currentStreak}</div>
                     </div>
                 </div>
@@ -3084,7 +3160,7 @@ body::before {
                 </div>`;
             const card = (title, rows) => `
                 <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">${title}</h3>
+                    <h3 class="card-title">${title}</h3>
                     <div style="display:grid; gap:10px;">${rows}</div>
                 </div>`;
 
@@ -3095,9 +3171,9 @@ body::before {
             const allStats = StatsEngine.calculateStats();
             const p = allStats.find(s => s.name === name);
             if(!p) return;
-            document.getElementById('stats-content-rank').classList.add('hidden');
-            document.getElementById('stats-content-player').classList.remove('hidden');
-            document.getElementById('stats-content-records').classList.add('hidden');
+            UI._hide('stats-content-rank');
+            UI._show('stats-content-player');
+            UI._hide('stats-content-records');
             const container = document.getElementById('player-detail-content');
             
             const streakColor = p.currentStreak >= 3 ? 'var(--danger)' : p.currentStreak > 0 ? 'var(--primary)' : 'var(--text)';
@@ -3128,14 +3204,14 @@ body::before {
                 </div>`;
             return `
                 <div style="margin-bottom:20px;">
-                    <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">🏆 Records Spéciaux</h3>
+                    <h3 class="card-title">🏆 Records Spéciaux</h3>
                     <div style="display:grid; gap:8px;">
                         ${card('MEILLEURE MOYENNE', bestAvg.name, `<span style="color:var(--primary)">${bestAvg.avgPerRound}</span>`)}
                         ${card('MEILLEURE SÉRIE',   bestStreak.name, `<span style="color:var(--danger)">🔥 ${bestStreak.bestStreak}</span>`)}
                         ${card('PLUS RÉGULIER',     mostRegular.name, mostRegular.regularityStars)}
                     </div>
                 </div>
-                <h3 style="font-size:14px; font-weight:700; margin:0 0 12px 0; color:var(--text);">🎯 Meilleurs Scores (Partie)</h3>`;
+                <h3 class="card-title">🎯 Meilleurs Scores (Partie)</h3>`;
         },
 
 
@@ -3168,13 +3244,14 @@ body::before {
 
         renderRecords() {
             const data = StatsEngine.getRecordScores(this.currentRecordsMode || 'all');
-            const container = document.getElementById('stats-content-records');
-            container.innerHTML = '';
-            if(data.length === 0) { container.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucun record.</p>'; return; }
-            
+            const list = document.getElementById('records-list');
+            if (!list) return;
+            list.innerHTML = '';
+            if(data.length === 0) { list.innerHTML = '<p class="text-empty">Aucun record.</p>'; return; }
+
             const { bestAvg, bestStreak, mostRegular } = this._findSpecialRecords(data);
-            container.innerHTML += this._buildSpecialRecordsHtml(bestAvg, bestStreak, mostRegular);
-            data.forEach(p => container.appendChild(this._buildRecordRow(p)));
+            list.innerHTML = this._buildSpecialRecordsHtml(bestAvg, bestStreak, mostRegular);
+            data.forEach(p => list.appendChild(this._buildRecordRow(p)));
         },
 
         // --- Rendus Partie (cartes scores / historique / graphe) ---
@@ -3271,7 +3348,7 @@ body::before {
         },
 
         renderScoreCards(state, editIdx = null) {
-            const isLowest = app.currentGame.victoryCondition === 'lowest';
+            const isLowest = app.currentGame.victoryCondition === VC_LOWEST;
             
             const getDisplayScore = p => this._displayScore(p, state, editIdx);
             
@@ -3321,11 +3398,6 @@ body::before {
         },
 
         // --- Chart helpers (renderChart) ---
-
-        /**
-         * Prépare les datasets Chart.js et les bornes Y à partir de l'état de jeu.
-         * @returns {{ datasets, labels, yMin, yMax, hasNegativeScores }}
-         */
 
         // --- _buildChartData helpers ---
 
@@ -3467,7 +3539,7 @@ body::before {
             document.querySelectorAll('[id^="victory-tab-"]').forEach(t => t.classList.add('hidden'));
             const tabIndex = { podium: 1, stats: 2, highlights: 3 };
             document.querySelector(`.victory-tab:nth-child(${tabIndex[tab]})`).classList.add('active');
-            document.getElementById(`victory-tab-${tab}`).classList.remove('hidden');
+            UI._show(`victory-tab-${tab}`);
         },
 
         // --- Helpers privés (showVictory) ---
@@ -3532,7 +3604,7 @@ body::before {
             const container = document.getElementById('victory-highlights');
             container.innerHTML = '';
             if (highlights.length === 0) {
-                container.innerHTML = '<p class="text-center" style="color:var(--text-sec);padding:20px;">Aucun highlight.</p>';
+                container.innerHTML = '<p class="text-empty">Aucun highlight.</p>';
                 return;
             }
             highlights.forEach(h => {
@@ -3552,8 +3624,8 @@ body::before {
         showVictory(winner, score, state) {
             SoundFX.success();
             const overlay = document.getElementById('victory');
-            const isLowest = state.victoryCondition === 'lowest';
-            const sorted = [...state.players].sort((a,b) => isLowest ? a.total - b.total : b.total - a.total);
+            const isLowest = state.victoryCondition === VC_LOWEST;
+            const sorted = GameState.getSortedPlayers(state);
             const podium = document.getElementById('podium');
             podium.innerHTML = '';
             
@@ -3568,7 +3640,7 @@ body::before {
             vibrate([100, 50, 100, 50, 200]);
         },
         calculatePlayerGameStats(player, state) {
-            const isLowest = state.victoryCondition === 'lowest';
+            const isLowest = state.victoryCondition === VC_LOWEST;
             const scores = state.history.map(r => r[player.id] || 0);
             const nonZero = scores.filter(s => s > 0);
             // Pour le meilleur score: si tous les scores sont négatifs, prendre le max (le moins négatif)
@@ -3798,8 +3870,8 @@ body::before {
         _restoreCurrentGame() {
             const game = Storage.loadCurrentGame();
             if (game) {
-                if (!game.victoryCondition) game.victoryCondition = 'highest';
-                if (!game.endCondition) game.endCondition = this._resolveEndCondition(game.mode, 'free', null);
+                if (!game.victoryCondition) game.victoryCondition = VC_HIGHEST;
+                if (!game.endCondition) game.endCondition = this._resolveEndCondition(game.mode, END_FREE, null);
                 this.currentGame = game;
                 this.showGame();
             } else {
@@ -3966,11 +4038,6 @@ body::before {
             }
         },
 
-        /**
-         * Applique les préférences utilisateur issues d'un fichier importé
-         * (settings, savedPlayers, recentPlayers, sound, theme).
-         */
-
         // --- _applyImportedPrefs helpers ---
 
         /** Applique et persiste le thème importé. */
@@ -3992,7 +4059,7 @@ body::before {
             }
             if (data.savedPlayers) {
                 this.savedPlayers = data.savedPlayers;
-                localStorage.setItem(Storage.SAVED_PLAYERS_KEY, JSON.stringify(data.savedPlayers));
+                Storage.saveSavedPlayers(data.savedPlayers);
             }
             if (data.recentPlayers) {
                 this.recentPlayers = data.recentPlayers;
@@ -4004,17 +4071,19 @@ body::before {
 
         _restoreImportedData(data) {
             if (data.games) Storage.importGames(data.games);
-
-            // Compatibilité ancien/nouveau format
-            const currentId = data.currentGameId ?? data.currentGame?.id;
-            if (currentId) localStorage.setItem(Storage.CURRENT_KEY, currentId);
-
             this._applyImportedPrefs(data);
 
             UI.showToast('📥 Données importées !', 'success');
             UI.closeSettings();
-            localStorage.removeItem(Storage.CURRENT_KEY); // évite le flash d'écran
+            localStorage.removeItem(Storage.CURRENT_KEY); // évite le flash d'écran au redémarrage
             setTimeout(() => this.init(), 500);
+        },
+
+        /** Valide la structure d'un objet d'import. Lève une Error si invalide. */
+        _validateImportData(data) {
+            if (!data.version)                                    throw new Error('version manquante');
+            if (data.games !== undefined && !Array.isArray(data.games)) throw new Error('structure games invalide');
+            if (!data.games?.length && !data.settings && !data.savedPlayers) throw new Error('fichier vide ou incompatible');
         },
 
         importData(input) {
@@ -4025,20 +4094,12 @@ body::before {
                 input.value = '';
                 return;
             }
-            
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    
-                    if (!data.version) throw new Error('version manquante');
-                    if (data.games !== undefined && !Array.isArray(data.games))
-                        throw new Error('structure games invalide');
-                    if (!data.games?.length && !data.settings && !data.savedPlayers)
-                        throw new Error('fichier vide ou incompatible');
-                    
+                    this._validateImportData(data);
                     this._restoreImportedData(data);
-                    
                 } catch(err) {
                     console.error('Erreur import:', err);
                     UI.showToast(`❌ Import échoué : ${err.message}`, 'error');
@@ -4046,14 +4107,6 @@ body::before {
             };
             reader.readAsText(file);
             input.value = ''; // Reset pour permettre de réimporter le même fichier
-        },
-        updateThemeColor() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
-            document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
-                meta.setAttribute('content', isDark ? '#000000' : '#F5F5F7');
-            });
         },
 
         // -----------------------------------------------------------------------
@@ -4080,7 +4133,7 @@ body::before {
             UI.closeVictory();
             this.focusMode = false;
             document.body.classList.remove('focus-mode');
-            document.getElementById('dock').classList.add('hidden');
+            UI._hide('dock');
             
             this._saveCurrentIfActive();
             
@@ -4088,8 +4141,8 @@ body::before {
             
             this.currentGame = null;
             this.editIdx = null;
-            document.getElementById('setup').classList.remove('hidden');
-            document.getElementById('game').classList.add('hidden');
+            UI._show('setup');
+            UI._hide('game');
             this.renderGamesList();
         },
         // === GESTION DES PRESETS ===
@@ -4222,8 +4275,7 @@ body::before {
         /** Ajoute un titre de section + les cartes de la liste (si non vide). */
         _appendPresetSection(grid, title, presets) {
             if (!presets.length) return;
-            const h = document.createElement('div');
-            h.className = 'preset-section-title';
+            const h = UI._makeEl('div', 'preset-section-title');
             h.textContent = title;
             grid.appendChild(h);
             presets.forEach(([key, game]) => grid.appendChild(this.createPresetCard(key, game)));
@@ -4259,7 +4311,7 @@ body::before {
             
             // Reset le mode édition
             grid.classList.remove('edit-mode');
-            document.getElementById('preset-edit-btn').classList.remove('active');
+            document.getElementById('preset-edit-btn')?.classList.remove('active');
             
             const sortedPresets = this.getSortedPresets();
             
@@ -4281,20 +4333,20 @@ body::before {
                     const g = allPresets[key];
                     return `
                         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card); border-radius:12px; margin-bottom:8px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="flex-ai-gap10">
                                 <span style="font-size:24px;">${g.icon}</span>
                                 <span style="font-weight:700;">${g.name}</span>
                             </div>
-                            <button onclick="app.restorePreset('${key}')" style="padding:8px 16px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Restaurer</button>
+                            <button onclick="app.restorePreset('${key}')" class="btn-action-success">Restaurer</button>
                         </div>`;
                 }).join('');
             return `
                 <div class="modal-box" style="max-width:340px;">
-                    <h3 style="margin:0 0 15px 0; text-align:center;">↩️ Jeux masqués</h3>
+                    <h3 class="centered-title">↩️ Jeux masqués</h3>
                     <div style="max-height:300px; overflow-y:auto;">
                         ${rows || '<p style="text-align:center; color:var(--text-sec);">Aucun jeu masqué</p>'}
                     </div>
-                    <button onclick="document.getElementById('hidden-presets-modal').remove()" style="width:100%; margin-top:15px; padding:14px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:14px; font-size:14px; font-weight:700; cursor:pointer;">Fermer</button>
+                    <button onclick="document.getElementById('hidden-presets-modal').remove()" class="btn-full-secondary">Fermer</button>
                 </div>`;
         },
 
@@ -4405,7 +4457,7 @@ body::before {
         closePresets() {
             const grid = document.getElementById('presets-grid');
             grid.classList.remove('edit-mode');
-            document.getElementById('preset-edit-btn').classList.remove('active');
+            document.getElementById('preset-edit-btn')?.classList.remove('active');
             UI._close('preset-modal');
         },
 
@@ -4458,10 +4510,7 @@ body::before {
         createGameWithPreset(key, game) {
             this.currentGame = this._buildPresetGameObject(key, game);
             
-            if(!Storage.saveGame(this.currentGame)) {
-                UI.showToast('⚠️ Erreur de sauvegarde', 'warning');
-                return;
-            }
+            if(!Storage.saveGame(this.currentGame)) { UI.showToast('⚠️ Erreur de sauvegarde', 'warning'); return; }
             
             UI.showToast(`🎮 ${game.name} configuré !`, 'success');
             this.showGame();
@@ -4479,7 +4528,7 @@ body::before {
             if (endRadio) { endRadio.checked = true; this.updateEndCondition(); }
 
             const scoreInput = document.getElementById('score-target');
-            scoreInput.value = (game.endType === 'score' && game.endValue) ? game.endValue : 100;
+            scoreInput.value = (game.endType === END_SCORE && game.endValue) ? game.endValue : 100;
         },
 
         openPlayerCountWithPreset(key, game) {
@@ -4487,7 +4536,7 @@ body::before {
             document.getElementById('mode-setup-title').textContent = game.name;
             
             // Afficher le bouton retour
-            document.getElementById('btn-back-to-presets').classList.remove('hidden');
+            UI._show('btn-back-to-presets');
             
             this._applyPresetToModal(game);
             this.pendingPreset = { key, game };
@@ -4498,12 +4547,12 @@ body::before {
             this.closePresets();
             
             // Afficher le bouton retour
-            document.getElementById('btn-back-to-presets').classList.remove('hidden');
+            UI._show('btn-back-to-presets');
             
             // Reset des options
             document.getElementById('mode-setup-title').textContent = 'Mode Personnalisé';
-            document.querySelector('input[name="victory-condition"][value="highest"]').checked = true;
-            document.querySelector('input[name="end-condition"][value="free"]').checked = true;
+            document.querySelector(`input[name="victory-condition"][value="${VC_HIGHEST}"]`).checked = true;
+            document.querySelector(`input[name="end-condition"][value="${END_FREE}"]`).checked = true;
             document.getElementById('score-target').value = 100;
             this.updateVictoryCondition();
             this.updateEndCondition();
@@ -4514,7 +4563,7 @@ body::before {
         backToPresets() {
             SoundFX.click();
             // Cacher le bouton retour
-            document.getElementById('btn-back-to-presets').classList.add('hidden');
+            UI._hide('btn-back-to-presets');
             // Fermer le modal player count
             UI._close('modal-player-count');
             // Réouvrir le modal presets
@@ -4522,7 +4571,7 @@ body::before {
         },
         closePlayerCountModal() {
             UI._close('modal-player-count');
-            document.getElementById('btn-back-to-presets').classList.add('hidden');
+            UI._hide('btn-back-to-presets');
             this.pendingPreset = null;
         },
         // === SAUVEGARDE MODE PERSONNALISÉ ===
@@ -4541,10 +4590,10 @@ body::before {
 
         openSaveCustomModal() {
             // Récupérer les valeurs actuelles
-            const victory = document.querySelector('input[name="victory-condition"]:checked')?.value || 'highest';
-            const endType = document.querySelector('input[name="end-condition"]:checked')?.value || 'free';
+            const victory = document.querySelector('input[name="victory-condition"]:checked')?.value || VC_HIGHEST;
+            const endType = document.querySelector('input[name="end-condition"]:checked')?.value || END_FREE;
             const rawTarget = parseInt(document.getElementById('score-target').value);
-            const endValue = endType === 'score' ? (isNaN(rawTarget) ? null : rawTarget) : null;
+            const endValue = endType === END_SCORE ? (isNaN(rawTarget) ? null : rawTarget) : null;
             
             // Stocker temporairement
             this.tempCustomMode = { victory, endType, endValue };
@@ -4580,12 +4629,12 @@ body::before {
             modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
             modal.innerHTML = `
                 <div class="modal-box" style="max-width:300px;">
-                    <h3 style="margin:0 0 15px 0; text-align:center;">🎨 Choisissez un emoji</h3>
+                    <h3 class="centered-title">🎨 Choisissez un emoji</h3>
                     <input type="text" id="emoji-text-input" placeholder="Tapez votre emoji" maxlength="2"
                            style="width:100%; padding:15px; border:2px solid var(--primary); border-radius:14px;
                                   font-size:32px; text-align:center; background:var(--bg); color:var(--text);
                                   box-sizing:border-box; margin-bottom:15px;">
-                    <div style="display:flex; gap:10px;">
+                    <div class="flex-gap10">
                         <button id="emoji-cancel-btn" style="flex:1; padding:14px; background:var(--card); color:var(--text);
                                 border:1px solid var(--border); border-radius:14px; font-size:14px; font-weight:700; cursor:pointer;">Annuler</button>
                         <button id="emoji-confirm-btn" style="flex:1; padding:14px; background:var(--primary); color:white;
@@ -4670,7 +4719,7 @@ body::before {
             
             const { victory, endType, endValue } = this.tempCustomMode;
             const key    = 'custom_' + Date.now();
-            const tag    = endType === 'free' ? 'Partie libre' : (victory === 'lowest' ? `Limite ${endValue}` : `Objectif ${endValue}`);
+            const tag    = endType === END_FREE ? 'Partie libre' : (victory === VC_LOWEST ? `Limite ${endValue}` : `Objectif ${endValue}`);
             const preset = { name, icon: emoji, victory, endType, endValue, tag, custom: true };
 
             if (this.saveCustomPreset(key, preset)) {
@@ -4682,13 +4731,13 @@ body::before {
             this.tempCustomMode = null;
         },
         updateVictoryCondition() {
-            const isLowest = document.querySelector('input[name="victory-condition"]:checked')?.value === 'lowest';
+            const isLowest = document.querySelector('input[name="victory-condition"]:checked')?.value === VC_LOWEST;
             const scoreLabel = document.getElementById('score-label-text');
             const highestLabel = document.getElementById('victory-highest-label');
             const lowestLabel = document.getElementById('victory-lowest-label');
             
             if (this.currentGame?.state) {
-                this.currentGame.state.victoryCondition = isLowest ? 'lowest' : 'highest';
+                this.currentGame.state.victoryCondition = isLowest ? VC_LOWEST : VC_HIGHEST;
             }
             
             highestLabel.style.borderColor = !isLowest ? 'var(--primary)' : 'var(--border)';
@@ -4705,8 +4754,8 @@ body::before {
             const freeLabel = document.getElementById('end-free-label');
             const scoreLabel = document.getElementById('end-score-label');
             
-            freeLabel.style.borderColor = endType === 'free' ? 'var(--primary)' : 'var(--border)';
-            scoreLabel.style.borderColor = endType === 'score' ? 'var(--primary)' : 'var(--border)';
+            freeLabel.style.borderColor = endType === END_FREE ? 'var(--primary)' : 'var(--border)';
+            scoreLabel.style.borderColor = endType === END_SCORE ? 'var(--primary)' : 'var(--border)';
         },
         toggleMorePlayers() {
             const extraDiv = document.getElementById('extra-players');
@@ -4722,11 +4771,11 @@ body::before {
         // --- selectPlayerCount helpers ---
 
         /**
-         * Lit et valide le champ score-target si endType === 'score'.
+         * Lit et valide le champ score-target si endType === END_SCORE.
          * @returns {number|null|false} Score validé, null si libre, false si invalide.
          */
         _readScoreTarget(endType) {
-            if (endType !== 'score') return null;
+            if (endType !== END_SCORE) return null;
             const val = parseInt(document.getElementById('score-target').value);
             if (isNaN(val) || val < 10) {
                 UI.showToast('⚠️ Score minimum : 10 points', 'warning');
@@ -4741,8 +4790,8 @@ body::before {
 
         /** Réinitialise l'UI du sélecteur de nombre de joueurs. */
         _resetPlayerCountUI() {
-            document.getElementById('btn-back-to-presets').classList.add('hidden');
-            document.getElementById('extra-players').classList.add('hidden');
+            UI._hide('btn-back-to-presets');
+            UI._hide('extra-players');
             document.getElementById('btn-toggle-players').textContent = 'Plus ▼';
         },
 
@@ -4763,8 +4812,8 @@ body::before {
          * @returns {{ victoryCondition, endType, scoreTarget }} ou null si validation échoue
          */
         _readPlayerCountForm() {
-            const victoryCondition = document.querySelector('input[name="victory-condition"]:checked')?.value || 'highest';
-            const endType          = document.querySelector('input[name="end-condition"]:checked')?.value   || 'free';
+            const victoryCondition = document.querySelector('input[name="victory-condition"]:checked')?.value || VC_HIGHEST;
+            const endType          = document.querySelector('input[name="end-condition"]:checked')?.value   || END_FREE;
             const scoreTarget      = this._readScoreTarget(endType);
             if (scoreTarget === false) return null;
             return { victoryCondition, endType, scoreTarget };
@@ -4803,7 +4852,7 @@ body::before {
          */
         _resolveEndCondition(mode, endType, scoreTarget) {
             return mode === 'belote'
-                ? { type: 'score', value: BELOTE_WIN_SCORE }
+                ? { type: END_SCORE, value: BELOTE_WIN_SCORE }
                 : { type: endType, value: scoreTarget };
         },
 
@@ -4824,16 +4873,13 @@ body::before {
             return game;
         },
 
-        createGame(mode, playerCount, victoryCondition = 'highest', endType = 'free', scoreTarget = null, presetName = null, presetKey = null) {
+        createGame(mode, playerCount, victoryCondition = VC_HIGHEST, endType = END_FREE, scoreTarget = null, presetName = null, presetKey = null) {
             // Créer le state et propager victoryCondition
             const state = GameState.create(mode, playerCount);
-            state.victoryCondition = mode === 'belote' ? 'highest' : victoryCondition;
+            state.victoryCondition = mode === 'belote' ? VC_HIGHEST : victoryCondition;
             
             this.currentGame = this._buildGameObject(state, mode, playerCount, victoryCondition, endType, scoreTarget, presetName, presetKey);
-            if(!Storage.saveGame(this.currentGame)) {
-                UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
-                return;
-            }
+            if(!this._saveOrWarn()) return;
             this.showGame();
         },
 
@@ -4845,10 +4891,10 @@ body::before {
          */
         _buildGameInfoText(isBelote) {
             if (isBelote) return '🎯 Premier à 1000 pts';
-            const isLowest = this.currentGame.victoryCondition === 'lowest';
+            const isLowest = this.currentGame.victoryCondition === VC_LOWEST;
             const endCond  = this.currentGame.endCondition;
             let text = isLowest ? '⬇️ Score le plus BAS' : '⬆️ Score le plus HAUT';
-            if (endCond.type === 'score')
+            if (endCond.type === END_SCORE)
                 text += isLowest ? ` • Limite ${endCond.value} pts` : ` • Objectif ${endCond.value} pts`;
             return text;
         },
@@ -4862,9 +4908,9 @@ body::before {
         },
 
         showGame() {
-            document.getElementById('setup').classList.add('hidden');
-            document.getElementById('game').classList.remove('hidden');
-            document.getElementById('dock').classList.remove('hidden');
+            UI._hide('setup');
+            UI._show('game');
+            UI._show('dock');
             const isBelote = this.currentGame.mode === 'belote';
             // Afficher le nom du jeu (preset ou mode)
             const gameName = this.currentGame.name || (isBelote ? 'BELOTE' : 'STANDARD');
@@ -4926,8 +4972,8 @@ body::before {
          * @returns {{ preset, icon, safeId, sortedPlayers, isLowest }}
          */
         _getGameMeta(game) {
-            const isLowest = game.victoryCondition === 'lowest';
-            const sortedPlayers = [...game.state.players].sort((a, b) => isLowest ? a.total - b.total : b.total - a.total);
+            const isLowest = game.state.victoryCondition === VC_LOWEST;
+            const sortedPlayers = GameState.getSortedPlayers(game.state);
             const preset = this.getAllPresets()[game.preset] || null;
             const icon = preset?.icon || (game.mode === 'belote' ? '🃏' : '🎲');
             const safeId = String(game.id).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -4963,7 +5009,7 @@ body::before {
         },
 
         _buildCurrentGameItem(game) {
-            const { isLowest, sortedPlayers, icon, safeId } = this._getGameMeta(game);
+            const { sortedPlayers, icon, safeId } = this._getGameMeta(game);
             const safeGameName = escapeHtml(game.name);
             const gameDate = new Date(game.lastModified || game.date);
             const dateStr = gameDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -4972,10 +5018,8 @@ body::before {
 
             const playersHtml = sortedPlayers.map(p => this._playerChipHtml(p)).join('');
 
-            const item = document.createElement('div');
-            item.className = 'current-game-item';
+            const item = UI._makeEl('div', 'current-game-item', this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml));
             item.onclick = () => this.loadGame(safeId);
-            item.innerHTML = this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml);
             return item;
         },
 
@@ -4990,7 +5034,7 @@ body::before {
                             <div class="collapsed-date">${date} • ${rounds} manche${rounds !== 1 ? 's' : ''}</div>
                         </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="flex-ai-gap10">
                         <div class="collapsed-winner" style="color:${winner.color};">🏆 ${winnerName} (${winner.total})</div>
                         <span class="expand-icon">▼</span>
                     </div>
@@ -4998,7 +5042,7 @@ body::before {
                 <div class="game-item-details">
                     <div class="game-item-players">${playersHtml}</div>
                     <div class="game-item-actions">
-                        <button onclick="app.loadGame('${safeId}')" style="padding:8px 16px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer;">▶️ Voir</button>
+                        <button onclick="app.loadGame('${safeId}')" class="btn-action-primary">▶️ Voir</button>
                         <button onclick="event.stopPropagation(); app.deleteGame('${safeId}')" class="btn-ghost-danger">🗑️</button>
                     </div>
                 </div>`;
@@ -5016,10 +5060,8 @@ body::before {
                 `<div class="game-player-score" style="background:${p.color}20; color:${p.color}; border:1px solid ${p.color}40;">${escapeHtml(p.name)}: ${p.total}</div>`
             ).join('');
 
-            const item = document.createElement('div');
-            item.className = 'game-item-collapsed';
+            const item = UI._makeEl('div', 'game-item-collapsed', this._finishedItemHtml(safeId, icon, safeGameName, date, rounds, winner, safeWinnerName, playersHtml));
             item.setAttribute('data-game-id', safeId);
-            item.innerHTML = this._finishedItemHtml(safeId, icon, safeGameName, date, rounds, winner, safeWinnerName, playersHtml);
             return item;
         },
 
@@ -5045,7 +5087,7 @@ body::before {
                 );
 
             if (!games.length) {
-                historyList.innerHTML = '<p class="text-center" style="color:var(--text-sec); padding:20px;">Aucune partie dans cette catégorie</p>';
+                historyList.innerHTML = '<p class="text-empty">Aucune partie dans cette catégorie</p>';
                 return;
             }
 
@@ -5219,14 +5261,23 @@ body::before {
         // -----------------------------------------------------------------------
 
         /**
+         * Mémorise la composition joueurs d'une partie terminée/chargée dans savedPlayers.
+         * @param {string} mode    Mode de jeu
+         * @param {Array}  players Liste des joueurs
+         */
+        _memoizeComposition(mode, players) {
+            const key = `${mode}_${players.length}`;
+            this.savedPlayers[key] = players.map(p => ({ name: p.name, color: p.color }));
+            Storage.saveSavedPlayers(this.savedPlayers);
+        },
+
+        /**
          * Persiste le joueur courant dans savedPlayers et marque la partie comme active.
          * Gère QuotaExceededError séparément pour afficher un toast pertinent.
          */
         _persistLoadedGame(game, id) {
             try {
-                const key = `${game.mode}_${game.state.players.length}`;
-                this.savedPlayers[key] = game.state.players.map(p => ({ name: p.name, color: p.color }));
-                localStorage.setItem(Storage.SAVED_PLAYERS_KEY, JSON.stringify(this.savedPlayers));
+                this._memoizeComposition(game.mode, game.state.players);
                 localStorage.setItem(Storage.CURRENT_KEY, id);
             } catch(e) {
                 if (e.name === 'QuotaExceededError')
@@ -5234,6 +5285,17 @@ body::before {
                 else
                     console.error('localStorage error:', e);
             }
+        },
+
+        /**
+         * Sauvegarde this.currentGame. Affiche un toast et retourne false si échec.
+         */
+        _saveOrWarn() {
+            if (!Storage.saveGame(this.currentGame)) {
+                UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
+                return false;
+            }
+            return true;
         },
 
         loadGame(id) {
@@ -5288,11 +5350,11 @@ body::before {
                                   (this.currentGame.mode === 'belote' ? 'Belote' : 'Partie Standard'),
                 mode:             this.currentGame.mode,
                 date:             new Date().toISOString(),
-                victoryCondition: this.currentGame.victoryCondition || 'highest',
-                endCondition:     this.currentGame.endCondition || { type: 'free', value: null },
+                victoryCondition: this.currentGame.victoryCondition || VC_HIGHEST,
+                endCondition:     this.currentGame.endCondition || { type: END_FREE, value: null },
                 state: {
                     mode:                 oldState.mode,
-                    victoryCondition:     oldState.victoryCondition || 'highest',
+                    victoryCondition:     oldState.victoryCondition || VC_HIGHEST,
                     players:              oldState.players.map(p => ({ ...p, total: 0, previousRank: null })),
                     history:              [],
                     temp:                 {},
@@ -5311,10 +5373,7 @@ body::before {
             const oldState = this.currentGame.state;
             const newGame = this._buildRestartGame(oldState);
             this.currentGame = newGame;
-            if(!Storage.saveGame(newGame)) {
-                UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
-                return;
-            }
+            if(!this._saveOrWarn()) return;
             // Réinitialiser les rangs précédents pour éviter les animations incorrectes
             this.lastRanks = {};
             UI.showToast('🎮 Nouvelle partie lancée !', 'success');
@@ -5325,14 +5384,7 @@ body::before {
          * Persiste la composition de joueurs courante dans savedPlayers et localStorage.
          * Utilisé à la fin d'une partie (finishGame) pour le rechargement rapide.
          */
-        _saveCurrentComposition() {
-            try {
-                const { mode, state } = this.currentGame;
-                const key = `${mode}_${state.players.length}`;
-                this.savedPlayers[key] = state.players.map(p => ({ name: p.name, color: p.color }));
-                localStorage.setItem(Storage.SAVED_PLAYERS_KEY, JSON.stringify(this.savedPlayers));
-            } catch (e) { console.error('localStorage error:', e); }
-        },
+        _saveCurrentComposition() { this._memoizeComposition(this.currentGame.mode, this.currentGame.state.players); },
 
         finishGame() {
             if(this.currentGame.state.history.length === 0) { UI.showToast('⚠️ Aucune manche jouée', 'warning'); return; }
@@ -5340,9 +5392,7 @@ body::before {
             Storage.saveGame(this.currentGame);
             
             this._saveCurrentComposition();
-            const isLowest = this.currentGame.victoryCondition === 'lowest';
-            const winner = [...this.currentGame.state.players]
-                .sort((a, b) => isLowest ? a.total - b.total : b.total - a.total)[0];
+            const winner = GameState.getSortedPlayers(this.currentGame.state)[0];
             UI.showVictory(winner, winner.total, this.currentGame.state);
         },
 
@@ -5498,9 +5548,7 @@ body::before {
             container.appendChild(title);
 
             suggestions.forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'recent-suggestion-item';
-                item.innerHTML = `<span class="add-icon">+</span><span>${name}</span>`;
+                const item = UI._makeEl('div', 'recent-suggestion-item', `<span class="add-icon">+</span><span>${name}</span>`);
                 item.onclick = () => this.selectSuggestion(name);
                 container.appendChild(item);
             });
@@ -5553,12 +5601,6 @@ body::before {
         },
         closeModal() { UI._close('modal-player'); },
 
-        /**
-         * Valide et nettoie un nom de joueur.
-         * @param {string} raw      Nom brut (déjà trim().toUpperCase())
-         * @param {number} excludeId  ID du joueur en cours d'édition (exclu du check doublons)
-         * @returns {string|null}   Nom validé, ou null si invalide (toast affiché)
-         */
 
         // --- _validatePlayerName helpers ---
 
@@ -5671,9 +5713,7 @@ body::before {
             SoundFX.click();
             this.activePlayerId = playerId;
             const isBelote = this.currentGame.mode === 'belote';
-            document.getElementById('calc-btn').classList.toggle('hidden', !isBelote);
-            document.getElementById('btn-82').classList.toggle('hidden', !isBelote);
-            document.getElementById('btn-50').classList.toggle('hidden', isBelote);
+            this._toggleBeloteButtons(isBelote);
             this.renderSwitcher();
             UI._open('sheet');
         },
@@ -5735,7 +5775,7 @@ body::before {
         handleSmart() {
             SoundFX.click();
             if(this.currentGame.mode === 'belote') {
-                this.currentGame.state.temp[this.activePlayerId] = 252;
+                this.currentGame.state.temp[this.activePlayerId] = BELOTE_CAPOT;
                 // Mettre l'autre équipe à 0 pour le CAPOT
                 const otherPlayer = this.currentGame.state.players.find(p => p.id !== this.activePlayerId);
                 if (otherPlayer) this.currentGame.state.temp[otherPlayer.id] = 0;
@@ -5801,7 +5841,7 @@ body::before {
 
         _checkMilestones(state, previousTotals) {
             if (this.currentGame.mode !== 'standard' ||
-                this.currentGame.victoryCondition !== 'highest' ||
+                this.currentGame.victoryCondition !== VC_HIGHEST ||
                 !this.settings.milestones) return;
 
             state.players.forEach(p => this._triggerMilestoneIfReached(p, state, previousTotals));
@@ -5835,7 +5875,7 @@ body::before {
          * - lowest  : premier à dépasser la limite est éliminé, le moins haut restant gagne
          */
         _evalScoreEnd(state, endCond, victCond) {
-            if (victCond === 'highest') {
+            if (victCond === VC_HIGHEST) {
                 const winner = state.players.find(p => p.total >= endCond.value) || null;
                 return { gameEnded: !!winner, winner };
             }
@@ -5853,7 +5893,7 @@ body::before {
 
             if (this.currentGame.mode === 'belote') {
                 ({ gameEnded, winner } = this._evalBeloteEnd(state));
-            } else if (endCond.type === 'score') {
+            } else if (endCond.type === END_SCORE) {
                 ({ gameEnded, winner } = this._evalScoreEnd(state, endCond, victCond));
             }
             return { gameEnded, winner };
@@ -5873,14 +5913,6 @@ body::before {
         // GESTION DES MANCHES
         // -----------------------------------------------------------------------
 
-        /**
-         * Applique la fin de manche : sauvegarde les joueurs si victoire, affiche l'écran de fin,
-         * ou fait tourner le donneur si la partie continue.
-         * @param {Object} state
-         * @param {boolean} gameEnded
-         * @param {Object|null} winner
-         */
-
         // --- _applyRoundEnd helpers ---
 
         /**
@@ -5888,11 +5920,7 @@ body::before {
          * et déclenche l'écran de victoire après 500 ms.
          */
         _finalizeGameEnd(state, winner) {
-            try {
-                const key = `${this.currentGame.mode}_${state.players.length}`;
-                this.savedPlayers[key] = state.players.map(p => ({ name: p.name, color: p.color }));
-                localStorage.setItem(Storage.SAVED_PLAYERS_KEY, JSON.stringify(this.savedPlayers));
-            } catch (e) { console.error('localStorage error:', e); }
+            this._memoizeComposition(this.currentGame.mode, state.players);
             this.currentGame.finished = true;
             setTimeout(() => UI.showVictory(winner, winner.total, state), 500);
         },
@@ -5978,9 +6006,7 @@ body::before {
             this._applyRoundEnd(state, gameEnded, winner);
             
             // Une seule sauvegarde pour tous les cas
-            if(!Storage.saveGame(this.currentGame)) {
-                UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
-            }
+            Storage.saveGame(this.currentGame) || UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
             state.temp = {};
             this.render();
         },
@@ -6547,11 +6573,6 @@ body::before {
             return this._narrativeTemplate(genre, idx, { winner, leader, loser, gap, changes });
         },
 
-        /**
-         * Calcule le pourcentage de manches remportées par chaque joueur.
-         * @returns {Array} triée par value décroissant
-         */
-
         // --- _computeWinRates helpers ---
 
         /**
@@ -6640,8 +6661,8 @@ body::before {
         },
 
         analyzeGameData(gameState) {
-            const victoryCondition = gameState.victoryCondition || 'highest';
-            const isLowest = victoryCondition === 'lowest';
+            const victoryCondition = gameState.victoryCondition || VC_HIGHEST;
+            const isLowest = victoryCondition === VC_LOWEST;
             const players = gameState.players;
             const history = gameState.history;
             
@@ -6706,13 +6727,6 @@ body::before {
             return frames;
         },
 
-        /**
-         * Encode les frames en GIF via gifshot, convertit en Blob et télécharge.
-         * @param {string[]} frames
-         * @param {Object} ai
-         * @param {number} totalFrames
-         * @param {Function} updateProgress
-         */
 
         // --- _encodeGIF callbacks ---
 
@@ -6998,15 +7012,26 @@ body::before {
             else this._drawBannerDots(ctx, w, startY, false, 0);
         },
 
+
+        /**
+         * Raccourci : applique font, fillStyle et textAlign en une seule ligne.
+         * @param {string} align — optionnel, non modifié si omis
+         */
+        _ctxSet(ctx, font, fill, align) {
+            ctx.font = font;
+            ctx.fillStyle = fill;
+            if (align !== undefined) ctx.textAlign = align;
+        },
+
         /** Dessine le titre "SCORE MASTER" et le badge de genre. */
         _drawBannerTitle(ctx, w, startY, genre) {
             ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(0,0,0,0.3)';
-            ctx.font = 'italic 900 52px Georgia'; ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center';
+            this._ctxSet(ctx, 'italic 900 52px Georgia', '#FFFFFF', 'center');
             ctx.fillText('SCORE MASTER', w / 2, startY + 60);
             ctx.shadowBlur = 0;
             ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
             ctx.strokeText('SCORE MASTER', w / 2, startY + 60);
-            ctx.font = 'bold 11px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            this._ctxSet(ctx, 'bold 11px Arial', 'rgba(255,255,255,0.9)');
             ctx.fillText(genre, w - 60, startY + 85);
         },
 
@@ -7027,10 +7052,6 @@ body::before {
         // --- Canvas helpers (drawRanking) ---
 
         /** Dessine le podium top-3 sur le canvas du récap. */
-
-        /**
-         * Dessine un slot du podium (barre + score + nom tronqué + avatar + couronne).
-         */
 
         // --- _drawSinglePodiumSlot helpers ---
 
@@ -7060,8 +7081,7 @@ body::before {
             ctx.fillStyle = ag;
             ctx.beginPath(); ctx.arc(centerX, avatarY, r, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
-            ctx.font = `bold ${r}px Arial`;
-            ctx.fillStyle = displayIdx === 1 ? '#1a1a1a' : '#FFFFFF';
+            this._ctxSet(ctx, `bold ${r}px Arial`, displayIdx === 1 ? '#1a1a1a' : '#FFFFFF');
             ctx.fillText(playerName.charAt(0), centerX, avatarY + r * 0.35);
             if (displayIdx === 1) {
                 ctx.font = '18px Arial';
@@ -7079,9 +7099,9 @@ body::before {
             this._drawPodiumBar(ctx, x, barY, podW, barH, baseY, centerX, colors[displayIdx], emojis[displayIdx]);
 
             // Score + Nom
-            ctx.font = 'bold 16px Arial'; ctx.fillStyle = '#1a1a1a'; ctx.textAlign = 'center';
+            this._ctxSet(ctx, 'bold 16px Arial', '#1a1a1a', 'center');
             ctx.fillText(`${player.total} pts`, centerX, barY + floatY - 8);
-            ctx.font = 'bold 13px Arial'; ctx.fillStyle = '#333';
+            this._ctxSet(ctx, 'bold 13px Arial', '#333');
             let name = player.name.toUpperCase();
             const maxW = podW - 10;
             while (ctx.measureText(name).width > maxW && name.length > 1) name = name.slice(0, -1);
@@ -7123,11 +7143,11 @@ body::before {
                 ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
                 ctx.fillStyle = colors.primary;
                 this.roundRect(ctx, p, itemY, 5, itemH, [10, 0, 0, 10]); ctx.fill();
-                ctx.font = 'bold 18px Arial'; ctx.fillStyle = '#888'; ctx.textAlign = 'center';
+                this._ctxSet(ctx, 'bold 18px Arial', '#888', 'center');
                 ctx.fillText(`${i + 4}`, p + 28, itemY + 25);
-                ctx.font = 'bold 16px Arial'; ctx.fillStyle = '#333';
+                this._ctxSet(ctx, 'bold 16px Arial', '#333');
                 ctx.fillText(player.name.toUpperCase(), w / 2, itemY + 25);
-                ctx.font = 'bold 17px Arial'; ctx.fillStyle = colors.primary; ctx.textAlign = 'right';
+                this._ctxSet(ctx, 'bold 17px Arial', colors.primary, 'right');
                 ctx.fillText(`${player.total} pts`, p + cardW - 15, itemY + 25);
             });
         },
@@ -7141,9 +7161,7 @@ body::before {
             ctx.fillStyle = fillColor;
             this.roundRect(ctx, p, startY, w - p * 2, 40, 12);
             ctx.fill();
-            ctx.font = 'bold 18px Arial';
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textAlign = 'center';
+            this._ctxSet(ctx, 'bold 18px Arial', '#FFFFFF', 'center');
             ctx.fillText(label, w / 2, startY + 26);
         },
 
@@ -7208,12 +7226,11 @@ body::before {
 
         /** Dessine l'icône, le label, la valeur et le sous-texte d'une carte temps fort. */
         _drawHighlightCardText(ctx, p, y, cardW, barW, item) {
-            const centerX = p + barW + 15 + (cardW - barW - 30) / 2;
-            ctx.textAlign = 'center';
-            ctx.font = '24px Arial';       ctx.fillStyle = item.color;   ctx.fillText(item.icon,  centerX, y + 22);
-            ctx.font = 'bold 10px Arial';  ctx.fillStyle = item.color;   ctx.fillText(item.label, centerX, y + 38);
-            ctx.font = 'bold 16px Arial';  ctx.fillStyle = '#1a1a1a';    ctx.fillText(item.value, centerX, y + 54);
-            ctx.font = 'bold 13px Arial';  ctx.fillStyle = item.color;   ctx.fillText(item.sub,   centerX, y + 68);
+            const cx = p + barW + 15 + (cardW - barW - 30) / 2;
+            this._ctxSet(ctx, '24px Arial',      item.color,  'center'); ctx.fillText(item.icon,  cx, y + 22);
+            this._ctxSet(ctx, 'bold 10px Arial', item.color);            ctx.fillText(item.label, cx, y + 38);
+            this._ctxSet(ctx, 'bold 16px Arial', '#1a1a1a');             ctx.fillText(item.value, cx, y + 54);
+            this._ctxSet(ctx, 'bold 13px Arial', item.color);            ctx.fillText(item.sub,   cx, y + 68);
         },
 
         _drawHighlightCard(ctx, p, cardW, contentY, itemH, barW, item, i, time, animated) {
@@ -7324,13 +7341,13 @@ body::before {
 
         _drawWinRateBar(ctx, p, cardW, w, contentY, top, time, animated) {
             const topValue = Math.max(0, Math.min(100, top?.value || 0));
-            ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#333'; ctx.textAlign = 'center';
+            this._ctxSet(ctx, 'bold 14px Arial', '#333', 'center');
             ctx.fillText(`🎯 Taux victoire: ${top?.name || 'N/A'}`, w / 2, contentY + 25);
             const barW = cardW - 30, barH = 24;
             const barX = p + 15, barY = contentY + 35;
             const fillW = this._drawProgressBar(ctx, barX, barY, barW, barH, topValue, '#22C55E', '#16A34A');
             if (animated) this._drawBarShine(ctx, barX, barY, barW, barH, fillW, time);
-            ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center';
+            this._ctxSet(ctx, 'bold 14px Arial', '#FFFFFF', 'center');
             ctx.fillText(`${topValue}%`, w / 2, barY + 17);
         },
 
@@ -7384,11 +7401,11 @@ body::before {
             const col2X = w / 2 + 40;
 
             const label = (text, x, y) => {
-                ctx.font = '14px Arial'; ctx.fillStyle = '#444'; ctx.textAlign = 'center';
+                this._ctxSet(ctx, '14px Arial', '#444', 'center');
                 ctx.fillText(text, x, y);
             };
             const value = (text, x, y) => {
-                ctx.font = 'bold 15px Arial'; ctx.fillStyle = '#1a1a1a'; ctx.textAlign = 'center';
+                this._ctxSet(ctx, 'bold 15px Arial', '#1a1a1a', 'center');
                 ctx.fillText(text, x, y);
             };
 
@@ -7493,14 +7510,6 @@ body::before {
         },
         
         // Version synchrone (pour compatibilité, mais moins performante)
-        canvasToBlob(canvas) {
-            const data = canvas.toDataURL('image/png');
-            const bytes = atob(data.split(',')[1]);
-            const arr = new Uint8Array(bytes.length);
-            for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-            return new Blob([arr], { type: 'image/png' });
-        },
-        
         // Version asynchrone (recommandée, ne bloque pas l'UI)
         canvasToBlobAsync(canvas) {
             return new Promise((resolve) => {
