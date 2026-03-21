@@ -3911,12 +3911,19 @@ with st.sidebar:
 
     # ── Statut persistance Gist ───────────────────────────────────────────
     if _gist_is_configured():
-        # Diagnostic rapide : combien de fichiers valides en local
-        _SLUGS_D = list(WINE_TYPES.values())
-        _n_viv_local = sum(1 for s in _SLUGS_D if _viv_path(s).exists() and
-                          len(json.loads(_viv_path(s).read_text()) if _viv_path(s).exists() else {}) > 0)
-        _n_lec_local = sum(1 for s in _SLUGS_D if _lec_path(s).exists() and
-                          len((json.loads(_lec_path(s).read_text()) if _lec_path(s).exists() else {}).get("wines",[])) > 0)
+        # Diagnostic rapide : combien de fichiers valides en local (robuste aux fichiers corrompus)
+        def _count_valid(path_fn, check):
+            n = 0
+            for s in WINE_TYPES.values():
+                p = path_fn(s)
+                if not p.exists(): continue
+                try:
+                    d = json.loads(p.read_text("utf-8"))
+                    if check(d): n += 1
+                except Exception: pass
+            return n
+        _n_viv_local = _count_valid(_viv_path, lambda d: isinstance(d, dict) and len(d) > 0)
+        _n_lec_local = _count_valid(_lec_path, lambda d: isinstance(d, dict) and len(d.get("wines",[])) > 0)
         _cache_ok = _n_viv_local >= 1 or _n_lec_local >= 1
         _status_icon = "☁️" if _cache_ok else "⚠️"
         _status_txt = f"Vivino: {_n_viv_local}/4 · Leclerc: {_n_lec_local}/4"
