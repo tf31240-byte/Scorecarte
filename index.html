@@ -5704,6 +5704,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          * @returns {boolean} true si hors bornes (affiche un toast + vibration)
          */
         _checkBounds(val) {
+            if (!isFinite(val) || isNaN(val)) { vibrate([50, 50, 50]); UI.showToast('⚠️ Score invalide', 'warning'); return true; }
             if (val > SCORE_MAX) { vibrate([50, 50, 50]); UI.showToast(`⚠️ Maximum ${SCORE_MAX} points`, 'warning'); return true; }
             if (val < SCORE_MIN) { vibrate([50, 50, 50]); UI.showToast(`⚠️ Minimum ${SCORE_MIN} points`, 'warning'); return true; }
             return false;
@@ -5726,10 +5727,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
         renderSwitcher() {
             const cont = document.getElementById('input-switcher');
+            if (!cont) return;
             cont.innerHTML = '';
             this.currentGame.state.players.forEach(p => {
                 const isActive = p.id === this.activePlayerId;
-                const tempScore = this.currentGame.state.temp[p.id] || 0;
+                // Number() normalise -0 → 0 pour éviter un affichage trompeur
+                const tempScore = Number(this.currentGame.state.temp[p.id] || 0);
                 const div = document.createElement('div');
                 div.className = `sel-box ${isActive ? 'active' : ''}`;
                 if(isActive) div.style.setProperty('--p-color', p.color);
@@ -5739,7 +5742,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             });
         },
         typeNum(n) {
-            const current = (this.currentGame.state.temp[this.activePlayerId] || 0).toString();
+            // Number() convertit -0 en 0, évitant que (-0).toString() = "0" fasse perdre le signe
+            // (cas théoriquement bloqué par handleSmart fix, mais guard défensif)
+            const raw = this.currentGame.state.temp[this.activePlayerId];
+            const current = (raw !== undefined && raw !== null ? Number(raw) : 0).toString();
             const newVal = parseInt((current === '0' ? '' : current) + n);
             if (this._checkBounds(newVal)) return;
             vibrate(10);
@@ -5781,7 +5787,11 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 if (otherPlayer) this.currentGame.state.temp[otherPlayer.id] = 0;
             } else {
                 const current = this.currentGame.state.temp[this.activePlayerId] || 0;
-                this.currentGame.state.temp[this.activePlayerId] = current * -1;
+                // Correction : current * -1 produit -0 quand current = 0 (JavaScript negative zero).
+                // -0 est FALSY : `(-0 || 0)` = 0, donc le signe est perdu partout dans le code.
+                // typeNum() suivant produirait un score POSITIF au lieu de négatif.
+                // Fix : ne stocker -0 que si current !== 0.
+                this.currentGame.state.temp[this.activePlayerId] = current !== 0 ? current * -1 : 0;
             }
             this.renderSwitcher();
             this.render();
