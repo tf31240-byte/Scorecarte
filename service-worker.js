@@ -1,117 +1,169 @@
-// ScoreMaster Service Worker v13
-const CACHE_VERSION = 'scoremaster-v13.0.0';
-const CACHE_ASSETS = [
-  './',
-  './ScoreMaster_PWA.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+// ============================================================
+//  ScoreMaster — Service Worker v12
+//  Stratégie : cache-first pour l'app shell,
+//              stale-while-revalidate pour les CDN.
+//  Résultat  : app 100 % fonctionnelle sans connexion
+//              après la première visite en ligne.
+// ============================================================
+
+const CACHE_APP = 'scoremaster-app-v12';
+const CACHE_CDN = 'scoremaster-cdn-v12';
+
+// ── Ressources à précacher à l'install ──────────────────────
+const APP_SHELL = [
+    './',
+    './scoremaster.html',
+    './manifest.json',
 ];
 
-// Installation - Mise en cache des ressources
+// Icônes : precache uniquement si elles existent (allSettled)
+const APP_ICONS = [
+    './icon-180.png',
+    './icon-192.png',
+    './icon-512.png',
+];
+
+// Bibliothèques CDN (nécessitent crossorigin="anonymous" dans le HTML)
+const CDN_LIBS = [
+    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js',
+    'https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js',
+];
+
+// ── Install : precache ───────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installation...');
-  event.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((cache) => {
-        console.log('[SW] Mise en cache des assets');
-        return cache.addAll(CACHE_ASSETS);
-      })
-      .then(() => self.skipWaiting()) // Active immédiatement
-  );
-});
-
-// Activation - Nettoyage des vieux caches
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Activation...');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_VERSION) {
-            console.log('[SW] Suppression ancien cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+    event.waitUntil(
+        Promise.all([
+            caches.open(CACHE_APP).then(cache =>
+                // allSettled : l'install ne plante pas si une ressource manque
+                Promise.allSettled([
+                    ...APP_SHELL.map(url => cache.add(url)),
+                    ...APP_ICONS.map(url => cache.add(url).catch(() => {})),
+                ])
+            ),
+            caches.open(CACHE_CDN).then(cache =>
+                Promise.allSettled(
+                    CDN_LIBS.map(url =>
+                        cache.add(new Request(url, { mode: 'cors', credentials: 'omit' }))
+                             .catch(() => console.warn('[SW] CDN non mis en cache (hors-ligne ?) :', url))
+                    )
+                )
+            ),
+        ])
+        .then(() => {
+            console.log('[SW] Precache terminé');
+            return self.skipWaiting(); // Activation immédiate
         })
-      );
-    }).then(() => self.clients.claim()) // Prend le contrôle immédiatement
-  );
+    );
 });
 
-// Fetch - Stratégie Cache First avec Network Fallback
+// ── Activate : nettoyer les anciens caches ───────────────────
+self.addEventListener('activate', (event) => {
+    const CURRENT = new Set([CACHE_APP, CACHE_CDN]);
+    event.waitUntil(
+        caches.keys()
+            .then(keys =>
+                Promise.all(
+                    keys.filter(k => !CURRENT.has(k)).map(k => {
+                        console.log('[SW] Suppression ancien cache :', k);
+                        return caches.delete(k);
+                    })
+                )
+            )
+            .then(() => {
+                console.log('[SW] Activé — contrôle immédiat des clients');
+                return self.clients.claim();
+            })
+    );
+});
+
+// ── Fetch : stratégie par type de ressource ─────────────────
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes non-GET
-  if (event.request.method !== 'GET') return;
-  
-  // Ignorer les requêtes externes (sauf CDN)
-  const url = new URL(event.request.url);
-  const isCDN = url.hostname.includes('cdn.jsdelivr.net');
-  const isSameOrigin = url.origin === self.location.origin;
-  
-  if (!isSameOrigin && !isCDN) return;
+    if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        // Si trouvé en cache, le retourner
-        if (cachedResponse) {
-          console.log('[SW] Cache hit:', event.request.url);
-          return cachedResponse;
-        }
+    const url = new URL(event.request.url);
 
-        // Sinon, fetch depuis le réseau
-        console.log('[SW] Network fetch:', event.request.url);
-        return fetch(event.request)
-          .then((networkResponse) => {
-            // Mettre en cache pour les prochaines fois
-            if (networkResponse && networkResponse.status === 200) {
-              const responseToCache = networkResponse.clone();
-              caches.open(CACHE_VERSION)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
-            }
-            return networkResponse;
-          })
-          .catch(() => {
-            // En cas d'erreur réseau, retourner une page offline si HTML
-            if (event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('./ScoreMaster_PWA.html');
-            }
-          });
-      })
-  );
+    // ── CDN : stale-while-revalidate ──────────────────────────
+    const isCDN = CDN_LIBS.some(lib => event.request.url.startsWith(lib));
+    if (isCDN) {
+        event.respondWith(staleWhileRevalidate(event.request, CACHE_CDN));
+        return;
+    }
+
+    // ── Hors-origine (autres CDN, fonts…) : network-first silencieux ──
+    if (url.origin !== location.origin) {
+        event.respondWith(
+            fetch(event.request).catch(() =>
+                caches.match(event.request)
+                    .then(cached => cached || new Response('', { status: 503 }))
+            )
+        );
+        return;
+    }
+
+    // ── App shell (même origine) : cache-first + revalidation fond ──
+    event.respondWith(cacheFirstWithUpdate(event.request));
 });
 
-// Message - Communication avec l'app
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[SW] Skip waiting demandé');
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_VERSION });
-  }
-});
+// ── Helpers ─────────────────────────────────────────────────
 
-// Notification de mise à jour disponible
-self.addEventListener('controllerchange', () => {
-  console.log('[SW] Nouveau Service Worker actif');
-});
+/**
+ * Cache-first avec mise à jour silencieuse en fond.
+ * Fallback vers scoremaster.html pour les requêtes de navigation.
+ */
+async function cacheFirstWithUpdate(request) {
+    const cache   = await caches.open(CACHE_APP);
+    const cached  = await cache.match(request);
 
-// Background Sync (optionnel - pour futures fonctionnalités)
-self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync:', event.tag);
-  if (event.tag === 'sync-scores') {
-    event.waitUntil(syncScores());
-  }
-});
+    // Mise à jour en arrière-plan
+    const fetchPromise = fetch(request).then(response => {
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+    }).catch(() => null);
 
-async function syncScores() {
-  // Placeholder pour sync future
-  console.log('[SW] Sync des scores...');
-  return Promise.resolve();
+    if (cached) {
+        // Retourner le cache immédiatement, fetch en fond
+        fetchPromise; // fire-and-forget
+        return cached;
+    }
+
+    // Pas en cache : attendre le réseau
+    const networkResponse = await fetchPromise;
+    if (networkResponse) return networkResponse;
+
+    // Hors-ligne et pas en cache : fallback app shell
+    if (request.destination === 'document') {
+        const shell = await cache.match('./scoremaster.html') || await cache.match('./');
+        if (shell) return shell;
+    }
+
+    return new Response(
+        '<h1 style="font-family:sans-serif;text-align:center;margin-top:30vh">📵 Hors-ligne — ouvrez l\'app une première fois avec une connexion.</h1>',
+        { status: 503, headers: { 'Content-Type': 'text/html;charset=utf-8' } }
+    );
 }
+
+/**
+ * Stale-while-revalidate : retourne le cache immédiatement
+ * et met à jour en fond pour la prochaine visite.
+ */
+async function staleWhileRevalidate(request, cacheName) {
+    const cache  = await caches.open(cacheName);
+    const cached = await cache.match(request);
+
+    // Fetch en fond dans tous les cas
+    fetch(request)
+        .then(response => { if (response.ok) cache.put(request, response.clone()); })
+        .catch(() => {});
+
+    return cached || fetch(request).catch(() =>
+        new Response('', { status: 503 })
+    );
+}
+
+// ── Message : forcer la mise à jour immédiate ────────────────
+self.addEventListener('message', (event) => {
+    if (event.data?.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});

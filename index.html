@@ -25,9 +25,9 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>ScoreMaster</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js" crossorigin="anonymous" defer></script>
 
 <style>
 /* =============================================================================
@@ -296,6 +296,24 @@ body::before {
 .toast.warning  { background: var(--dealer);  color: white; border: none; }
 .toast.error    { background: var(--danger);  color: white; border: none; }
 .toast.info     { background: var(--primary); color: white; border: none; }
+
+/* Bannière hors-ligne */
+#offline-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #1c1c1e;
+    color: #ffe58f;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: calc(6px + env(safe-area-inset-bottom)) 16px 6px;
+    z-index: 8000;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+}
+#offline-banner.visible { transform: translateY(0); }
 
 
 /* =============================================================================
@@ -1502,6 +1520,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
     <!-- Toast -->
     <div id="toast" class="toast"></div>
+    <div id="offline-banner" role="status" aria-live="polite">📵 Hors-ligne — les scores sont sauvegardés localement</div>
 
     <!-- Loading overlay -->
     <div id="loading-overlay" class="loading-overlay">
@@ -2342,7 +2361,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 localStorage.setItem(this.GAMES_KEY, v11Data);
                 console.log('SM: Migration v11->v12 OK');
                 const v11Current = localStorage.getItem(this.LEGACY_CURRENT_KEY);
-                if (v11Current && parsed.find(g => g.id === v11Current))
+                if (v11Current && parsed.find(g => String(g.id) === String(v11Current)))
                     localStorage.setItem(this.CURRENT_KEY, v11Current);
             } catch (e) { console.error('SM: Migration échouée', e); }
         },
@@ -2381,13 +2400,19 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          * @returns {Array} Sanitised player objects
          */
         _sanitizePlayers(players) {
-            return players.map((p, i) => ({
-                id:           p.id || (i + 1),
-                name:         String(p.name || `J${i + 1}`).toUpperCase().substring(0, NAME_MAX_LEN),
-                color:        p.color || PLAYER_COLORS[i % PLAYER_COLORS.length],
-                total:        typeof p.total === 'number' ? p.total : 0,
-                previousRank: p.previousRank || null
-            }));
+            return players.map((p, i) => {
+                // Strip des caractères HTML dangereux sur les noms importés.
+                // _validatePlayerName le fait à la saisie, mais pas sur les données JSON importées.
+                const rawName = String(p.name || `J${i + 1}`).toUpperCase().substring(0, NAME_MAX_LEN);
+                const cleanName = rawName.replace(/[<>"'&]/g, '') || `J${i + 1}`;
+                return {
+                    id:           p.id || (i + 1),
+                    name:         cleanName,
+                    color:        p.color || PLAYER_COLORS[i % PLAYER_COLORS.length],
+                    total:        typeof p.total === 'number' ? p.total : 0,
+                    previousRank: p.previousRank || null
+                };
+            });
         },
 
         /**
@@ -2840,7 +2865,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             });
             if (best.player) highlights.push({
                 icon: '🔥', label: 'Meilleure manche',
-                value: `${best.player.name} - ${best.score} pts (M${best.roundIdx})`,
+                value: `${escapeHtml(best.player.name)} - ${best.score} pts (M${best.roundIdx})`,
                 color: best.player.color
             });
         },
@@ -2883,7 +2908,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const best = Object.values(prog).sort((a, b) => b.improvement - a.improvement)[0];
             if (best?.improvement > 0) highlights.push({
                 icon: '⚡', label: 'Comeback King',
-                value: `${best.player.name} (${best.maxRank}e → ${best.finalRank}e)`,
+                value: `${escapeHtml(best.player.name)} (${best.maxRank}e → ${best.finalRank}e)`,
                 color: best.player.color
             });
         },
@@ -2899,7 +2924,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             }).sort((a, b) => a.std - b.std)[0];
             if (best?.std !== Infinity) highlights.push({
                 icon: '🎯', label: 'Joueur régulier',
-                value: `${best.player.name} (${Math.round(best.mean)} pts/manche)`,
+                value: `${escapeHtml(best.player.name)} (${Math.round(best.mean)} pts/manche)`,
                 color: best.player.color
             });
         },
@@ -3206,9 +3231,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div style="margin-bottom:20px;">
                     <h3 class="card-title">🏆 Records Spéciaux</h3>
                     <div style="display:grid; gap:8px;">
-                        ${card('MEILLEURE MOYENNE', bestAvg.name, `<span style="color:var(--primary)">${bestAvg.avgPerRound}</span>`)}
-                        ${card('MEILLEURE SÉRIE',   bestStreak.name, `<span style="color:var(--danger)">🔥 ${bestStreak.bestStreak}</span>`)}
-                        ${card('PLUS RÉGULIER',     mostRegular.name, mostRegular.regularityStars)}
+                        ${card('MEILLEURE MOYENNE', escapeHtml(bestAvg.name), `<span style="color:var(--primary)">${bestAvg.avgPerRound}</span>`)}
+                        ${card('MEILLEURE SÉRIE',   escapeHtml(bestStreak.name), `<span style="color:var(--danger)">🔥 ${bestStreak.bestStreak}</span>`)}
+                        ${card('PLUS RÉGULIER',     escapeHtml(mostRegular.name), mostRegular.regularityStars)}
                     </div>
                 </div>
                 <h3 class="card-title">🎯 Meilleurs Scores (Partie)</h3>`;
@@ -3221,7 +3246,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             el.className = 'rank-item';
             el.innerHTML = `
                 <div class="rank-info">
-                    <div class="rank-name">${p.name}</div>
+                    <div class="rank-name">${escapeHtml(p.name)}</div>
                     <div class="rank-sub">Meilleure manche: ${p.highestRound} pts</div>
                 </div>
                 <div class="rank-val">${p.highestScore}</div>`;
@@ -3353,10 +3378,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const getDisplayScore = p => this._displayScore(p, state, editIdx);
             
             // Toujours trier selon victoryCondition, même en mode Zen
+            // Tiebreaker sur p.id pour un ordre déterministe à égalité (évite les cartes qui "sautent")
             const sorted = [...state.players].sort((a,b) => {
                 const scoreA = getDisplayScore(a);
                 const scoreB = getDisplayScore(b);
-                return isLowest ? scoreA - scoreB : scoreB - scoreA;
+                const diff = isLowest ? scoreA - scoreB : scoreB - scoreA;
+                return diff !== 0 ? diff : a.id - b.id;
             });
             const grid = document.getElementById('grid');
             const rankChanges = this._detectRankChanges(state.players, sorted);
@@ -3589,7 +3616,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 row.innerHTML = `
                     <div class="player-stats-rank" style="color:${idx < 3 ? p.color : 'var(--text-sec)'}">${idx+1}</div>
                     <div class="player-stats-info">
-                        <div class="player-stats-name" style="color:${p.color}">${p.name}</div>
+                        <div class="player-stats-name" style="color:${p.color}">${escapeHtml(p.name)}</div>
                         <div style="font-size:11px;color:var(--text-sec);">${bestLabel}: ${stats.best} • Moy: ${stats.avg} • Manches gagnées: ${stats.roundsWon}</div>
                     </div>
                     <div class="player-stats-score" style="color:${p.color}">${p.total}</div>
@@ -3658,6 +3685,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
         closeVictory() { this._close('victory'); },
         launchFireworks() {
+            if (typeof confetti === 'undefined') return; // CDN non chargé (hors-ligne)
             const duration = 5000;
             const end = Date.now() + duration;
             const colors = PLAYER_COLORS.slice(0, 6);
@@ -3691,8 +3719,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         launchMilestoneConfetti(score) {
-            const colors = PLAYER_COLORS.slice(0, 6);
-            confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: colors });
+            if (typeof confetti !== 'undefined') { // CDN non chargé (hors-ligne) → skip confetti
+                const colors = PLAYER_COLORS.slice(0, 6);
+                confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: colors });
+            }
             const [m200, m500, m1000] = MILESTONE_SCORES;
             const milestone = this._getMilestoneText(score, m200, m500, m1000);
             this._vibrateForMilestone(score, m500, m1000);
@@ -3789,6 +3819,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const app = {
         currentGame: null, activePlayerId: null, editIdx: null, chart: null, savedPlayers: {}, focusMode: false,
         recentPlayers: [], // Les 8 derniers noms de joueurs utilisés
+        _addValPlayers: new Set(), // Joueurs dont le score a été posé par addVal (pour typeNum)
         
         // Paramètres par défaut
         settings: {
@@ -4062,8 +4093,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 Storage.saveSavedPlayers(data.savedPlayers);
             }
             if (data.recentPlayers) {
-                this.recentPlayers = data.recentPlayers;
-                localStorage.setItem(Storage.RECENT_KEY, JSON.stringify(data.recentPlayers));
+                // Sanitiser les noms importés pour éviter XSS dans renderRecentSuggestions
+                this.recentPlayers = data.recentPlayers
+                    .filter(n => typeof n === 'string')
+                    .map(n => n.replace(/[<>"'&]/g, '').substring(0, 20))
+                    .filter(n => n.length > 0);
+                localStorage.setItem(Storage.RECENT_KEY, JSON.stringify(this.recentPlayers));
             }
             if (data.sound !== undefined) this._applyImportedSound(data.sound);
             if (data.theme) this._applyImportedTheme(data.theme);
@@ -4497,8 +4532,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 name:             game.name,
                 mode:             'standard',
                 date:             new Date().toISOString(),
-                victoryCondition: game.victory,
-                endCondition:     { type: game.endType, value: game.endValue },
+                victoryCondition: game.victory || VC_HIGHEST,
+                endCondition:     { type: game.endType || END_FREE, value: game.endValue ?? null },
                 state,
                 finished:         false,
                 preset:           key
@@ -5548,7 +5583,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             container.appendChild(title);
 
             suggestions.forEach(name => {
-                const item = UI._makeEl('div', 'recent-suggestion-item', `<span class="add-icon">+</span><span>${name}</span>`);
+                const item = UI._makeEl('div', 'recent-suggestion-item', `<span class="add-icon">+</span><span>${escapeHtml(name)}</span>`);
                 item.onclick = () => this.selectSuggestion(name);
                 container.appendChild(item);
             });
@@ -5564,7 +5599,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             // Filtrer les suggestions : pas les noms par défaut, pas le nom actuel, pas déjà dans la partie
             const suggestions = this.recentPlayers
                 .filter(name => 
-                    !this.defaultNames.includes(name) && 
+                    !this.defaultNames.some(d => d.toUpperCase() === name.toUpperCase()) &&
                     name !== currentName &&
                     !namesInGame.includes(name)
                 )
@@ -5584,8 +5619,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this.renderRecentSuggestions(name);
         },
         addRecentPlayer(name) {
-            // Ne pas ajouter les noms par défaut
-            if(this.defaultNames.includes(name)) return;
+            // Ne pas ajouter les noms par défaut (comparaison insensible à la casse :
+            // _validatePlayerName met en majuscules, defaultNames sont en casse mixte)
+            if(this.defaultNames.some(d => d.toUpperCase() === name.toUpperCase())) return;
             
             // Retirer si déjà présent, puis ajouter en premier
             this.recentPlayers = this.recentPlayers.filter(n => n !== name);
@@ -5640,9 +5676,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (raw.length > NAME_MAX_LEN)
                 UI.showToast(`⚠️ Nom limité à ${NAME_MAX_LEN} caractères`, 'warning');
 
-            if (this._isNameDuplicate(name, excludeId)) return null;
+            // Strip AVANT le check doublon : "ALICE!!" → "ALICE" avant de comparer.
+            // Sans ça, "ALICE!!" passe le check doublon (≠ "ALICE"), puis est strippé
+            // en "ALICE", créant silencieusement deux joueurs avec le même nom.
             name = this._stripForbiddenChars(name);
             if (name === null) return null;
+
+            if (this._isNameDuplicate(name, excludeId)) return null;
 
             return name;
         },
@@ -5657,6 +5697,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this.addRecentPlayer(newName);
             if (document.getElementById('edit-dealer').checked)
                 this.currentGame.state.dealerId = player.id;
+            // Sauvegarder immédiatement : sans ça, un renommage suivi d'une fermeture
+            // de l'app avant la prochaine manche entraîne la perte du nouveau nom.
+            this._saveOrWarn();
             this.closeModal();
             this.render();
             UI.showToast(`✅ ${newName} mis à jour`, 'success');
@@ -5745,9 +5788,35 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             // Number() convertit -0 en 0, évitant que (-0).toString() = "0" fasse perdre le signe
             // (cas théoriquement bloqué par handleSmart fix, mais guard défensif)
             const raw = this.currentGame.state.temp[this.activePlayerId];
-            const current = (raw !== undefined && raw !== null ? Number(raw) : 0).toString();
-            const newVal = parseInt((current === '0' ? '' : current) + n);
+            // Fix : CAPOT (252) ne doit pas être concaténé avec un nouveau chiffre.
+            // Sans ce guard: 252 + typeNum(5) → parseInt("2525") = 2525 — score aberrant.
+            // On repart de 0 si la valeur courante est une valeur spéciale Belote.
+            const isBeloteSpecial = this.currentGame.mode === 'belote' && raw === BELOTE_CAPOT;
+
+            // Fix : si addVal a posé un score complet pour ce joueur, typeNum repart
+            // de zéro plutôt que de concaténer.
+            // Ex: +20 → typeNum(5) donne 5 (pas 205).
+            // On préserve le signe si +/- a été pressé après addVal (ex: +20→+/-→5 = -5).
+            const wasAddVal = this._addValPlayers.has(this.activePlayerId);
+            if (wasAddVal) this._addValPlayers.delete(this.activePlayerId);
+
+            let current;
+            if (isBeloteSpecial) {
+                current = '';
+            } else if (wasAddVal) {
+                // Signe préservé : +20 → +/- (=-20) → typeNum(5) = -5 (pas -205)
+                current = (raw !== undefined && raw !== null && raw < 0) ? '-' : '';
+            } else {
+                current = (raw !== undefined && raw !== null ? Number(raw) : 0).toString();
+            }
+
+            const newVal = parseInt((current === '0' || current === '' ? '' : current) + n);
             if (this._checkBounds(newVal)) return;
+            // En Belote : si on retape après un CAPOT, annuler aussi le score adverse
+            if (isBeloteSpecial) {
+                const other = this.currentGame.state.players.find(p => p.id !== this.activePlayerId);
+                if (other) this.currentGame.state.temp[other.id] = 0;
+            }
             vibrate(10);
             this.currentGame.state.temp[this.activePlayerId] = newVal;
             this.renderSwitcher();
@@ -5760,11 +5829,34 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             vibrate(20);
             // En mode belote, pas de scores négatifs
             this.currentGame.state.temp[this.activePlayerId] = this.currentGame.mode === 'belote' ? Math.max(0, newVal) : newVal;
+            // Marquer ce joueur : addVal a posé un score "complet".
+            // Quand typeNum sera appelé ensuite pour ce même joueur, il repartira
+            // de zéro plutôt que de concaténer sur le score addVal.
+            // Ex sans fix : +20 → typeNum(5) = parseInt("20"+"5") = 205
+            // Ex avec fix  : +20 → typeNum(5) = 5 (repart de zéro)
+            this._addValPlayers.add(this.activePlayerId);
             this.renderSwitcher();
             this.render();
         },
         backspace() {
-            const current = (this.currentGame.state.temp[this.activePlayerId] || 0).toString();
+            const val = this.currentGame.state.temp[this.activePlayerId];
+            // Fix : CAPOT (252) et autres valeurs spéciales Belote ne doivent pas être
+            // modifiées partiellement par ⌫ — 252 → 25 produirait un score invalide.
+            // Utiliser C (clearInput) pour réinitialiser une valeur spéciale.
+            if (this.currentGame.mode === 'belote' && val === BELOTE_CAPOT) {
+                this.currentGame.state.temp[this.activePlayerId] = 0;
+                // Remettre l'adversaire à 0 également (CAPOT annulé)
+                const other = this.currentGame.state.players.find(p => p.id !== this.activePlayerId);
+                if (other) this.currentGame.state.temp[other.id] = 0;
+                this._addValPlayers.delete(this.activePlayerId);
+                vibrate(15);
+                this.renderSwitcher();
+                this.render();
+                return;
+            }
+            // ⌫ = modification manuelle : annule le flag addVal pour ce joueur
+            this._addValPlayers.delete(this.activePlayerId);
+            const current = (val || 0).toString();
             const sliced = current.slice(0, -1);
             // Gérer le cas "-" ou "" qui donnerait NaN avec parseInt
             this.currentGame.state.temp[this.activePlayerId] = (sliced === '' || sliced === '-') ? 0 : parseInt(sliced);
@@ -5774,6 +5866,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
         clearInput() {
             this.currentGame.state.temp[this.activePlayerId] = 0;
+            // Effacer manuellement annule le flag addVal pour ce joueur
+            this._addValPlayers.delete(this.activePlayerId);
             vibrate([30, 50, 30]);
             this.renderSwitcher();
             this.render();
@@ -5810,7 +5904,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 return;
             }
             this.currentGame.state.temp[other.id] = Math.max(0, BELOTE_ROUND_TOTAL - cur);
-            this.activePlayerId = other.id;
+            // Fix : ne PAS basculer activePlayerId après =Reste.
+            // Avant : activePlayerId passait sur l'adversaire → les pressions suivantes
+            // (typeNum, backspace, C) modifiaient son score au lieu du score saisi.
+            // Ex: saisir 82 → =Reste → puis ⌫ effaçait 80 (Éq2) au lieu de 82 (Éq1).
             this.renderSwitcher();
             this.render();
         },
@@ -6006,18 +6103,23 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (!this._preValidateRound(state)) return;
             const previousTotals = {};
             state.players.forEach(p => previousTotals[p.id] = p.total);
-            
+
+            // Capturer AVANT _applyRoundData qui remet editIdx à null
+            const wasEditing = this.editIdx !== null;
             const roundNumber = this._applyRoundData(state);
             this._checkMilestones(state, previousTotals);
-            
-            // Vérifier les conditions de fin de partie
-            const { gameEnded, winner } = this._checkEndCondition(state);
-            
-            this._applyRoundEnd(state, gameEnded, winner);
-            
-            // Une seule sauvegarde pour tous les cas
+
+            // Ne vérifier la fin de partie QUE si ce n'était pas une édition.
+            // Sans ce guard, corriger un score historique peut déclencher
+            // accidentellement showVictory si le total corrigé dépasse le seuil.
+            if (!wasEditing) {
+                const { gameEnded, winner } = this._checkEndCondition(state);
+                this._applyRoundEnd(state, gameEnded, winner);
+            }
+
             Storage.saveGame(this.currentGame) || UI.showToast('⚠️ Mémoire pleine ! Supprimez des parties.', 'warning');
             state.temp = {};
+            this._addValPlayers.clear(); // reset flags addVal pour tous les joueurs
             this.render();
         },
         startEdit(idx) {
@@ -6046,6 +6148,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (this.editIdx !== null && this.editIdx === idx) {
                 this.editIdx = null;
                 this.currentGame.state.temp = {};
+                this._addValPlayers.clear();
                 this._setSaveBtn('save', this.currentGame.state.history.length);
             }
             GameState.deleteRound(this.currentGame.state, idx);
@@ -6075,6 +6178,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (this.editIdx !== null && this.editIdx >= prevLength - 1) {
                 this.editIdx = null;
                 this.currentGame.state.temp = {};
+                this._addValPlayers.clear();
                 this._setSaveBtn('save', this.currentGame.state.history.length + 1);
             }
         },
@@ -6112,8 +6216,38 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this.setupInstallPrompt();
             this.setupUpdateNotification();
             this.addInstallButton();
+            this.setupOfflineDetection();
         },
         
+
+        // --- Détection hors-ligne ---
+        setupOfflineDetection() {
+            const banner = document.getElementById('offline-banner');
+            if (!banner) return;
+
+            const update = (isOnline) => {
+                banner.classList.toggle('visible', !isOnline);
+                if (!isOnline) {
+                    UI.showToast('📵 Connexion perdue — mode hors-ligne', 'warning');
+                } else {
+                    // De retour en ligne : vérifier si une mise à jour SW est disponible
+                    UI.showToast('✅ Connexion rétablie', 'success');
+                    if (navigator.serviceWorker?.controller) {
+                        // Demander au SW de se mettre à jour en fond
+                        navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
+                    }
+                }
+            };
+
+            window.addEventListener('online',  () => update(true));
+            window.addEventListener('offline', () => update(false));
+
+            // Vérifier l'état au démarrage
+            if (!navigator.onLine) {
+                banner.classList.add('visible');
+                console.log('[PWA] Démarrage hors-ligne');
+            }
+        },
 
         // --- Détection & Installation ---
         checkIfInstalled() {
@@ -6127,24 +6261,36 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         // --- Service Worker ---
         async registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                try {
-                    const registration = await navigator.serviceWorker.register('./service-worker.js');
-                    console.log('[PWA] Service Worker enregistré:', registration.scope);
-                    
-                    // Vérifier les mises à jour
-                    registration.addEventListener('updatefound', () => {
-                        console.log('[PWA] Mise à jour trouvée');
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                this.showUpdateNotification();
-                            }
-                        });
+            if (!('serviceWorker' in navigator)) {
+                console.warn('[PWA] Service Worker non supporté — mode hors-ligne indisponible');
+                return;
+            }
+            try {
+                const registration = await navigator.serviceWorker.register('./service-worker.js');
+                console.log('[PWA] Service Worker enregistré:', registration.scope);
+                
+                // Vérifier les mises à jour
+                registration.addEventListener('updatefound', () => {
+                    console.log('[PWA] Mise à jour trouvée');
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            this.showUpdateNotification();
+                        }
                     });
-                } catch (error) {
-                    console.error('[PWA] Erreur Service Worker:', error);
-                }
+                });
+
+                // Écouter les messages du SW (ex: update disponible)
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data?.type === 'UPDATE_AVAILABLE') {
+                        this.showUpdateNotification();
+                    }
+                });
+
+            } catch (error) {
+                // SW introuvable ou protocole non supporté (ex: file://)
+                // L'app reste fonctionnelle, juste sans cache offline
+                console.warn('[PWA] Service Worker non enregistré (normal en local) :', error.message);
             }
         },
         
