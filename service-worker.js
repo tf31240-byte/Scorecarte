@@ -1,18 +1,18 @@
 // ============================================================
-//  ScoreMaster — Service Worker v12
+//  ScoreMaster — Service Worker v13
 //  Stratégie : cache-first pour l'app shell,
 //              stale-while-revalidate pour les CDN.
 //  Résultat  : app 100 % fonctionnelle sans connexion
 //              après la première visite en ligne.
 // ============================================================
 
-const CACHE_APP = 'scoremaster-app-v12';
-const CACHE_CDN = 'scoremaster-cdn-v12';
+const CACHE_APP = 'scoremaster-app-v13';
+const CACHE_CDN = 'scoremaster-cdn-v13';
 
 // ── Ressources à précacher à l'install ──────────────────────
 const APP_SHELL = [
     './',
-    './scoremaster.html',
+    './index.html',
     './manifest.json',
 ];
 
@@ -109,7 +109,7 @@ self.addEventListener('fetch', (event) => {
 
 /**
  * Cache-first avec mise à jour silencieuse en fond.
- * Fallback vers scoremaster.html pour les requêtes de navigation.
+ * Fallback vers index.html pour les requêtes de navigation.
  */
 async function cacheFirstWithUpdate(request) {
     const cache   = await caches.open(CACHE_APP);
@@ -133,7 +133,7 @@ async function cacheFirstWithUpdate(request) {
 
     // Hors-ligne et pas en cache : fallback app shell
     if (request.destination === 'document') {
-        const shell = await cache.match('./scoremaster.html') || await cache.match('./');
+        const shell = await cache.match('./index.html') || await cache.match('./');
         if (shell) return shell;
     }
 

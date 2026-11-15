@@ -297,30 +297,66 @@ body::before {
 .toast.error    { background: var(--danger);  color: white; border: none; }
 .toast.info     { background: var(--primary); color: white; border: none; }
 
-/* Bannière hors-ligne */
-#offline-banner {
+/* Indicateur hors-ligne — icône discrète */
+#offline-badge {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: #1c1c1e;
-    color: #ffe58f;
-    font-size: 12px;
-    font-weight: 700;
-    text-align: center;
-    padding: calc(6px + env(safe-area-inset-bottom)) 16px 6px;
+    top: max(14px, calc(env(safe-area-inset-top) + 10px));
+    right: 16px;
     z-index: 8000;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    letter-spacing: 0.3px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(28, 28, 30, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 229, 143, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: none;
+    cursor: default;
 }
-#offline-banner.visible { transform: translateY(0); }
+#offline-badge.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+/* Tooltip au tap */
+#offline-badge::after {
+    content: 'Hors-ligne · scores sauvegardés';
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: rgba(28, 28, 30, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #ffe58f;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 229, 143, 0.25);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+#offline-badge.show-tip::after {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 
 /* =============================================================================
    CONFIRM MODAL
    ============================================================================= */
 
-#confirm-modal                 { z-index: 6500; }
+#confirm-modal                 { z-index: 6800; } /* au-dessus de #share-modal (6600) */
 #confirm-modal .modal-box      { text-align: center; }
 #confirm-msg                   { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
 .confirm-actions               { display: flex; gap: 10px; }
@@ -1338,6 +1374,31 @@ body::before {
 .settings-desc   { font-size: 12px; color: var(--text-sec); }
 
 
+
+/* ===== Sauvegarde / Export ===== */
+.btn-backup { position: relative; }
+.backup-dot { display:none; position:absolute; top:4px; right:4px; width:10px; height:10px; border-radius:50%; background:var(--danger); border:2px solid var(--bg); }
+.backup-dot.visible { display:block; }
+.backup-stats { display:flex; gap:8px; margin-bottom:10px; }
+.backup-stats > div { flex:1; background:var(--bg); border-radius:14px; padding:10px 6px; text-align:center; }
+.backup-stats b { display:block; font-size:22px; font-weight:900; }
+.backup-stats span { font-size:11px; color:var(--text-sec); }
+.backup-status { font-size:13px; padding:10px 12px; border-radius:12px; background:var(--bg); margin-bottom:14px; color:var(--text-sec); }
+.backup-status.ok   { color:var(--success, #34C759); }
+.backup-status.warn { color:var(--danger); font-weight:700; }
+.backup-action { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:14px 16px; margin-bottom:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:16px; cursor:pointer; font-family:inherit; }
+.backup-action:active { transform:scale(.98); }
+.backup-action:disabled { opacity:.4; pointer-events:none; }
+.backup-action.primary { background:var(--primary, #007AFF); color:#fff; border-color:transparent; }
+.backup-action.primary small { color:rgba(255,255,255,.85); }
+.backup-action.danger b { color:var(--danger); }
+.ba-icon { font-size:24px; }
+.ba-text { display:flex; flex-direction:column; gap:2px; }
+.ba-text b { font-size:15px; font-weight:800; }
+.ba-text small { font-size:12px; color:var(--text-sec); }
+#share-modal { z-index: 6600; }
+.backup-hint { font-size:12px; color:var(--text-sec); margin:8px 2px 0; }
+
 /* =============================================================================
    ZEN (FOCUS) MODE
    ============================================================================= */
@@ -1520,7 +1581,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
     <!-- Toast -->
     <div id="toast" class="toast"></div>
-    <div id="offline-banner" role="status" aria-live="polite">📵 Hors-ligne — les scores sont sauvegardés localement</div>
+    <div id="offline-badge" role="status" aria-label="Hors-ligne" title="Hors-ligne — scores sauvegardés localement">📵</div>
 
     <!-- Loading overlay -->
     <div id="loading-overlay" class="loading-overlay">
@@ -1580,6 +1641,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             <div class="modal-header">
                 <h2 style="margin:0">⚙️ Paramètres</h2>
                 <button onclick="UI.closeSettings()" class="btn-icon" >✕</button>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">💾 Sauvegarde</div>
+                <div class="settings-row" style="cursor:pointer;" onclick="UI.showBackup()">
+                    <div class="settings-label">
+                        <div class="settings-name">💾 Sauvegarde &amp; export</div>
+                        <div class="settings-desc">Sauvegarder, exporter en tableur, restaurer</div>
+                    </div>
+                    <div class="icon-primary">→</div>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -1679,23 +1751,87 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
-            <div class="settings-section">
-                <div class="settings-section-title">💾 Données</div>
-                <div class="settings-row" style="cursor:pointer;" onclick="app.exportData()">
-                    <div class="settings-label">
-                        <div class="settings-name">📤 Exporter les données</div>
-                        <div class="settings-desc">Télécharger toutes vos parties</div>
-                    </div>
-                    <div class="icon-primary">→</div>
-                </div>
-                <div class="settings-row" style="cursor:pointer;" onclick="document.getElementById('import-file').click()">
-                    <div class="settings-label">
-                        <div class="settings-name">📥 Importer les données</div>
-                        <div class="settings-desc">Restaurer une sauvegarde</div>
-                    </div>
-                    <div class="icon-primary">→</div>
-                </div>
-                <input type="file" id="import-file" accept=".json" style="display:none;" onchange="app.importData(this)">
+        </div>
+    </div>
+
+    <!-- Backup modal -->
+    <div id="backup-modal" class="modal-overlay" onclick="if(event.target===this) UI.closeBackup()">
+        <div class="modal-box large">
+            <div class="modal-header">
+                <h2 style="margin:0">💾 Sauvegarde</h2>
+                <button onclick="UI.closeBackup()" class="btn-icon">✕</button>
+            </div>
+
+            <div id="backup-main">
+                <div id="backup-summary"></div>
+
+                <button class="backup-action primary" onclick="app.exportData()">
+                    <span class="ba-icon">📤</span>
+                    <span class="ba-text"><b>Sauvegarder mes données</b><small>Fichier complet : parties, joueurs, jeux perso, réglages</small></span>
+                </button>
+                <button class="backup-action" onclick="app.exportCsv()">
+                    <span class="ba-icon">📊</span>
+                    <span class="ba-text"><b>Exporter en tableur (CSV)</b><small>Historique lisible dans Excel / Google Sheets</small></span>
+                </button>
+                <button class="backup-action" onclick="document.getElementById('import-file').click()">
+                    <span class="ba-icon">📥</span>
+                    <span class="ba-text"><b>Restaurer une sauvegarde</b><small>Choisir un fichier .json — aperçu avant import</small></span>
+                </button>
+                <p class="backup-hint">💡 Sur téléphone, le fichier s'envoie directement vers Fichiers, Drive, WhatsApp, e-mail…</p>
+                <input type="file" id="import-file" accept=".json,application/json" style="display:none;" onchange="app.importData(this)">
+            </div>
+
+            <div id="backup-import-preview" class="hidden">
+                <div id="backup-import-info"></div>
+                <button class="backup-action" id="backup-merge-btn" onclick="app.confirmImport('merge')">
+                    <span class="ba-icon">➕</span>
+                    <span class="ba-text"><b>Fusionner</b><small>Ajouter seulement les parties absentes — rien n'est supprimé</small></span>
+                </button>
+                <button class="backup-action danger" onclick="app.confirmImport('replace')">
+                    <span class="ba-icon">♻️</span>
+                    <span class="ba-text"><b>Remplacer mes données</b><small>Tout est remplacé par le contenu du fichier</small></span>
+                </button>
+                <button class="btn-modal-cancel" style="width:100%; margin-top:6px;" onclick="app.cancelImport()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share sheet -->
+    <div id="share-modal" class="modal-overlay" onclick="if(event.target===this) app.closeShareSheet()">
+        <div class="modal-box large">
+            <div class="modal-header">
+                <h2 style="margin:0" id="share-title">📤 Partager</h2>
+                <button onclick="app.closeShareSheet()" class="btn-icon">✕</button>
+            </div>
+            <div id="share-choices">
+                <button class="backup-action primary" onclick="app.shareText()">
+                    <span class="ba-icon">💬</span>
+                    <span class="ba-text"><b>Texte</b><small>Instantané — classement prêt à coller dans un message</small></span>
+                </button>
+                <button class="backup-action" onclick="app.prepareImage()">
+                    <span class="ba-icon">📸</span>
+                    <span class="ba-text"><b>Image récap</b><small>Podium, temps forts et stats en une image</small></span>
+                </button>
+                <button class="backup-action" onclick="app.prepareGif()">
+                    <span class="ba-icon">🎬</span>
+                    <span class="ba-text"><b>GIF animé</b><small>Version animée du récap (~15 s de préparation)</small></span>
+                </button>
+            </div>
+            <div id="share-result" class="hidden">
+                <img id="share-preview" alt="Aperçu du récap" style="width:100%; max-height:46vh; object-fit:contain; border-radius:14px; background:var(--bg); margin-bottom:12px;">
+                <button class="backup-action primary" onclick="app.sendResult()">
+                    <span class="ba-icon">📤</span>
+                    <span class="ba-text"><b>Partager</b><small>Messages, WhatsApp, Instagram…</small></span>
+                </button>
+                <button class="backup-action" onclick="app.saveResult()">
+                    <span class="ba-icon">💾</span>
+                    <span class="ba-text"><b>Enregistrer</b><small>Télécharger le fichier</small></span>
+                </button>
+                <button class="backup-action" onclick="app.rerollPunchline()">
+                    <span class="ba-icon">🎲</span>
+                    <span class="ba-text"><b>Autre punchline</b><small>Tirer une nouvelle réplique pour ce récap</small></span>
+                </button>
+                <button class="btn-modal-cancel" style="width:100%;" onclick="app.backToShareChoices()">← Autres formats</button>
             </div>
         </div>
     </div>
@@ -1822,7 +1958,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             <h1 class="welcome-title" style="margin:0; flex:1;">ScoreMaster</h1>
             <div class="flex-gap10">
                 <button class="btn-stats"     onclick="app.showStats()"    title="Statistiques">📊</button>
-                <button class="theme-toggle"  onclick="UI.showSettings()"  title="Paramètres">⚙️</button>
+                <button class="theme-toggle btn-backup" onclick="UI.showSettings()" title="Paramètres">⚙️<span id="backup-dot" class="backup-dot"></span></button>
             </div>
         </div>
 
@@ -1987,15 +2123,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div id="victory-highlights"></div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 12px;">
-                <button class="btn-main" style="background:linear-gradient(135deg, #2B5AA0 0%, #1E3F6E 100%); color:white; font-size:16px;" onclick="app.shareRecapPNG()">
-                    📸 PNG
-                </button>
-                <button class="btn-main" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:16px;" onclick="app.shareRecapGIF()">
-                    🎬 GIF
-                    <div style="font-size:10px; opacity:0.8; margin-top:2px;">~15s</div>
-                </button>
-            </div>
+            <button class="btn-main" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:17px; margin:20px 0 12px;" onclick="app.openShareSheet()">📤 PARTAGER LE RÉSULTAT</button>
             <button class="btn-main" style="background:var(--primary); color:white; margin:0 0 12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
             <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
         </div>
@@ -3062,6 +3190,63 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this.updateSettingsUI();
         },
         closeSettings() { this._close('settings-modal'); },
+
+        // --- Sauvegarde / Export ---
+        showBackup() {
+            SoundFX.click();
+            this._close('settings-modal');
+            this._open('backup-modal');
+            this.renderBackup();
+        },
+        closeBackup() { this._close('backup-modal'); app._pendingImport = null; },
+
+        _fmtDate(iso) {
+            const d = new Date(iso);
+            return isNaN(d) ? '—' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        },
+
+        /** Met à jour le résumé, le statut de sauvegarde et la pastille d'alerte. */
+        renderBackup() {
+            const sum = app._dataSummary();
+            const dot = document.getElementById('backup-dot');
+            if (dot) dot.classList.toggle('visible', sum.stale);
+            const body = document.getElementById('backup-summary');
+            if (!body) return;
+            document.getElementById('backup-import-preview')?.classList.add('hidden');
+            document.getElementById('backup-main')?.classList.remove('hidden');
+            let status, cls;
+            if (!sum.games)              { status = 'Rien à sauvegarder pour le moment.'; cls = ''; }
+            else if (sum.last === null)  { status = '⚠️ Jamais sauvegardé — vos données ne sont que sur cet appareil.'; cls = 'warn'; }
+            else if (sum.stale)          { status = `⚠️ Dernière sauvegarde il y a ${sum.days} jours.`; cls = 'warn'; }
+            else                         { status = `✅ Dernière sauvegarde : ${this._fmtDate(sum.last)}`; cls = 'ok'; }
+            body.innerHTML =
+                `<div class="backup-stats">
+                    <div><b>${sum.games}</b><span>parties</span></div>
+                    <div><b>${sum.finished}</b><span>terminées</span></div>
+                    <div><b>${sum.players}</b><span>joueurs</span></div>
+                 </div>
+                 <div class="backup-status ${cls}">${escapeHtml(status)}</div>`;
+        },
+
+        /** Aperçu d'un fichier importé avant toute écriture. */
+        showImportPreview(data) {
+            const n = Array.isArray(data.games) ? data.games.length : 0;
+            const local = Storage.loadGames();
+            const ids = new Set(local.map(g => String(g.id)));
+            const fresh = (data.games || []).filter(g => g && !ids.has(String(g.id))).length;
+            const date = data.exportDate ? this._fmtDate(data.exportDate) : 'date inconnue';
+            document.getElementById('backup-import-info').innerHTML =
+                `<div class="backup-stats">
+                    <div><b>${n}</b><span>parties dans le fichier</span></div>
+                    <div><b>${fresh}</b><span>nouvelles pour cet appareil</span></div>
+                 </div>
+                 <div class="backup-status">Sauvegarde du ${escapeHtml(date)}</div>`;
+            document.getElementById('backup-main').classList.add('hidden');
+            document.getElementById('backup-import-preview').classList.remove('hidden');
+            const mergeBtn = document.getElementById('backup-merge-btn');
+            if (mergeBtn) mergeBtn.disabled = n === 0 || fresh === 0;
+            this._open('backup-modal');
+        },
         updateSettingsUI() {
             const theme    = document.documentElement.getAttribute('data-theme');
             const isDark   = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -4017,82 +4202,186 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         // EXPORT / IMPORT / STATS
         // -----------------------------------------------------------------------
 
-        /**
-         * Crée un Blob JSON et déclenche le téléchargement via un lien temporaire.
-         * @param {Object} data    Données à sérialiser
-         * @param {string} filename  Nom du fichier téléchargé
-         */
-        _triggerJsonDownload(data, filename) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
+        LAST_EXPORT_KEY: 'sm_last_export',
+        BACKUP_STALE_DAYS: 30,
+
+        _readJsonKey(key, fallback) {
+            try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; }
+            catch(e) { return fallback; }
         },
 
+        /** Télécharge un Blob via un lien temporaire (révocation différée pour Safari/Android). */
+        _downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a   = document.createElement('a');
+            a.href = url; a.download = filename; a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1500);
+        },
 
         /**
-         * Construit l'objet d'export complet : parties, préférences, joueurs récents.
+         * Partage le fichier via la feuille de partage native (mobile) si possible,
+         * sinon télécharge. Retourne 'shared' | 'downloaded' | 'cancelled'.
+         */
+        async _deliverFile(blob, filename) {
+            try {
+                const file = new File([blob], filename, { type: blob.type });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'ScoreMaster' });
+                    return 'shared';
+                }
+            } catch(e) {
+                if (e && e.name === 'AbortError') return 'cancelled';
+                // autre erreur : repli sur le téléchargement
+            }
+            this._downloadBlob(blob, filename);
+            return 'downloaded';
+        },
+
+        /**
+         * Construit l'objet d'export complet : parties, préférences, joueurs, jeux perso, stats.
          * @param {Object|null} currentGame  Partie courante chargée depuis Storage
          * @returns {Object}
          */
         _buildExportData(currentGame) {
+            const games = Storage.loadGames();
             return {
-                version:       1,
+                app:           'ScoreMaster',
+                version:       2,
                 exportDate:    new Date().toISOString(),
-                games:         Storage.loadGames(),
+                counts:        { games: games.length },
+                games:         games,
                 currentGameId: currentGame?.id || null,
                 settings:      this.settings,
                 savedPlayers:  this.savedPlayers,
                 recentPlayers: this.recentPlayers,
+                customPresets: this._readJsonKey(Storage.CUSTOM_PRESETS_KEY, {}),
+                hiddenPresets: this._readJsonKey(Storage.HIDDEN_PRESETS_KEY, []),
+                presetStats:   this._readJsonKey(Storage.PRESET_STATS_KEY, {}),
+                playerStats:   this._readJsonKey(Storage.PLAYER_STATS_KEY, {}),
                 sound:         SoundFX.enabled,
                 theme:         localStorage.getItem(Storage.THEME_KEY)
             };
         },
 
-        _downloadExportJson() {
-            const currentGame = Storage.loadCurrentGame();
-            const data = this._buildExportData(currentGame);
-            this._triggerJsonDownload(data, `ScoreMaster_Export_${new Date().toISOString().split('T')[0]}.json`);
+        _stamp() { return new Date().toISOString().split('T')[0]; },
+
+        _markExported() {
+            try { localStorage.setItem(this.LAST_EXPORT_KEY, new Date().toISOString()); } catch(e) {}
+            UI.renderBackup();
         },
 
-        exportData() {
+        _dataSummary() {
+            const games = Storage.loadGames();
+            const names = new Set();
+            games.forEach(g => (g.state?.players || []).forEach(p => names.add(String(p.name).toLowerCase())));
+            let last = null;
+            try { last = localStorage.getItem(this.LAST_EXPORT_KEY); } catch(e) {}
+            const days = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
+            return {
+                games: games.length,
+                finished: games.filter(g => g.finished).length,
+                players: names.size,
+                last, days,
+                stale: games.length > 0 && (days === null || days >= this.BACKUP_STALE_DAYS)
+            };
+        },
+
+        /** Sauvegarde complète (.json) : partage natif sur mobile, téléchargement sinon. */
+        async exportData() {
             SoundFX.click();
             try {
-                this._downloadExportJson();
-                UI.showToast('📤 Données exportées !', 'success');
+                const data = this._buildExportData(Storage.loadCurrentGame());
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const res  = await this._deliverFile(blob, `ScoreMaster_Sauvegarde_${this._stamp()}.json`);
+                if (res === 'cancelled') return;
+                this._markExported();
+                UI.showToast(res === 'shared' ? '📤 Sauvegarde partagée' : '📤 Sauvegarde téléchargée', 'success');
             } catch(e) {
                 console.error('Erreur export:', e);
                 UI.showToast('❌ Erreur lors de l\'export', 'error');
             }
         },
 
+        // --- CSV ---
+        _csvCell(v) {
+            let t = String(v ?? '');
+            if (/^[=+\-@\t\r]/.test(t) && isNaN(Number(t))) t = "'" + t; // anti-injection de formule tableur
+            return /[";\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+        },
+
+        /** Une ligne par joueur et par partie (séparateur ';' + BOM : s'ouvre direct dans Excel FR). */
+        _buildCsv(games) {
+            const rows = [['Date', 'Jeu', 'Mode', 'Statut', 'Rang', 'Joueur', 'Score', 'Manches']];
+            games.forEach(g => {
+                const players = (g.state?.players || []).map(p => ({ name: p.name, total: Number(p.total) || 0 }));
+                const lowest  = g.victoryCondition === VC_LOWEST;
+                const sorted  = [...players].sort((a, b) => lowest ? a.total - b.total : b.total - a.total);
+                const date    = (g.date || '').slice(0, 10);
+                const rounds  = (g.state?.history || []).length;
+                players.forEach(p => {
+                    const rank = sorted.findIndex(x => x.total === p.total) + 1;
+                    rows.push([date, g.name, g.mode, g.finished ? 'Terminée' : 'En cours', rank, p.name, p.total, rounds]);
+                });
+            });
+            return '﻿' + rows.map(r => r.map(c => this._csvCell(c)).join(';')).join('\r\n');
+        },
+
+        /** Export tableur de l'historique (lecture seule, non réimportable). */
+        async exportCsv() {
+            SoundFX.click();
+            const games = Storage.loadGames();
+            if (!games.length) { UI.showToast('Aucune partie à exporter', 'warning'); return; }
+            try {
+                const blob = new Blob([this._buildCsv(games)], { type: 'text/csv;charset=utf-8' });
+                const res  = await this._deliverFile(blob, `ScoreMaster_Historique_${this._stamp()}.csv`);
+                if (res === 'cancelled') return;
+                UI.showToast('📊 Tableau exporté', 'success');
+            } catch(e) {
+                console.error('Erreur export CSV:', e);
+                UI.showToast('❌ Erreur lors de l\'export', 'error');
+            }
+        },
+
+        // --- Import ---
+
+        _applyImportedExtras(data) {
+            const putObj = (key, v, type) => {
+                const ok = type === 'array' ? Array.isArray(v) : (v && typeof v === 'object' && !Array.isArray(v));
+                if (ok) { try { localStorage.setItem(key, JSON.stringify(v)); } catch(e) {} }
+            };
+            putObj(Storage.CUSTOM_PRESETS_KEY, data.customPresets, 'object');
+            putObj(Storage.HIDDEN_PRESETS_KEY, data.hiddenPresets, 'array');
+            putObj(Storage.PRESET_STATS_KEY,   data.presetStats,   'object');
+            putObj(Storage.PLAYER_STATS_KEY,   data.playerStats,   'object');
+        },
+
         // --- _applyImportedPrefs helpers ---
 
         /** Applique et persiste le thème importé. */
         _applyImportedTheme(theme) {
+            if (theme !== 'light' && theme !== 'dark') return;
             localStorage.setItem(Storage.THEME_KEY, theme);
             document.documentElement.setAttribute('data-theme', theme);
         },
 
         /** Applique et persiste l'état du son importé. */
         _applyImportedSound(sound) {
-            SoundFX.enabled = sound;
+            SoundFX.enabled = !!sound;
             localStorage.setItem(Storage.SOUND_KEY, sound ? '1' : '0');
         },
 
         _applyImportedPrefs(data) {
-            if (data.settings) {
+            if (data.settings && typeof data.settings === 'object') {
                 this.settings = { ...this.settings, ...data.settings };
                 this.saveSettings();
             }
-            if (data.savedPlayers) {
+            if (Array.isArray(data.savedPlayers)) {
                 this.savedPlayers = data.savedPlayers;
                 Storage.saveSavedPlayers(data.savedPlayers);
             }
-            if (data.recentPlayers) {
+            if (Array.isArray(data.recentPlayers)) {
                 // Sanitiser les noms importés pour éviter XSS dans renderRecentSuggestions
                 this.recentPlayers = data.recentPlayers
                     .filter(n => typeof n === 'string')
@@ -4100,31 +4389,50 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     .filter(n => n.length > 0);
                 localStorage.setItem(Storage.RECENT_KEY, JSON.stringify(this.recentPlayers));
             }
+            this._applyImportedExtras(data);
             if (data.sound !== undefined) this._applyImportedSound(data.sound);
             if (data.theme) this._applyImportedTheme(data.theme);
         },
 
-        _restoreImportedData(data) {
-            if (data.games) Storage.importGames(data.games);
-            this._applyImportedPrefs(data);
+        /**
+         * Applique l'import. mode = 'replace' (remplace tout) ou 'merge' (ajoute les parties absentes).
+         */
+        _restoreImportedData(data, mode = 'replace') {
+            if (Array.isArray(data.games)) {
+                if (mode === 'merge') {
+                    const local = Storage.loadGames();
+                    const ids = new Set(local.map(g => String(g.id)));
+                    const added = data.games.filter(g => g && !ids.has(String(g.id)));
+                    Storage.importGames([...local, ...added]);
+                    this._lastMergeAdded = added.length;
+                } else {
+                    Storage.importGames(data.games);
+                }
+            }
+            if (mode === 'replace') this._applyImportedPrefs(data);
 
-            UI.showToast('📥 Données importées !', 'success');
-            UI.closeSettings();
+            const msg = mode === 'merge'
+                ? `📥 ${this._lastMergeAdded || 0} nouvelle(s) partie(s) ajoutée(s)`
+                : '📥 Données restaurées !';
+            UI.showToast(msg, 'success');
+            UI.closeBackup();
             localStorage.removeItem(Storage.CURRENT_KEY); // évite le flash d'écran au redémarrage
             setTimeout(() => this.init(), 500);
         },
 
         /** Valide la structure d'un objet d'import. Lève une Error si invalide. */
         _validateImportData(data) {
+            if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('fichier non reconnu');
             if (!data.version)                                    throw new Error('version manquante');
             if (data.games !== undefined && !Array.isArray(data.games)) throw new Error('structure games invalide');
             if (!data.games?.length && !data.settings && !data.savedPlayers) throw new Error('fichier vide ou incompatible');
         },
 
+        /** Étape 1 : lit et valide le fichier, puis affiche l'aperçu (rien n'est écrit encore). */
         importData(input) {
             const file = input.files[0];
             if (!file) return;
-            if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+            if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
                 UI.showToast('❌ Format invalide — fichier .json requis', 'error');
                 input.value = '';
                 return;
@@ -4134,15 +4442,28 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 try {
                     const data = JSON.parse(e.target.result);
                     this._validateImportData(data);
-                    this._restoreImportedData(data);
+                    this._pendingImport = data;
+                    UI.showImportPreview(data);
                 } catch(err) {
                     console.error('Erreur import:', err);
                     UI.showToast(`❌ Import échoué : ${err.message}`, 'error');
                 }
             };
+            reader.onerror = () => UI.showToast('❌ Lecture du fichier impossible', 'error');
             reader.readAsText(file);
             input.value = ''; // Reset pour permettre de réimporter le même fichier
         },
+
+        /** Étape 2 : confirmation de l'utilisateur. */
+        confirmImport(mode) {
+            const data = this._pendingImport;
+            if (!data) return;
+            this._pendingImport = null;
+            try { this._restoreImportedData(data, mode); }
+            catch(err) { console.error(err); UI.showToast(`❌ Import échoué : ${err.message}`, 'error'); }
+        },
+
+        cancelImport() { this._pendingImport = null; UI.renderBackup(); },
 
         // -----------------------------------------------------------------------
         // NAVIGATION ENTRE ÉCRANS
@@ -5198,6 +5519,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         renderGamesList(filter = null) {
+            try { UI.renderBackup(); } catch(e) {} // met à jour la pastille « sauvegarde conseillée »
             const games = Storage.loadGames();
             const els = this._gamesListElements();
             if (!games?.length) {
@@ -5446,60 +5768,182 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 temp:                 {},
                 dealerId:             s.dealerId,
                 celebratedMilestones: { ...s.celebratedMilestones },
-                victoryCondition:     this.currentGame.victoryCondition
+                victoryCondition:     this.currentGame.victoryCondition,
+                name:                 this.currentGame.name,
+                date:                 this.currentGame.date,
+                roll:                 this._punchRoll || 0
             };
         },
 
 
-        /**
-         * Finalise le partage PNG : tente le partage natif, sinon télécharge.
-         * @param {HTMLCanvasElement} canvas
-         */
-        async _finalizePngShare(canvas) {
-            UI.updateLoadingProgress(80, 'Préparation du partage...');
-            const shared = await UnifiedRecapGenerator.shareImage(canvas);
-            UI.updateLoadingProgress(100, 'Terminé !');
-            setTimeout(() => {
-                UI.hideLoading();
-                if (!shared) {
-                    const date = new Date().toISOString().split('T')[0];
-                    UnifiedRecapGenerator.downloadImage(canvas, `ScoreMaster_${date}.png`);
-                    UI.showToast('📥 PNG téléchargé !', 'success');
-                } else {
-                    UI.showToast('✅ PNG partagé !', 'success');
-                }
-                vibrate([50, 30, 50]);
-            }, 300);
+        // -----------------------------------------------------------------------
+        // PARTAGE DE FIN DE PARTIE
+        // -----------------------------------------------------------------------
+
+        /** Classement avec rangs (ex æquo = même rang). */
+        _shareRanking(game) {
+            const sorted = GameState.getSortedPlayers(game.state);
+            let prev = null, rank = 0;
+            return sorted.map((p, i) => {
+                if (p.total !== prev) { rank = i + 1; prev = p.total; }
+                return { rank, name: p.name, total: p.total };
+            });
         },
 
+        /** Texte de partage : titre, classement avec médailles, infos de la partie. */
+        buildShareText(game = this.currentGame) {
+            const ranking = this._shareRanking(game).slice(0, 10);
+            const medals  = { 1: '🥇', 2: '🥈', 3: '🥉' };
+            const winners = ranking.filter(r => r.rank === 1);
+            const title = winners.length > 1
+                ? `🤝 Égalité sur ${game.name} : ${winners.map(w => w.name).join(' & ')} !`
+                : `🏆 ${winners[0]?.name ?? '?'} remporte ${game.name} !`;
+            const lines = ranking.map(r => `${medals[r.rank] || (r.rank + '.')} ${r.name} — ${r.total} pt${Math.abs(r.total) > 1 ? 's' : ''}`);
+            const rounds = game.state.history.length;
+            const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const a = UnifiedRecapGenerator.analyze({ ...game.state, victoryCondition: game.victoryCondition, name: game.name, date: game.date, roll: this._punchRoll || 0 });
+            const punch = a ? `💬 ${a.narrative}` : '';
+            return [title, '', ...lines, '', punch, `🎲 ${rounds} manche${rounds > 1 ? 's' : ''} · ${date}`, '— ScoreMaster'].filter((l, i, arr) => l !== '' || arr[i - 1] !== '').join('\n');
+        },
 
-        /** Génère le PNG statique et délègue à _finalizePngShare. Gère les erreurs. */
-        async _generateAndSharePng() {
+        _requireFinished() {
+            if (!this.currentGame || !this.currentGame.finished) {
+                UI.showToast("⚠️ Terminez d'abord la partie", 'warning');
+                return false;
+            }
+            return true;
+        },
+
+        openShareSheet() {
+            if (!this._requireFinished()) return;
+            SoundFX.click();
+            this._punchRoll = 0;
+            this.backToShareChoices();
+            UI._open('share-modal');
+        },
+        closeShareSheet() {
+            UI._close('share-modal');
+            this._clearShareResult();
+        },
+        _clearShareResult() {
+            if (this._shareResult?.url) URL.revokeObjectURL(this._shareResult.url);
+            this._shareResult = null;
+        },
+        backToShareChoices() {
+            this._clearShareResult();
+            document.getElementById('share-choices').classList.remove('hidden');
+            document.getElementById('share-result').classList.add('hidden');
+            document.getElementById('share-title').textContent = '📤 Partager';
+        },
+
+        /** Partage le texte : feuille native si dispo, sinon copie dans le presse-papiers. */
+        async shareText() {
+            if (!this._requireFinished()) return;
+            SoundFX.click();
+            const text = this.buildShareText();
             try {
-                UI.showLoading('📸 Génération du PNG...');
-                UI.updateLoadingProgress(10, 'Analyse des données...');
-                const gs = { ...this.currentGame.state, victoryCondition: this.currentGame.victoryCondition };
+                if (navigator.share) {
+                    await navigator.share({ text });
+                    UI.showToast('✅ Résultat partagé', 'success');
+                    return;
+                }
+            } catch(e) {
+                if (e?.name === 'AbortError') return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                UI.showToast('📋 Texte copié — collez-le où vous voulez', 'success');
+            } catch(e) {
+                // Dernier recours : copie via textarea
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta); ta.select();
+                let ok = false; try { ok = document.execCommand('copy'); } catch(_) {}
+                ta.remove();
+                UI.showToast(ok ? '📋 Texte copié' : '❌ Copie impossible', ok ? 'success' : 'error');
+            }
+        },
+
+        /** Affiche le résultat prêt (aperçu + boutons : un vrai geste utilisateur déclenche le partage). */
+        _showShareResult(blob, filename, label) {
+            this._clearShareResult();
+            const url = URL.createObjectURL(blob);
+            this._shareResult = { blob, filename, url, text: this.buildShareText() };
+            document.getElementById('share-preview').src = url;
+            document.getElementById('share-title').textContent = label;
+            document.getElementById('share-choices').classList.add('hidden');
+            document.getElementById('share-result').classList.remove('hidden');
+            UI._open('share-modal');
+        },
+
+        async sendResult() {
+            const r = this._shareResult;
+            if (!r) return;
+            SoundFX.click();
+            try {
+                const file = new File([r.blob], r.filename, { type: r.blob.type });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], text: r.text, title: 'ScoreMaster' });
+                    UI.showToast('✅ Partagé !', 'success');
+                    return;
+                }
+                UI.showToast('ℹ️ Partage indisponible ici — fichier enregistré', 'info');
+                this.saveResult(true);
+            } catch(e) {
+                if (e?.name === 'AbortError') return;
+                console.warn('Partage impossible', e);
+                this.saveResult(true);
+            }
+        },
+
+        /** Nouvelle punchline : régénère l'image (ou redemande le GIF) avec la réplique suivante. */
+        rerollPunchline() {
+            this._punchRoll = (this._punchRoll || 0) + 1;
+            SoundFX.click();
+            if (this._lastKind === 'gif') this.prepareGif(); else this.prepareImage();
+        },
+
+        saveResult(silent = false) {
+            const r = this._shareResult;
+            if (!r) return;
+            this._downloadBlob(r.blob, r.filename);
+            if (!silent) UI.showToast('💾 Fichier enregistré', 'success');
+        },
+
+        /** Génère l'image PNG puis affiche l'aperçu. */
+        async prepareImage() {
+            if (!this._requireFinished()) return;
+            this._lastKind = 'image';
+            SoundFX.click();
+            try {
+                UI.showLoading('📸 Génération de l\'image...');
                 UI.updateLoadingProgress(30, 'Création du visuel...');
+                const gs = { ...this.currentGame.state, victoryCondition: this.currentGame.victoryCondition, name: this.currentGame.name, date: this.currentGame.date, roll: this._punchRoll || 0 };
                 const canvas = UnifiedRecapGenerator.generateStatic(gs);
                 if (!canvas) { UI.hideLoading(); return; }
-                await this._finalizePngShare(canvas);
+                const blob = await UnifiedRecapGenerator.canvasToBlobAsync(canvas);
+                UI.updateLoadingProgress(100, 'Terminé !');
+                UI.hideLoading();
+                this._showShareResult(blob, `ScoreMaster_${this._stamp()}.png`, '📸 Image prête');
+                vibrate([50, 30, 50]);
             } catch (error) {
                 UI.hideLoading();
-                if (error?.name === 'AbortError') return; // User cancelled share
-                console.error('[ScoreMaster] Erreur PNG:', error);
-                UI.showToast('❌ Erreur PNG', 'error');
+                console.error('[ScoreMaster] Erreur image:', error);
+                UI.showToast('❌ Erreur lors de la création de l\'image', 'error');
             }
         },
 
-        async shareRecapPNG() {
-            if(!this.currentGame || !this.currentGame.finished) {
-                UI.showToast("⚠️ Terminez d'abord la partie", 'warning');
-                return;
-            }
-            
-            SoundFX.click();
-            
-            await this._generateAndSharePng();
+        /** Appelé par le générateur quand le GIF est prêt. */
+        onGifReady(blob) {
+            UI.hideLoading();
+            this._showShareResult(blob, `ScoreMaster_${this._stamp()}.gif`, '🎬 GIF prêt');
+            vibrate([50, 30, 50]);
+        },
+
+        prepareGif() {
+            if (!this._requireFinished()) return;
+            this._lastKind = 'gif';
+            this._confirmGifGeneration();
         },
 
         /**
@@ -5509,6 +5953,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _startGifGeneration(savedGameState) {
             this._gifGenerating = true;
             this._confirmPending = false;
+            UI._close('share-modal');
             UI.showLoading('🎬 Génération du GIF...');
             UI.updateLoadingProgress(0, 'Initialisation...');
             try {
@@ -5521,9 +5966,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 UI.showToast('❌ Erreur: ' + error.message, 'error');
                 this._gifGenerating = false;
             }
-            // Verrou de sécurité : libère automatiquement après 30s si le callback n'a pas été appelé
+            // Verrou de sécurité : libère automatiquement après 90 s si le callback n'a pas été appelé
             if (this._gifTimeoutId) clearTimeout(this._gifTimeoutId);
-            this._gifTimeoutId = setTimeout(() => { this._gifGenerating = false; this._gifTimeoutId = null; }, 30000);
+            this._gifTimeoutId = setTimeout(() => { this._gifGenerating = false; this._gifTimeoutId = null; }, 90000);
         },
 
 
@@ -5549,15 +5994,6 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 () => this._startGifGeneration(savedGameState),
                 () => { this._confirmPending = false; }
             );
-        },
-
-        async shareRecapGIF() {
-            if(!this.currentGame || !this.currentGame.finished) {
-                UI.showToast("⚠️ Terminez d'abord la partie", 'warning');
-                return;
-            }
-            
-            this._confirmGifGeneration();
         },
 
         // -----------------------------------------------------------------------
@@ -6222,18 +6658,25 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         // --- Détection hors-ligne ---
         setupOfflineDetection() {
-            const banner = document.getElementById('offline-banner');
-            if (!banner) return;
+            const badge = document.getElementById('offline-badge');
+            if (!badge) return;
+
+            // Tooltip au tap : affiche 2s puis disparaît
+            let tipTimer = null;
+            badge.addEventListener('click', () => {
+                badge.classList.add('show-tip');
+                clearTimeout(tipTimer);
+                tipTimer = setTimeout(() => badge.classList.remove('show-tip'), 2000);
+            });
 
             const update = (isOnline) => {
-                banner.classList.toggle('visible', !isOnline);
+                badge.classList.toggle('visible', !isOnline);
+                badge.classList.remove('show-tip');
                 if (!isOnline) {
                     UI.showToast('📵 Connexion perdue — mode hors-ligne', 'warning');
                 } else {
-                    // De retour en ligne : vérifier si une mise à jour SW est disponible
                     UI.showToast('✅ Connexion rétablie', 'success');
                     if (navigator.serviceWorker?.controller) {
-                        // Demander au SW de se mettre à jour en fond
                         navigator.serviceWorker.ready.then(reg => reg.update()).catch(() => {});
                     }
                 }
@@ -6242,9 +6685,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             window.addEventListener('online',  () => update(true));
             window.addEventListener('offline', () => update(false));
 
-            // Vérifier l'état au démarrage
+            // État au démarrage
             if (!navigator.onLine) {
-                banner.classList.add('visible');
+                badge.classList.add('visible');
                 console.log('[PWA] Démarrage hors-ligne');
             }
         },
@@ -6451,1197 +6894,165 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     };
     
 
-    // ==================== UNIFIED RECAP GENERATOR V5.0 ====================
-    // Design unifié pour PNG (statique) et GIF (animé)
-    // PNG = capture du GIF à un instant T
-    // GIF = même design avec animations décoratives
+    // ==================== PUNCHLINES ====================
+    // Répliques contextuelles pour le récap : chaque situation détectée (égalité, remontada,
+    // dernier qui a signé la meilleure manche…) apporte ses propres lignes ; le tirage est
+    // déterministe (même partie = même réplique) sauf si l'utilisateur relance (roll).
+    const Punchlines = {
+        // Poids : une situation rare compte plus (ses lignes sont ajoutées plusieurs fois au tirage)
+        SITUATIONS: [
+            { id: 'tie', weight: 6, when: c => c.tie, lines: [
+                '{w} et {s} : égalité parfaite. Le pire scénario pour les mauvais perdants.',
+                '0 point d\'écart ! {w} et {s} se regardent en chiens de faïence.',
+                'Égalité entre {w} et {s}. Quelqu\'un va réclamer une revanche, et vite.',
+                'Personne ne gagne, tout le monde râle. Classique.',
+                '{w} = {s}. Les mathématiques ont tranché : il faudra rejouer.',
+                'Match nul entre {w} et {s}. Le canapé est neutre, la revanche ne le sera pas.',
+                'Égalité : {w} et {s} ont tous les deux raison, c\'est insupportable.',
+                'Ni vainqueur ni vaincu. Juste deux ego à calmer.'
+            ]},
+            { id: 'comeback', weight: 4, when: c => c.comeback, lines: [
+                'Belle remontée de {w} ! {f} menait, mais ça, c\'était avant.',
+                '{f} a mené la danse… jusqu\'à ce que {w} change la musique.',
+                'Remontada : {w} était derrière, {w} est devant. Les autres regardent le plafond.',
+                '{w} a laissé les autres y croire. Puis il a tout repris.',
+                'Comme quoi, ce n\'est jamais fini tant que {w} n\'a pas fini de jouer.'
+            ]},
+            { id: 'chaos', weight: 4, when: c => c.changes >= 3, lines: [
+                '{changes} changements de leader : même les joueurs ne savent plus qui gagne.',
+                'Le classement a changé plus souvent que la météo.',
+                'Un vrai ascenseur émotionnel, avec {w} qui descend à l\'étage du haut.',
+                'Partie folle : personne n\'a gardé la tête plus de deux manches.'
+            ]},
+            { id: 'thriller', weight: 4, when: c => !c.tie && c.n > 1 && c.ratio <= 0.1, lines: [
+                'Suspense jusqu\'au bout : {gap} d\'écart seulement !',
+                '{gap} d\'écart. {s} va rejouer cette partie dans sa tête toute la nuit.',
+                '{s} est à {gap} de la victoire. Ça pique.',
+                'Gagner de {gap}, c\'est gagner quand même. Demandez à {w}.'
+            ]},
+            { id: 'domination', weight: 4, when: c => !c.tie && c.n > 1 && c.ratio >= 0.5, lines: [
+                '{w} a joué, les autres ont regardé.',
+                'Démonstration de {w}. Les autres, on en reparle.',
+                '{w} gagne avec une facilité insolente.',
+                'À ce niveau-là, ce n\'est plus une victoire, c\'est une visite guidée.',
+                '{w} a écrasé la partie. Les chaises des autres sont encore chaudes.'
+            ]},
+            { id: 'wire', weight: 3, when: c => c.wire && c.rounds >= 3, lines: [
+                '{w} en tête du début à la fin. Zéro suspense, 100 % classe.',
+                '{w} a pris le volant dès la première manche et n\'a plus jamais lâché.',
+                'Premier de la première à la dernière manche : {w} ne fait pas dans la dentelle.'
+            ]},
+            { id: 'late', weight: 4, when: c => c.late && c.rounds >= 3, lines: [
+                '{w} attend la dernière manche pour passer devant. Le sens du spectacle.',
+                'Cuisiné à la dernière minute : {w} double tout le monde au finish.',
+                '{w} a gardé ses cartouches pour la fin. Les autres ont dû apprécier.'
+            ]},
+            { id: 'lucky', weight: 5, when: c => c.moreWinsElsewhere, lines: [
+                '{t} a gagné plus de manches, {w} a gagné la partie. C\'est ça, la vraie vie.',
+                '{w} gagne sans être le roi des manches. La régularité, ça paie.',
+                '{t} a brillé manche après manche. {w} a juste eu le meilleur total. Détail.'
+            ]},
+            { id: 'loserBest', weight: 5, when: c => c.loserBest, lines: [
+                '{l} signe la meilleure manche… et finit dernier. Le talent ne fait pas tout.',
+                'Un éclair de génie de {l}, puis plus rien. Dommage.',
+                '{l} a eu le meilleur coup de la partie. Et le pire classement. Bravo ?'
+            ]},
+            { id: 'roast', weight: 2, when: c => c.n >= 3 && !c.tie, lines: [
+                '{l} termine dernier, mais avec panache.',
+                'Mention spéciale à {l}, qui a fait monter la moyenne des autres.',
+                '{l} jure qu\'il réchauffait la place pour la revanche.',
+                '{l} a joué avec le cœur. Pas avec les points.',
+                'Dernier, {l} ? Non : stratégiquement placé.'
+            ]},
+            { id: 'duel', weight: 2, when: c => c.n === 2 && !c.tie, lines: [
+                'Un duel, un vainqueur : {w} l\'emporte sur {s}.',
+                '{s} a perdu la bataille, mais pas sa mauvaise foi.',
+                '{w} 1 – 0 {s}. La revanche est déjà réclamée, j\'imagine.'
+            ]},
+            { id: 'short', weight: 3, when: c => c.rounds <= 2, lines: [
+                'Partie express : {w} gagne avant que les autres aient fini leur verre.',
+                'Déjà fini ? {w} n\'a pas laissé le temps de s\'installer.'
+            ]},
+            { id: 'long', weight: 3, when: c => c.rounds >= 10, lines: [
+                '{rounds} manches : {w} gagne à l\'usure.',
+                'Un vrai marathon. {w} termine avec la tête haute (et les jambes lourdes).',
+                '{rounds} manches plus tard, {w} est toujours debout. Respect.'
+            ]},
+            { id: 'streak', weight: 4, when: c => c.streakCount >= 3, lines: [
+                '{p} enchaîne {streakCount} manches de suite. Ça devient personnel.',
+                '{streakCount} manches d\'affilée pour {p}. Quelqu\'un peut l\'arrêter ?'
+            ]},
+            { id: 'lowest', weight: 2, when: c => c.isLowest && !c.tie, lines: [
+                '{w} gagne en marquant le moins. Faire le moins a parfois du bon.',
+                'Ici, le plus petit score gagne : {w} a très bien compris le principe.'
+            ]},
+            { id: 'base', weight: 1, when: () => true, lines: [
+                '{w} s\'impose. Les autres préparent leur revanche.',
+                'Victoire de {w}. Les perdants réclament déjà un nouveau match.',
+                '{w} remporte la partie. Propre, net, sans bavure.',
+                '{w} gagne. Les excuses des autres arrivent dans 3, 2, 1…'
+            ]}
+        ],
+
+        _hash(str) {
+            let h = 2166136261;
+            for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return h >>> 0;
+        },
+        _rng(seed) { // mulberry32
+            let t = seed >>> 0;
+            return () => { t = (t + 0x6D2B79F5) >>> 0; let x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+        },
+        _fill(tpl, c) {
+            const pts = n => `${n} pt${Math.abs(n) > 1 ? 's' : ''}`;
+            const v = { w: c.w, s: c.s, l: c.l, f: c.f, t: c.t, p: c.p, changes: c.changes, rounds: c.rounds, streakCount: c.streakCount, gap: pts(c.gap) };
+            return tpl.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+        },
+
+        /** @param {Object} c contexte de partie  @param {string} seedStr graine  @param {number} roll relances */
+        pick(c, seedStr, roll = 0) {
+            const pool = [];
+            // Égalité : on ne garde que les répliques qui ne désignent pas de vainqueur
+            const sits = c.tie ? this.SITUATIONS.filter(x => x.id === 'tie') : this.SITUATIONS;
+            sits.forEach(sit => { if (sit.when(c)) for (let i = 0; i < sit.weight; i++) pool.push(...sit.lines); });
+            const unique = [...new Set(pool)];
+            // roll décale la sélection : relancer ne retombe pas sur la même réplique
+            const rnd = this._rng(this._hash(seedStr));
+            const weighted = pool[Math.floor(rnd() * pool.length)];
+            const first = unique.indexOf(weighted);
+            return this._fill(unique[(first + roll) % unique.length], c);
+        }
+    };
+
+    // ==================== UNIFIED RECAP GENERATOR V6.0 ====================
+    // Récap carré (1080×1080 en PNG, 540×540 en GIF) : podium, courbe d'évolution, temps forts.
+    // PNG = image finale ; GIF = même rendu animé (podium qui monte, courbe qui se dessine).
     
     const UnifiedRecapGenerator = {
-        // Configuration du design
-        CONFIG: {
-            WIDTH: 500,
-            PADDING: 25,
-            FPS: 8,
-            DURATION: 4,        // secondes
-            BORDER_RADIUS: 16
-        },
-        
-        // Palette de couleurs par genre
-        GENRE_COLORS: {
-            DOMINATION: { 
-                primary: '#DC2626', 
-                secondary: '#F59E0B', 
-                accent: '#FCD34D',
-                gradient: ['#DC2626', '#991B1B']
-            },
-            THRILLER: { 
-                primary: '#F97316', 
-                secondary: '#FBBF24', 
-                accent: '#FDE68A',
-                gradient: ['#F97316', '#EA580C']
-            },
-            CHAOS: { 
-                primary: '#8B5CF6', 
-                secondary: '#EC4899', 
-                accent: '#F9A8D4',
-                gradient: ['#8B5CF6', '#6D28D9']
-            },
-            COMEBACK: { 
-                primary: '#3B82F6', 
-                secondary: '#06B6D4', 
-                accent: '#67E8F9',
-                gradient: ['#3B82F6', '#1D4ED8']
-            }
-        },
-        
-        // Particules pour l'animation (réinitialisées à chaque génération)
-        particles: [],
-        
-        // --- Analyse des données ---
-
-        // --- Helpers privés (analyzeGameData) ---
-
-        /** Calcule les courbes de score, détecte le leader à chaque manche et le genre de la partie. */
-
-        /**
-         * Détermine le genre narratif d'une partie selon les changements de leader et l'écart final.
-         * @param {number} changes  Nombre de changements de leader
-         * @param {number} first    Index du premier leader
-         * @param {number} last     Index du dernier leader
-         * @param {number} gap      Écart de points entre 1er et 2e
-         * @returns {'CHAOS'|'COMEBACK'|'THRILLER'|'DOMINATION'}
-         */
-        _classifyGenre(changes, first, last, gap) {
-            if (changes >= 3)       return 'CHAOS';
-            if (first !== last)     return 'COMEBACK';
-            if (gap <= 100)         return 'THRILLER';
-            return 'DOMINATION';
-        },
-
-
-        /**
-         * Calcule les scores finaux triés et l'écart entre les deux premiers.
-         * @param {number[][]} curves   Courbes cumulatives par joueur
-         * @param {boolean}    isLowest Mode "score le plus bas gagne"
-         * @returns {{ finals, sortedF, gap }}
-         */
-        _calcFinalsAndGap(curves, isLowest) {
-            const finals  = curves.map(c => c[c.length - 1]);
-            const sortedF = finals
-                .map((t, i) => ({ i, t }))
-                .sort((a, b) => isLowest ? a.t - b.t : b.t - a.t);
-            const gap = sortedF.length > 1 ? Math.abs(sortedF[0].t - sortedF[1].t) : 0;
-            return { finals, sortedF, gap };
-        },
-
-
-        // --- _computeCurvesAndGenre helpers ---
-
-        /**
-         * Accumule les totaux cumulatifs par joueur et enregistre le leader à chaque manche.
-         * Modifie totals, curves et leaders en place.
-         */
-        _buildCurvesAndLeaders(players, history, isLowest, totals, curves, leaders) {
-            history.forEach(r => {
-                players.forEach((p, i) => {
-                    totals[i] += r[p.id] || 0;
-                    curves[i].push(totals[i]);
-                });
-                const sorted = players
-                    .map((p, i) => ({ i, t: totals[i] }))
-                    .sort((a, b) => isLowest ? a.t - b.t : b.t - a.t);
-                leaders.push(sorted[0].i);
-            });
-        },
-
-        /**
-         * Compte le nombre de changements de leader dans le tableau leaders.
-         * @param {number[]} leaders Index du joueur en tête à chaque manche
-         * @returns {number} Nombre de changements
-         */
-        _countLeaderChanges(leaders) {
-            let changes = 0;
-            for (let i = 1; i < leaders.length; i++) {
-                if (leaders[i] !== leaders[i - 1]) changes++;
-            }
-            return changes;
-        },
-
-        _computeCurvesAndGenre(players, history, isLowest) {
-            const totals = {};
-            const curves = players.map(() => []);
-            const leaders = [];
-            players.forEach((p, i) => totals[i] = 0);
-
-            this._buildCurvesAndLeaders(players, history, isLowest, totals, curves, leaders);
-            const changes = this._countLeaderChanges(leaders);
-
-            const last  = leaders[leaders.length - 1];
-            const first = leaders[0];
-            const { finals, sortedF, gap } = this._calcFinalsAndGap(curves, isLowest);
-
-            const genre = this._classifyGenre(changes, first, last, gap);
-
-            return { curves, leaders, genre, gap, sortedF, finals, last, first, changes };
-        },
-
-        /** Trouve la meilleure, 2e meilleure et pire manche parmi tous les joueurs. */
-
-        /**
-         * Met à jour les extrêmes de manche (best, 2nd best, worst) pour un score donné.
-         * @returns {{ bestRound, secondBestRound, worstRound }}
-         */
-        _updateRoundExtremes(score, playerName, roundNum, bestRound, secondBestRound, worstRound) {
-            if (score > bestRound.score) {
-                secondBestRound = { ...bestRound };
-                bestRound = { player: playerName, score, round: roundNum };
-            } else if (score > secondBestRound.score && score !== bestRound.score) {
-                secondBestRound = { player: playerName, score, round: roundNum };
-            }
-            if (score < worstRound.score) {
-                worstRound = { player: playerName, score, round: roundNum };
-            }
-            return { bestRound, secondBestRound, worstRound };
-        },
-
-
-        /**
-         * Parcourt l'historique et retourne les trois scores extrêmes de manche
-         * (meilleur, deuxième meilleur, pire) avec leurs auteurs et numéros de manche.
-         */
-        _scanRoundExtremes(players, history) {
-            const initScore = history[0][players[0]?.id] || 0;
-            const init = { player: players[0]?.name || 'N/A', score: initScore, round: 1 };
-            let bestRound = { ...init };
-            let secondBestRound = { ...init };
-            let worstRound = { ...init };
-            history.forEach((round, idx) => {
-                players.forEach(p => {
-                    const score = round[p.id] || 0;
-                    ({ bestRound, secondBestRound, worstRound } =
-                        this._updateRoundExtremes(score, p.name, idx + 1, bestRound, secondBestRound, worstRound));
-                });
-            });
-            return { bestRound, secondBestRound, worstRound };
-        },
-
-        _computeRoundStats(players, history) {
-            const empty = { player: 'N/A', score: 0 };
-            if (history.length === 0) return { bestRound: empty, secondBestRound: empty, worstRound: empty };
-
-            return this._scanRoundExtremes(players, history);
-        },
-
-        /** Calcule la meilleure série de victoires consécutives par joueur. */
-
-        /**
-         * Trouve le joueur avec la meilleure série de victoires dans la Map streaks.
-         * @param {Array} players
-         * @param {Map}   streaks  Map<id, {current, max}>
-         * @returns {{ player: string|null, count: number }}
-         */
-        _findBestStreak(players, streaks) {
-            let best = { player: null, count: 0 };
-            streaks.forEach((st, playerId) => {
-                if (st.max > best.count) {
-                    const p = players.find(p => p.id === playerId);
-                    best = { player: p?.name || 'N/A', count: st.max };
-                }
-            });
-            return best;
-        },
-
-
-        /**
-         * Met à jour la Map des séries pour une manche donnée.
-         * Détermine le gagnant de la manche et incrémente/remet à zéro les séries.
-         */
-        _updateStreaksForRound(players, round, isLowest, streaks) {
-            const scores   = players.map(p => ({ id: p.id, score: round[p.id] || 0 }));
-            const winScore = scores.reduce(
-                (best, s) => isLowest ? Math.min(best, s.score) : Math.max(best, s.score),
-                isLowest ? Infinity : -Infinity
-            );
-            const winner = scores.find(s => s.score === winScore);
-
-            scores.forEach(({ id, score }) => {
-                const st = streaks.get(id);
-                if (id === winner?.id && (isLowest ? score >= 0 : score > 0)) {
-                    st.current++;
-                    st.max = Math.max(st.max, st.current);
-                } else {
-                    st.current = 0;
-                }
-            });
-        },
-
-        _computeStreaks(players, history, isLowest) {
-            const streaks = new Map();
-            players.forEach(p => streaks.set(p.id, { current: 0, max: 0 }));
-
-            history.forEach(round => this._updateStreaksForRound(players, round, isLowest, streaks));
-
-            return this._findBestStreak(players, streaks);
-        },
-
-
-        // --- analyzeGameData helpers ---
-
-        /**
-         * Sélection déterministe d'une narrative de partie selon le genre.
-         * Basé sur les données (pas de random) pour cohérence PNG/GIF.
-         */
-
-        /**
-         * Retourne la narrative correspondant au genre et à l'index déterministe.
-         * @param {string} genre   DOMINATION | THRILLER | CHAOS | COMEBACK
-         * @param {number} idx     Index 0 ou 1
-         * @param {Object} names   { winner, leader, loser, gap, changes }
-         */
-        _narrativeTemplate(genre, idx, { winner, leader, loser, gap, changes }) {
-            const t = {
-                DOMINATION: [
-                    `Une démonstration totale. ${loser} n'avait aucune chance.`,
-                    `Match à sens unique. ${winner} écrase la concurrence.`
-                ],
-                THRILLER: [
-                    `Suspense jusqu'au bout ! Un écart de seulement ${gap} points.`,
-                    `Match serré ! Chaque point comptait.`
-                ],
-                CHAOS: [
-                    `Partie folle avec ${changes} changements de leader !`,
-                    `Un chaos total ! Impossible de prédire le vainqueur.`
-                ],
-                COMEBACK: [
-                    `Incroyable remontée de ${winner} !`,
-                    `Le retour du comeback kid ! ${leader} pensait avoir gagné.`
-                ]
-            };
-            return t[genre]?.[idx] ?? '';
-        },
-
-        _pickNarrative(genre, gap, changes, players, last, first, sortedF, history) {
-            const winner = players[last]?.name  || 'N/A';
-            const leader = players[first]?.name || 'N/A';
-            const loser  = players[sortedF[sortedF.length - 1]?.i]?.name || 'le perdant';
-            const idx    = (history.length + players.length) % 2;
-
-            return this._narrativeTemplate(genre, idx, { winner, leader, loser, gap, changes });
-        },
-
-        // --- _computeWinRates helpers ---
-
-        /**
-         * Compte les victoires de manche par joueur.
-         * @returns {number[]} tableau de compteurs indexé comme players
-         */
-        _countRoundWins(players, history, isLowest) {
-            const counts = players.map(() => 0);
-            history.forEach(round => {
-                const scores = players.map(p => round[p.id] || 0);
-                const best   = isLowest ? Math.min(...scores) : Math.max(...scores);
-                players.forEach((p, i) => { if ((round[p.id] || 0) === best) counts[i]++; });
-            });
-            return counts;
-        },
-
-        /**
-         * Convertit les compteurs de victoires en liste de taux (%) triée décroissante.
-         */
-        _buildWinRateList(players, totalRounds, counts) {
-            return players
-                .map((p, i) => ({
-                    name:  p.name,
-                    value: totalRounds > 0 ? Math.round((counts[i] / totalRounds) * 100) : 0
-                }))
-                .sort((a, b) => b.value - a.value);
-        },
-
-        _computeWinRates(players, history, isLowest) {
-            const counts = this._countRoundWins(players, history, isLowest);
-            return this._buildWinRateList(players, history.length, counts);
-        },
-
-
-        /** Construit et retourne l'objet résultat d'analyse complet. */
-
-        /**
-         * Convertit le tableau sortF [{i, t}] en tableau de joueurs triés lisibles.
-         * @param {Array} players  Joueurs bruts
-         * @param {Array} sortedF  [{i: index, t: total}]
-         */
-        _mapSortedPlayers(players, sortedF) {
-            return sortedF.map(s => ({ name: players[s.i].name, total: s.t, rank: 0 }));
-        },
-
-        _assembleAnalysisResult(genre, players, winnerIndex, winnerTotal, gap, narrative,
-                                bestRound, secondBestRound, worstRound, bestStreak, precision, history, sortedF) {
-            return {
-                genre,
-                winner:          players[winnerIndex]?.name || 'N/A',
-                winnerScore:     winnerTotal,
-                colors:          this.GENRE_COLORS[genre],
-                narrative,
-                bestRound, secondBestRound, worstRound, bestStreak,
-                finalGap:        gap,
-                precision,
-                totalManches:    history.length,
-                sortedPlayers:   this._mapSortedPlayers(players, sortedF)
-            };
-        },
-
-        _buildAnalysisResult({ genre, players, finals, last, gap, narrative, bestRound,
-                               secondBestRound, worstRound, bestStreak, precision, history, sortedF }) {
-            const winnerIndex = last !== undefined ? last : 0;
-            const winnerTotal = finals[winnerIndex] ?? 0;
-            return this._assembleAnalysisResult(genre, players, winnerIndex, winnerTotal, gap, narrative,
-                bestRound, secondBestRound, worstRound, bestStreak, precision, history, sortedF);
-        },
-
-
-        /**
-         * Orchestre tous les calculs d'analyse : courbes, manches, séries, narrative,
-         * win-rates, puis assemble et retourne l'objet résultat complet.
-         */
-        _computeAnalysis(players, history, isLowest) {
-            const { genre, gap, sortedF, finals, last, first, changes } =
-                this._computeCurvesAndGenre(players, history, isLowest);
-            const { bestRound, secondBestRound, worstRound } = this._computeRoundStats(players, history);
-            const bestStreak  = this._computeStreaks(players, history, isLowest);
-            const narrative   = this._pickNarrative(genre, gap, changes, players, last, first, sortedF, history);
-            const precision   = this._computeWinRates(players, history, isLowest);
-            return this._buildAnalysisResult({
-                genre, players, finals, last, gap, narrative,
-                bestRound, secondBestRound, worstRound, bestStreak, precision, history, sortedF
-            });
-        },
-
-        analyzeGameData(gameState) {
-            const victoryCondition = gameState.victoryCondition || VC_HIGHEST;
-            const isLowest = victoryCondition === VC_LOWEST;
-            const players = gameState.players;
-            const history = gameState.history;
-            
-            return this._computeAnalysis(players, history, isLowest);
-        },
-        
-        // === GÉNÉRATION PNG (STATIQUE) ===
-
-        // --- Génération PNG / GIF ---
-
-        /**
-         * Crée un canvas aux dimensions calculées, y dessine une frame statique (time=0)
-         * et retourne le canvas.
-         */
-        _renderStaticCanvas(ai) {
-            const canvas = document.createElement('canvas');
-            canvas.width  = this.CONFIG.WIDTH;
-            canvas.height = this.calculateHeight(ai);
-            this.drawFrame(canvas.getContext('2d'), ai, 0, false);
-            return canvas;
-        },
-
-        generateStatic(gameState) {
-            try {
-                const ai = this.analyzeGameData(gameState);
-                return this._renderStaticCanvas(ai);
-            } catch (error) {
-                console.error('[UnifiedRecap] Erreur PNG:', error);
-                return null;
-            }
-        },
-        
-        // === GÉNÉRATION GIF (ANIMÉ) ===
-
-        // --- GIF helpers (generateAnimated) ---
-
-        /**
-         * Boucle de rendu : dessine chaque frame sur ctx et pousse son dataURL dans frames.
-         * Met à jour la progression tous les 4 frames.
-         */
-        _renderFrameLoop(ctx, ai, totalFrames, frames, updateProgress) {
-            for (let frame = 0; frame < totalFrames; frame++) {
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                this.drawFrame(ctx, ai, frame / totalFrames, true);
-                frames.push(ctx.canvas.toDataURL('image/png'));
-                if (frame % 4 === 0) {
-                    const pct = 10 + Math.round((frame / totalFrames) * 50);
-                    updateProgress(pct, `Frame ${frame + 1}/${totalFrames}`);
-                }
-            }
-        },
-
-        _renderFrames(ai, totalFrames, updateProgress) {
-            const canvas = document.createElement('canvas');
-            canvas.width  = this.CONFIG.WIDTH;
-            canvas.height = this.calculateHeight(ai);
-            const ctx = canvas.getContext('2d');
-            const frames = [];
-
-            this._renderFrameLoop(ctx, ai, totalFrames, frames, updateProgress);
-            canvas.width = 1; canvas.height = 1; // libère mémoire
-            return frames;
-        },
-
-
-        // --- _encodeGIF callbacks ---
-
-        /** Finalise la génération GIF après succès de gifshot (dataURL → Blob → download). */
-        _onGifSuccess(obj, updateProgress) {
-            updateProgress(95, 'Finalisation...');
-            const base64 = obj.image.split(',')[1];
-            const binary = atob(base64);
-            const arr = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-            this.downloadGif(new Blob([arr], { type: 'image/gif' }));
-            updateProgress(100, 'Terminé !');
-            this.particles = [];
-            if (app._gifTimeoutId) { clearTimeout(app._gifTimeoutId); app._gifTimeoutId = null; }
-            app._gifGenerating = false;
-            setTimeout(() => { UI.hideLoading(); UI.showToast('✅ GIF téléchargé !', 'success'); }, 300);
-        },
-
-        /** Nettoie l'état et affiche l'erreur gifshot. */
-        _onGifFail(errorMsg) {
-            this.particles = [];
-            UI.hideLoading();
-            UI.showToast('❌ Erreur: ' + errorMsg, 'error');
-            app._gifGenerating = false;
-            if (app._gifTimeoutId) { clearTimeout(app._gifTimeoutId); app._gifTimeoutId = null; }
-        },
-
-
-        /**
-         * Construit l'objet de configuration pour gifshot.createGIF.
-         * Inclut dimensions, timing, sampleInterval et callback de progression.
-         */
-        _gifShotConfig(frames, ai, totalFrames, updateProgress) {
-            return {
-                images:           frames,
-                gifWidth:         this.CONFIG.WIDTH,
-                gifHeight:        this.calculateHeight(ai),
-                interval:         1 / this.CONFIG.FPS,
-                numFrames:        totalFrames,
-                frameDuration:    1,
-                sampleInterval:   10,
-                progressCallback: (p) =>
-                    updateProgress(60 + Math.round(p * 35), `Encodage: ${Math.round(p * 100)}%`)
-            };
-        },
-
-        _encodeGIF(frames, ai, totalFrames, updateProgress) {
-            gifshot.createGIF(
-                this._gifShotConfig(frames, ai, totalFrames, updateProgress),
-                (obj) => obj.error ? this._onGifFail(obj.error) : this._onGifSuccess(obj, updateProgress)
-            );
-        },
-
-
-        // --- generateAnimated helpers ---
-
-        /**
-         * Calcule le nombre de frames GIF selon la mémoire disponible.
-         * Réduit de moitié sur les appareils < 4 Go RAM.
-         */
-        _calcFrameCount() {
-            const base = this.CONFIG.FPS * this.CONFIG.DURATION;
-            return (navigator.deviceMemory && navigator.deviceMemory < 4)
-                ? Math.floor(base / 2)
-                : base;
-        },
-
-        /** Nettoie l'état et affiche le toast d'erreur après un échec de génération GIF. */
-        _handleGifError(error) {
-            this.particles = [];
-            UI.hideLoading();
-            UI.showToast('❌ Erreur: ' + error.message, 'error');
-            app._gifGenerating = false;
-        },
-
-
-        /**
-         * Exécute le pipeline complet de génération GIF :
-         * validation gifshot → particules → analyse → frames → encode.
-         */
-        _runGifPipeline(gameState, updateProgress) {
-            try {
-                if (typeof gifshot === 'undefined') {
-                    UI.hideLoading();
-                    throw new Error('Bibliothèque gifshot non chargée');
-                }
-                this.initParticles();
-                updateProgress(5, 'Analyse des données...');
-                const ai = this.analyzeGameData(gameState);
-                const totalFrames = this._calcFrameCount();
-                updateProgress(10, `Génération de ${totalFrames} frames...`);
-                const frames = this._renderFrames(ai, totalFrames, updateProgress);
-                updateProgress(60, 'Encodage du GIF...');
-                this._encodeGIF(frames, ai, totalFrames, updateProgress);
-            } catch (error) {
-                this._handleGifError(error);
-            }
-        },
-
-        generateAnimated(gameState, progressCallback = null) {
-            const updateProgress = (progress, message) => {
-                if (progressCallback) progressCallback(progress, message);
-            };
-            this._runGifPipeline(gameState, updateProgress);
-        },
-        
-        // === INITIALISATION PARTICULES ===
-
-        // --- Rendu Canvas ---
-        initParticles() {
-            this.particles = [];
-            for (let i = 0; i < 25; i++) {
-                this.particles.push({
-                    x: Math.random() * this.CONFIG.WIDTH,
-                    y: Math.random() * 1500,
-                    size: Math.random() * 3 + 1,
-                    speedX: (Math.random() - 0.5) * 0.6,
-                    speedY: (Math.random() - 0.5) * 0.3,
-                    opacity: Math.random() * 0.4 + 0.2,
-                    phase: Math.random() * Math.PI * 2
-                });
-            }
-        },
-        
-        // === CALCUL HAUTEUR DYNAMIQUE ===
-
-        /**
-         * Calcule la hauteur de la section classement selon le nombre de joueurs.
-         * ≥3 joueurs : podium + ligne par joueur supplémentaire. <3 : liste simple.
-         * @returns {number} hauteur en pixels (header + contenu + marge)
-         */
-        _rankingHeight(playerCount) {
-            let h = 40; // header
-            if (playerCount >= 3) {
-                h += 185; // podium complet
-                h += Math.max(0, playerCount - 3) * 43; // autres: 38 + 5 gap
-            } else {
-                h += playerCount * 48;
-            }
-            return h + 15; // marge
-        },
-
-        calculateHeight(ai) {
-            // Bannière: 100 + 10
-            let height = 110;
-            
-            height += this._rankingHeight(ai.sortedPlayers?.length || 2);
-            
-            // Temps forts: header(40) + offset(50) + 3*(70+8) + 15
-            height += 339;
-            // Stats: header(40) + offset(55) + card(175) + 10
-            height += 280;
-            // Watermark: 40
-            height += 40;
-            return height;
-        },
-        
-        // === DESSIN D'UNE FRAME (UNIFIÉ) ===
-
-        /**
-         * Dessine la séquence principale d'une frame : bannière → classement →
-         * temps forts → stats → watermark.
-         */
-        _drawFrameContent(ctx, ai, time, animated, w, h) {
-            let y = 0;
-            y = this.drawBanner(ctx, y, ai, time, animated);
-            y = this.drawRanking(ctx, y, ai, time, animated);
-            y = this.drawHighlights(ctx, y, ai, time, animated);
-                 this.drawStats(ctx, y, ai, time, animated);
-            this.drawWatermark(ctx, w, h, time, animated);
-        },
-
-        drawFrame(ctx, ai, time, animated) {
-            const w = this.CONFIG.WIDTH;
-            const h = this.calculateHeight(ai);
-            const p = this.CONFIG.PADDING;
-            
-            this.drawBackground(ctx, w, h, time, animated);
-            if (animated) this.drawParticles(ctx, time);
-            this._drawFrameContent(ctx, ai, time, animated, w, h);
-        },
-        
-        // --- Sous-couches de rendu ---
-
-        // --- drawBackground helpers ---
-
-        /** Applique une texture de grain déterministe (sans random, stable entre frames). */
-        _drawBgTexture(ctx, w, h) {
-            ctx.fillStyle = 'rgba(180,150,120,0.015)';
-            for (let i = 0; i < 800; i++) {
-                ctx.fillRect((i * 17) % w, (i * 23) % h, 1, 1);
-            }
-        },
-
-        /** Dessine la vague de lumière animée en haut du fond. */
-        _drawBgWave(ctx, w, h, time) {
-            const waveX = (time * 200) % (w + 200) - 100;
-            const g = ctx.createLinearGradient(waveX - 80, 0, waveX + 80, 0);
-            g.addColorStop(0,   'rgba(255,255,255,0)');
-            g.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-            g.addColorStop(1,   'rgba(255,255,255,0)');
-            ctx.fillStyle = g;
-            ctx.fillRect(0, 0, w, h);
-        },
-
-        drawBackground(ctx, w, h, time, animated) {
-            // Dégradé de base
-            const grad = ctx.createLinearGradient(0, 0, 0, h);
-            grad.addColorStop(0, '#FFFBF5');
-            grad.addColorStop(0.5, '#FFF8F0');
-            grad.addColorStop(1, '#FFF5EB');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, h);
-            
-            this._drawBgTexture(ctx, w, h);
-            if (animated) this._drawBgWave(ctx, w, h, time);
-        },
-        
-        // === PARTICULES ===
-
-        /**
-         * Met à jour la position d'une particule et la dessine (étoile dorée pulsante).
-         * @param {Object} p   Particule { x, y, speedX, speedY, opacity, phase, size }
-         */
-        _tickParticle(ctx, p, w, time) {
-            p.x += p.speedX;
-            p.y += p.speedY;
-            if (p.x < 0) p.x = w;
-            if (p.x > w) p.x = 0;
-            const pulse = 0.6 + Math.sin(time * 3 + p.phase) * 0.4;
-            ctx.save();
-            ctx.globalAlpha = p.opacity * pulse;
-            ctx.fillStyle = '#FFD700';
-            ctx.font = `${p.size * 4}px Arial`;
-            ctx.fillText('✦', p.x, p.y);
-            ctx.restore();
-        },
-
-        drawParticles(ctx, time) {
-            const w = this.CONFIG.WIDTH;
-            
-            this.particles.forEach(p => this._tickParticle(ctx, p, w, time));
-        },
-        
-        // === BANNIÈRE ===
-
-        // --- Banner helpers ---
-
-        /** Dessine le fond dégradé et les particules dorées de la bannière. */
-
-        // --- _drawBannerBackground helpers ---
-
-        /** Dessine la bordure pointillée animée + les particules dorées flottantes. */
-        _drawBannerAnimations(ctx, w, startY, h, time) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([20, 10]);
-            ctx.lineDashOffset = -time * 60;
-            ctx.strokeRect(2, startY + 2, w - 4, h - 4);
-            ctx.setLineDash([]);
-            this._drawBannerDots(ctx, w, startY, true, time);
-        },
-
-        /** Dessine les petits points dorés sur la bannière (statiques ou animés). */
-        _drawBannerDots(ctx, w, startY, animated, time) {
-            ctx.fillStyle = 'rgba(255,215,0,0.5)';
-            for (let i = 0; i < 10; i++) {
-                const px   = (w / 10) * i + (animated ? Math.sin(time * 4 + i) * 12 : 0);
-                const py   = startY + 30 + (animated ? Math.cos(time * 3 + i) * 8 : 0);
-                const size = 2 + (animated ? Math.sin(time * 5 + i) : 1);
-                ctx.beginPath(); ctx.arc(px, py, size, 0, Math.PI * 2); ctx.fill();
-            }
-        },
-
-        _drawBannerBackground(ctx, w, startY, h, colors, time, animated) {
-            const grad = ctx.createLinearGradient(0, startY, 0, startY + h);
-            grad.addColorStop(0, colors.gradient[0]);
-            grad.addColorStop(1, colors.gradient[1]);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, startY, w, h);
-
-            if (animated) this._drawBannerAnimations(ctx, w, startY, h, time);
-            else this._drawBannerDots(ctx, w, startY, false, 0);
-        },
-
-
-        /**
-         * Raccourci : applique font, fillStyle et textAlign en une seule ligne.
-         * @param {string} align — optionnel, non modifié si omis
-         */
-        _ctxSet(ctx, font, fill, align) {
-            ctx.font = font;
-            ctx.fillStyle = fill;
-            if (align !== undefined) ctx.textAlign = align;
-        },
-
-        /** Dessine le titre "SCORE MASTER" et le badge de genre. */
-        _drawBannerTitle(ctx, w, startY, genre) {
-            ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(0,0,0,0.3)';
-            this._ctxSet(ctx, 'italic 900 52px Georgia', '#FFFFFF', 'center');
-            ctx.fillText('SCORE MASTER', w / 2, startY + 60);
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
-            ctx.strokeText('SCORE MASTER', w / 2, startY + 60);
-            this._ctxSet(ctx, 'bold 11px Arial', 'rgba(255,255,255,0.9)');
-            ctx.fillText(genre, w - 60, startY + 85);
-        },
-
-        drawBanner(ctx, startY, ai, time, animated) {
-            const w = this.CONFIG.WIDTH;
-            const h = 100;
-            const colors = ai.colors;
-            
-            this._drawBannerBackground(ctx, w, startY, h, colors, time, animated);
-            
-            this._drawBannerTitle(ctx, w, startY, ai.genre);
-            
-            return startY + h + 10;
-        },
-        
-        // === CLASSEMENT COMPLET AVEC PODIUM ===
-
-        // --- Canvas helpers (drawRanking) ---
-
-        /** Dessine le podium top-3 sur le canvas du récap. */
-
-        // --- _drawSinglePodiumSlot helpers ---
-
-        /**
-         * Dessine la barre verticale du podium avec dégradé, ombre et emoji rang.
-         */
-        _drawPodiumBar(ctx, x, barY, podW, barH, baseY, centerX, colPair, emoji) {
-            const g = ctx.createLinearGradient(x, barY, x, baseY);
-            g.addColorStop(0, colPair[0]); g.addColorStop(1, colPair[1]);
-            ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowOffsetY = -3;
-            ctx.fillStyle = g;
-            this.roundRect(ctx, x, barY, podW, barH, [10, 10, 0, 0]); ctx.fill();
-            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-            ctx.font = '22px Arial'; ctx.textAlign = 'center';
-            ctx.fillText(emoji, centerX, barY + 25);
-        },
-
-        /**
-         * Dessine l'avatar circulaire au-dessus d'un slot de podium.
-         * Ajoute une couronne 👑 pour le gagnant (displayIdx === 1).
-         */
-        _drawPodiumAvatar(ctx, centerX, avatarY, displayIdx, playerName, colPair) {
-            const r = displayIdx === 1 ? 22 : 18;
-            const ag = ctx.createRadialGradient(centerX, avatarY, 0, centerX, avatarY, r);
-            ag.addColorStop(0, colPair[0]); ag.addColorStop(1, colPair[1]);
-            ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,0,0,0.25)';
-            ctx.fillStyle = ag;
-            ctx.beginPath(); ctx.arc(centerX, avatarY, r, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-            this._ctxSet(ctx, `bold ${r}px Arial`, displayIdx === 1 ? '#1a1a1a' : '#FFFFFF');
-            ctx.fillText(playerName.charAt(0), centerX, avatarY + r * 0.35);
-            if (displayIdx === 1) {
-                ctx.font = '18px Arial';
-                ctx.fillText('👑', centerX, avatarY - r - 5);
-            }
-        },
-
-        _drawSinglePodiumSlot(ctx, player, displayIdx, heights, colors, emojis, startX, podW, gap, baseY, time, animated) {
-            const barH    = heights[displayIdx];
-            const x       = startX + displayIdx * (podW + gap);
-            const centerX = x + podW / 2;
-            const floatY  = animated ? Math.sin(time * 2 + displayIdx) * 2 : 0;
-            const barY    = baseY - barH + floatY;
-
-            this._drawPodiumBar(ctx, x, barY, podW, barH, baseY, centerX, colors[displayIdx], emojis[displayIdx]);
-
-            // Score + Nom
-            this._ctxSet(ctx, 'bold 16px Arial', '#1a1a1a', 'center');
-            ctx.fillText(`${player.total} pts`, centerX, barY + floatY - 8);
-            this._ctxSet(ctx, 'bold 13px Arial', '#333');
-            let name = player.name.toUpperCase();
-            const maxW = podW - 10;
-            while (ctx.measureText(name).width > maxW && name.length > 1) name = name.slice(0, -1);
-            ctx.fillText(name, centerX, barY + floatY - 28);
-
-            this._drawPodiumAvatar(ctx, centerX, barY + floatY - 58, displayIdx, player.name, colors[displayIdx]);
-        },
-
-        _drawPodiumCanvas(ctx, p, cardW, contentY, top3, time, animated) {
-            const order = [1, 0, 2];
-            const podiumHeights = [60, 85, 40];
-            const podiumColors = [
-                ['#C0C0C0', '#A8A8A8'],
-                ['#FFD700', '#FFA500'],
-                ['#CD7F32', '#8B4513']
-            ];
-            const rankEmojis = ['🥈', '🥇', '🥉'];
-            const podiumWidth = 95;
-            const gap = 10;
-            const totalPodiumW = podiumWidth * 3 + gap * 2;
-            const podiumStartX = p + (cardW - totalPodiumW) / 2;
-            const podiumBaseY = contentY + 155;
-
-            order.forEach((playerIdx, displayIdx) => {
-                const player = top3[playerIdx];
-                if (!player) return;
-                this._drawSinglePodiumSlot(ctx, player, displayIdx, podiumHeights, podiumColors, rankEmojis, podiumStartX, podiumWidth, gap, podiumBaseY, time, animated);
-            });
-        },
-
-        /** Dessine la liste des joueurs au-delà du top-3. */
-        _drawPlayerListCanvas(ctx, p, cardW, w, listY, others, colors) {
-            const itemH = 38;
-            others.forEach((player, i) => {
-                const itemY = listY + i * (itemH + 5);
-                ctx.shadowBlur = 5; ctx.shadowColor = 'rgba(0,0,0,0.1)'; ctx.shadowOffsetY = 2;
-                ctx.fillStyle = '#FFFFFF';
-                this.roundRect(ctx, p, itemY, cardW, itemH, 10); ctx.fill();
-                ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-                ctx.fillStyle = colors.primary;
-                this.roundRect(ctx, p, itemY, 5, itemH, [10, 0, 0, 10]); ctx.fill();
-                this._ctxSet(ctx, 'bold 18px Arial', '#888', 'center');
-                ctx.fillText(`${i + 4}`, p + 28, itemY + 25);
-                this._ctxSet(ctx, 'bold 16px Arial', '#333');
-                ctx.fillText(player.name.toUpperCase(), w / 2, itemY + 25);
-                this._ctxSet(ctx, 'bold 17px Arial', colors.primary, 'right');
-                ctx.fillText(`${player.total} pts`, p + cardW - 15, itemY + 25);
-            });
-        },
-
-
-        /**
-         * Dessine un header de section (fond coloré arrondi + texte blanc centré).
-         * Utilisé par drawRanking, drawHighlights, drawStats.
-         */
-        _drawSectionHeader(ctx, p, startY, w, label, fillColor) {
-            ctx.fillStyle = fillColor;
-            this.roundRect(ctx, p, startY, w - p * 2, 40, 12);
-            ctx.fill();
-            this._ctxSet(ctx, 'bold 18px Arial', '#FFFFFF', 'center');
-            ctx.fillText(label, w / 2, startY + 26);
-        },
-
-
-        /**
-         * Dessine la liste des joueurs au-delà du top 3 et retourne l'ordonnée finale.
-         * @returns {number} Y final du bloc classement
-         */
-        _drawRankingOthers(ctx, p, cardW, w, contentY, hasPodium, players, colors, time, animated) {
-            const others = players.slice(3);
-            if (others.length > 0) {
-                const listY = contentY + (hasPodium ? 170 : 0);
-                this._drawPlayerListCanvas(ctx, p, cardW, w, listY, others, colors);
-                return listY + others.length * (38 + 5) + 15;
-            }
-            return contentY + (hasPodium ? 185 : 15);
-        },
-
-
-        /**
-         * Dessine le contenu de la section classement : podium top-3 (si ≥3 joueurs)
-         * puis liste des autres. Retourne l'ordonnée finale.
-         */
-        _drawRankingContent(ctx, p, startY, players, colors, time, animated) {
-            const contentY = startY + 50;
-            const cardW    = this.CONFIG.WIDTH - p * 2;
-            const top3     = players.slice(0, 3);
-            const hasPodium = top3.length >= 3;
-            if (hasPodium) this._drawPodiumCanvas(ctx, p, cardW, contentY, top3, time, animated);
-            ctx.textAlign = 'left';
-            return this._drawRankingOthers(ctx, p, cardW, this.CONFIG.WIDTH, contentY, hasPodium, players, colors, time, animated);
-        },
-
-        drawRanking(ctx, startY, ai, time, animated) {
-            const w = this.CONFIG.WIDTH;
-            const p = this.CONFIG.PADDING;
-            const colors = ai.colors;
-            const players = ai.sortedPlayers || [];
-            
-            this._drawSectionHeader(ctx, p, startY, w, '🏆 CLASSEMENT 🏆', colors.gradient[0]);
-            
-            return this._drawRankingContent(ctx, p, startY, players, colors, time, animated);
-        },
-        
-        // === TEMPS FORTS ===
-
-        /** Dessine une carte "temps fort" individuelle sur le canvas. */
-
-        // --- _drawHighlightCard helpers ---
-
-        /** Dessine le fond blanc + la barre colorée pulsante gauche d'une carte temps fort. */
-        _drawHighlightCardBg(ctx, p, y, cardW, itemH, barW, color, animated, time, i) {
-            ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.1)'; ctx.shadowOffsetY = 4;
-            ctx.fillStyle = '#FFFFFF';
-            this.roundRect(ctx, p, y, cardW, itemH, 12); ctx.fill();
-            ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-            ctx.globalAlpha = animated ? 0.7 + Math.sin(time * 4 + i) * 0.3 : 1;
-            ctx.fillStyle = color;
-            this.roundRect(ctx, p, y, barW, itemH, [12, 0, 0, 12]); ctx.fill();
-            ctx.globalAlpha = 1;
-        },
-
-        /** Dessine l'icône, le label, la valeur et le sous-texte d'une carte temps fort. */
-        _drawHighlightCardText(ctx, p, y, cardW, barW, item) {
-            const cx = p + barW + 15 + (cardW - barW - 30) / 2;
-            this._ctxSet(ctx, '24px Arial',      item.color,  'center'); ctx.fillText(item.icon,  cx, y + 22);
-            this._ctxSet(ctx, 'bold 10px Arial', item.color);            ctx.fillText(item.label, cx, y + 38);
-            this._ctxSet(ctx, 'bold 16px Arial', '#1a1a1a');             ctx.fillText(item.value, cx, y + 54);
-            this._ctxSet(ctx, 'bold 13px Arial', item.color);            ctx.fillText(item.sub,   cx, y + 68);
-        },
-
-        _drawHighlightCard(ctx, p, cardW, contentY, itemH, barW, item, i, time, animated) {
-            const itemY = contentY + i * (itemH + 8);
-            const floatY = animated ? Math.sin(time * 2 + i) * 2 : 0;
-
-            this._drawHighlightCardBg(ctx, p, itemY + floatY, cardW, itemH, barW, item.color, animated, time, i);
-
-            this._drawHighlightCardText(ctx, p, itemY + floatY, cardW, barW, item);
-        },
-
-
-        /**
-         * Construit le tableau des 3 cartes "temps forts" à partir des données analysées.
-         * @param {Object} ai Données analysées (bestRound, secondBestRound, bestStreak, totalManches)
-         * @returns {Array<{icon, label, value, sub, color}>}
-         */
-
-        /**
-         * Construit l'item "Série" pour la section temps forts.
-         * Affiche la série du meilleur joueur, ou "Match équilibré" si aucune.
-         */
-        _streakHighlightItem(ai) {
-            const haStreak = ai.bestStreak.count > 1;
-            return {
-                icon:  '⚡',
-                label: 'SÉRIE',
-                color: '#F59E0B',
-                value: haStreak ? ai.bestStreak.player : `${ai.totalManches} manches`,
-                sub:   haStreak ? `${ai.bestStreak.count} victoires` : 'Match équilibré'
-            };
-        },
-
-        _buildHighlightItems(ai) {
-            return [
-                {
-                    icon: '🔥', label: 'MEILLEURE MANCHE', color: '#EF4444',
-                    value: `${ai.bestRound.player}`,
-                    sub:   `${ai.bestRound.score} pts`
-                },
-                {
-                    icon: '🎯', label: 'EXPLOIT', color: '#3B82F6',
-                    value: `${ai.secondBestRound.player || 'N/A'}`,
-                    sub:   `${ai.secondBestRound.score || 0} pts`
-                },
-                this._streakHighlightItem(ai)
-            ];
-        },
-
-
-        /**
-         * Dessine chaque carte "temps fort" et retourne l'ordonnée finale de la section.
-         * @returns {number} Y final
-         */
-        _drawHighlightCards(ctx, p, startY, items, time, animated) {
-            const itemH    = 70;
-            const contentY = startY + 50;
-            const cardW    = this.CONFIG.WIDTH - p * 2;
-            const barW     = 6;
-            items.forEach((item, i) =>
-                this._drawHighlightCard(ctx, p, cardW, contentY, itemH, barW, item, i, time, animated));
-            ctx.textAlign = 'left';
-            return contentY + items.length * (itemH + 8) + 15;
-        },
-
-        drawHighlights(ctx, startY, ai, time, animated) {
-            const w = this.CONFIG.WIDTH;
-            const p = this.CONFIG.PADDING;
-            
-            this._drawSectionHeader(ctx, p, startY, w, '⭐ TEMPS FORTS ⭐', ai.colors.gradient[0]);
-            
-            const items = this._buildHighlightItems(ai);
-            
-            return this._drawHighlightCards(ctx, p, startY, items, time, animated);
-        },
-        
-        // === STATS ===
-
-        /** Dessine la barre de taux de victoire dans la section Stats. */
-
-        // --- _drawWinRateBar helpers ---
-
-        /**
-         * Dessine une barre de progression arrondie (fond gris + remplissage dégradé).
-         * @returns {number} fillW — largeur du remplissage (utile pour l'effet shine)
-         */
-        _drawProgressBar(ctx, barX, barY, barW, barH, pct, colorStart, colorEnd) {
-            ctx.fillStyle = '#E5E7EB';
-            this.roundRect(ctx, barX, barY, barW, barH, 8); ctx.fill();
-            const fillW = Math.max(1, barW * (pct / 100));
-            const grad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
-            grad.addColorStop(0, colorStart); grad.addColorStop(1, colorEnd);
-            ctx.fillStyle = grad;
-            this.roundRect(ctx, barX, barY, fillW, barH, 8); ctx.fill();
-            return fillW;
-        },
-
-        /** Dessine l'effet de brillance animé qui glisse sur la barre. */
-        _drawBarShine(ctx, barX, barY, barW, barH, fillW, time) {
-            const shineX = (time * 150) % barW;
-            const g = ctx.createLinearGradient(barX + shineX - 30, barY, barX + shineX + 30, barY);
-            g.addColorStop(0,   'rgba(255,255,255,0)');
-            g.addColorStop(0.5, 'rgba(255,255,255,0.4)');
-            g.addColorStop(1,   'rgba(255,255,255,0)');
-            ctx.fillStyle = g;
-            ctx.fillRect(barX, barY, fillW, barH);
-        },
-
-        _drawWinRateBar(ctx, p, cardW, w, contentY, top, time, animated) {
-            const topValue = Math.max(0, Math.min(100, top?.value || 0));
-            this._ctxSet(ctx, 'bold 14px Arial', '#333', 'center');
-            ctx.fillText(`🎯 Taux victoire: ${top?.name || 'N/A'}`, w / 2, contentY + 25);
-            const barW = cardW - 30, barH = 24;
-            const barX = p + 15, barY = contentY + 35;
-            const fillW = this._drawProgressBar(ctx, barX, barY, barW, barH, topValue, '#22C55E', '#16A34A');
-            if (animated) this._drawBarShine(ctx, barX, barY, barW, barH, fillW, time);
-            this._ctxSet(ctx, 'bold 14px Arial', '#FFFFFF', 'center');
-            ctx.fillText(`${topValue}%`, w / 2, barY + 17);
-        },
-
-
-        /** Dessine la grille 2 colonnes (meilleure manche / écart) + narrative. */
-
-        // --- _drawStatsGrid helpers ---
-
-        /**
-         * Dessine les deux colonnes de stats (meilleure manche / écart) + ligne manches.
-         * Reçoit les closures label/value pour la cohérence de style.
-         */
-        _drawStatsColumns(ctx, col1X, col2X, statsY, w, ai, label, value) {
-            label('🔥 Meilleure', col1X, statsY);
-            value(ai.bestRound.player, col1X, statsY + 20);
-
-            if (ai.finalGap === 0) {
-                label('🤝 Résultat', col2X, statsY);
-                value('Égalité !',   col2X, statsY + 20);
-            } else {
-                label('🎯 Écart',          col2X, statsY);
-                value(`${ai.finalGap} pts`, col2X, statsY + 20);
-            }
-            label(`📈 ${ai.totalManches} manches jouées`, w / 2, statsY + 55);
-        },
-
-        /**
-         * Dessine la narrative tronquée au pixel sur le canvas.
-         * @param {string} text      Narrative brute
-         * @param {number} maxW      Largeur max disponible (cardW - 30)
-         * @param {string} color     Couleur du texte (colors.primary)
-         * @param {number} w         Largeur totale du canvas
-         * @param {number} y         Ordonnée du texte
-         */
-        _drawNarrativeText(ctx, text, cardW, color, w, y) {
-            const maxW = cardW - 30;
-            ctx.font = 'italic 12px Georgia';
-            if (ctx.measureText(text).width > maxW) {
-                while (ctx.measureText(text + '...').width > maxW && text.length > 1)
-                    text = text.slice(0, -1);
-                text += '...';
-            }
-            ctx.fillStyle = color;
-            ctx.textAlign = 'center';
-            ctx.fillText(`"${text}"`, w / 2, y);
-        },
-
-        _drawStatsGrid(ctx, w, p, cardW, contentY, colors, ai) {
-            const statsY = contentY + 80;
-            const col1X = w / 2 - 80;
-            const col2X = w / 2 + 40;
-
-            const label = (text, x, y) => {
-                this._ctxSet(ctx, '14px Arial', '#444', 'center');
-                ctx.fillText(text, x, y);
-            };
-            const value = (text, x, y) => {
-                this._ctxSet(ctx, 'bold 15px Arial', '#1a1a1a', 'center');
-                ctx.fillText(text, x, y);
-            };
-
-            this._drawStatsColumns(ctx, col1X, col2X, statsY, w, ai, label, value);
-
-            if (ai.narrative) this._drawNarrativeText(ctx, ai.narrative, cardW, colors.primary, w, statsY + 80);
-        },
-
-
-        /** Dessine la carte blanche arrondie de fond pour la section stats. */
-        _drawStatsCard(ctx, p, contentY, cardW) {
-            ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(0,0,0,0.08)';
-            ctx.fillStyle = '#FFFFFF';
-            this.roundRect(ctx, p, contentY, cardW, 160, 12); ctx.fill();
-            ctx.shadowBlur = 0;
-        },
-
-        drawStats(ctx, startY, ai, time, animated) {
-            const w = this.CONFIG.WIDTH;
-            const p = this.CONFIG.PADDING;
-            const colors = ai.colors;
-            
-            this._drawSectionHeader(ctx, p, startY, w, '📊 STATISTIQUES 📊', colors.gradient[0]);
-            
-            const contentY = startY + 55;
-            const cardW = w - p*2;
-            
-            this._drawStatsCard(ctx, p, contentY, cardW);
-            
-            if (ai.precision?.length) this._drawWinRateBar(ctx, p, cardW, w, contentY, ai.precision[0], time, animated);
-            
-            this._drawStatsGrid(ctx, w, p, cardW, contentY, colors, ai);
-            
-            ctx.textAlign = 'left';
-            return contentY + 175;
-        },
-        
-        // === WATERMARK ===
-
-        /** Dessine le badge "ScoreMaster™" (fond sombre + bordure dorée animée + texte). */
-        _drawWatermarkBadge(ctx, time, animated) {
-            // Fond
-            ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(0,0,0,0.2)';
-            ctx.fillStyle = 'rgba(30,30,46,0.85)';
-            this.roundRect(ctx, -50, -10, 100, 20, 6); ctx.fill();
-            ctx.shadowBlur = 0;
-
-            // Bordure dorée (glow animé)
-            const alpha = animated ? 0.5 + Math.sin(time * 2.5) * 0.3 : 0.8;
-            ctx.strokeStyle = `rgba(255,215,0,${alpha})`;
-            ctx.lineWidth = 1;
-            this.roundRect(ctx, -50, -10, 100, 20, 6); ctx.stroke();
-
-            // Texte
-            ctx.font = 'bold 11px Arial';
-            ctx.fillStyle = '#FFD700';
-            ctx.textAlign = 'center';
-            ctx.fillText('ScoreMaster™', 0, 4);
-        },
-
-        drawWatermark(ctx, w, h, time, animated) {
-            const bobY = animated ? Math.sin(time * 1.5) * 2 : 0;
-            const bobR = animated ? Math.sin(time * 0.8) * 0.02 : 0;
-            
-            ctx.save();
-            ctx.translate(w/2, h - 30 + bobY);
-            ctx.rotate(bobR);
-            
-            this._drawWatermarkBadge(ctx, time, animated);
-            
-            ctx.restore();
-        },
-        
-        // === UTILITAIRES ===
+        // Carré 540×540 (logique) : PNG rendu en ×2 (1080 px), GIF en ×1.
+        CONFIG: { SIZE: 540, PAD: 28, FPS: 8, DURATION: 5, STATIC_SCALE: 2 },
+        FONT: '-apple-system, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        MEDALS: {
+            1: ['#FFE27A', '#F2A900'],
+            2: ['#F3F4F6', '#9CA3AF'],
+            3: ['#F0B27A', '#B4682A']
+        },
+
+        // ---------- Helpers ----------
+        _clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; },
+        _ease(x)    { x = this._clamp01(x); return 1 - Math.pow(1 - x, 3); },
+        _seg(u, a, b) { return this._ease((u - a) / (b - a)); },
+        _back(x)    { x = this._clamp01(x); const c = 1.70158; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+        _fit(ctx, text, maxW) {
+            let t = String(text);
+            if (ctx.measureText(t).width <= maxW) return t;
+            while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+            return t + '…';
+        },
+        _pts(n) { return `${n} pt${Math.abs(n) > 1 ? 's' : ''}`; },
 
-        // --- Utilitaires Canvas ---
         roundRect(ctx, x, y, w, h, r) {
-            if (typeof r === 'number') {
-                r = [r, r, r, r];
-            }
+            if (typeof r === 'number') r = [r, r, r, r];
             ctx.beginPath();
             ctx.moveTo(x + r[0], y);
             ctx.lineTo(x + w - r[1], y);
@@ -7654,49 +7065,600 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             ctx.quadraticCurveTo(x, y, x + r[0], y);
             ctx.closePath();
         },
-        
-        async downloadImage(canvas, filename = 'ScoreMaster.png') {
-            const blob = await this.canvasToBlobAsync(canvas);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
+
+        // ---------- Analyse ----------
+        /** Calcule tout ce qui est affiché : classement, courbes, temps forts, narration. */
+        analyze(gs) {
+            const players = gs.players || [];
+            if (!players.length) return null;
+            const history = gs.history || [];
+            const isLowest = gs.victoryCondition === VC_LOWEST;
+            const better = (a, b) => isLowest ? a < b : a > b;
+
+            const sorted = GameState.getSortedPlayers({ ...gs, victoryCondition: gs.victoryCondition || VC_HIGHEST });
+            let prev = null, rank = 0;
+            const ranked = sorted.map((p, i) => {
+                const idx = players.indexOf(p);
+                const curve = [0]; let cum = 0;
+                history.forEach(r => { cum += Number(r[p.id]) || 0; curve.push(cum); });
+                const total = Number.isFinite(p.total) ? p.total : cum;
+                if (total !== prev) { rank = i + 1; prev = total; }
+                return { id: p.id, name: String(p.name), color: p.color || PLAYER_COLORS[idx % PLAYER_COLORS.length], total, rank, curve };
+            });
+
+            // Meilleure manche (tient compte du sens de la victoire)
+            let best = null;
+            history.forEach((r, ri) => players.forEach(p => {
+                const s = Number(r[p.id]) || 0;
+                if (!best || better(s, best.score)) best = { name: String(p.name), score: s, round: ri + 1 };
+            }));
+
+            // Victoires de manche + meilleure série
+            const wins = {}; const run = {}; let streak = { name: null, count: 0 };
+            players.forEach(p => { wins[p.id] = 0; run[p.id] = 0; });
+            history.forEach(r => {
+                const sc = players.map(p => Number(r[p.id]) || 0);
+                const bestS = isLowest ? Math.min(...sc) : Math.max(...sc);
+                const winners = players.filter(p => (Number(r[p.id]) || 0) === bestS);
+                const w = winners.length === 1 ? winners[0] : null; // ex æquo : pas de série
+                players.forEach(p => { if (w && p.id === w.id) { wins[p.id]++; run[p.id]++; if (run[p.id] > streak.count) streak = { name: String(p.name), count: run[p.id] }; } else run[p.id] = 0; });
+            });
+            const topWin = players.map(p => ({ name: String(p.name), n: wins[p.id] })).sort((a, b) => b.n - a.n)[0];
+
+            // Changements de leader
+            let changes = 0, lastLeader = null, firstLeader = null;
+            const leaders = [];
+            const cum = {}; players.forEach(p => cum[p.id] = 0);
+            history.forEach((r, i) => {
+                players.forEach(p => cum[p.id] += Number(r[p.id]) || 0);
+                const lead = [...players].sort((a, b) => isLowest ? cum[a.id] - cum[b.id] : cum[b.id] - cum[a.id])[0].id;
+                leaders.push(lead);
+                if (i === 0) firstLeader = lead;
+                else if (lead !== lastLeader) changes++;
+                lastLeader = lead;
+            });
+
+            const winner = ranked[0], second = ranked[1];
+            const gap = second ? Math.abs(winner.total - second.total) : 0;
+            const tie = !!second && gap === 0;
+            const ratio = gap / Math.max(1, Math.abs(winner.total));
+            const loser = ranked[ranked.length - 1];
+            const firstPlayer = players.find(p => p.id === firstLeader);
+            const ctx = {
+                n: ranked.length, rounds: history.length, gap, ratio, tie, changes, isLowest,
+                w: winner.name, s: second ? second.name : '', l: loser.name,
+                f: firstPlayer ? String(firstPlayer.name) : winner.name,
+                t: topWin.name, p: streak.name || '', streakCount: streak.count,
+                comeback: firstLeader !== null && firstLeader !== winner.id && history.length > 2,
+                wire: history.length > 0 && leaders.every(l => l === winner.id),
+                late: history.length >= 3 && leaders[leaders.length - 1] === winner.id && leaders.slice(0, -1).every(l => l !== winner.id),
+                moreWinsElsewhere: !tie && topWin.name !== winner.name && topWin.n > (wins[winner.id] || 0),
+                loserBest: !!best && ranked.length >= 3 && best.name === loser.name && loser.name !== winner.name
+            };
+            const seed = `${gs.name}|${gs.date}|${ranked.map(r => r.name + r.total).join(',')}`;
+            const narrative = Punchlines.pick(ctx, seed, gs.roll || 0);
+
+            const d = gs.date ? new Date(gs.date) : new Date();
+            return {
+                name: gs.name || 'Partie', isLowest, ranked, rounds: history.length,
+                date: (isNaN(d) ? new Date() : d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                best, streak, topWin, changes, gap, tie, narrative
+            };
         },
-        
-        // Version synchrone (pour compatibilité, mais moins performante)
-        // Version asynchrone (recommandée, ne bloque pas l'UI)
-        canvasToBlobAsync(canvas) {
-            return new Promise((resolve) => {
-                canvas.toBlob((blob) => {
-                    resolve(blob);
-                }, 'image/png');
+
+        // ---------- Mise en page ----------
+        _layout(a) {
+            const n = a.ranked.length;
+            const H1 = n <= 3 ? 110 : 72;
+            const baseline = 166 + H1;
+            const rest = Math.max(0, n - 3);
+            const rows = rest === 0 ? 0 : (rest <= 4 ? rest : 3);   // au-delà : 2 joueurs + « + N autres »
+            const othersH = rows ? rows * 24 : 0;
+            const chartTop = rows ? baseline + 12 + othersH + 8 : baseline + 22;
+            return { n, H1, baseline, rows, rest, chartTop, chartBottom: 432, chipsY: 442 };
+        },
+
+        // ---------- Dessin ----------
+        drawFrame(ctx, a, time, animated) {
+            const S = this.CONFIG.SIZE;
+            const u = animated ? Math.min(1, time / 0.78) : 1;
+            const L = this._layout(a);
+            this._drawBackground(ctx, S, time);
+            this._drawBeams(ctx, S, time, u);
+            this._drawConfetti(ctx, S, time, u);
+            this._drawHeader(ctx, a, S, u);
+            this._drawPodium(ctx, a, L, S, u, time);
+            this._drawOthers(ctx, a, L, S, u, time);
+            this._drawChart(ctx, a, L, S, u);
+            this._drawChips(ctx, a, L, S, u);
+            this._drawFloaters(ctx, S, time, u);
+            this._drawFooter(ctx, a, S, u);
+        },
+
+        _drawBackground(ctx, S, time) {
+            const g = ctx.createLinearGradient(0, 0, 0, S);
+            g.addColorStop(0, '#1C2042'); g.addColorStop(1, '#0B1020');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+            const r = ctx.createRadialGradient(S / 2, 170, 10, S / 2, 170, 280);
+            r.addColorStop(0, 'rgba(255,196,60,0.16)'); r.addColorStop(1, 'rgba(255,196,60,0)');
+            ctx.fillStyle = r; ctx.fillRect(0, 0, S, S);
+            // particules dorées : mouvement périodique → boucle parfaite
+            for (let i = 0; i < 22; i++) {
+                const k = 1 + (i % 2);
+                const x = ((i * 97) % S) + Math.sin(2 * Math.PI * time * k + i) * 10;
+                const y = (((i * 53) % S) - time * S * k + S * 4) % S;
+                const alpha = 0.22 + 0.2 * Math.sin(2 * Math.PI * time * k + i * 1.7);
+                ctx.fillStyle = i % 3 ? `rgba(255,214,102,${alpha})` : `rgba(255,255,255,${alpha * 0.8})`;
+                ctx.beginPath(); ctx.arc(x, y, 1 + (i % 3) * 0.7, 0, Math.PI * 2); ctx.fill();
+            }
+        },
+
+        // ---------- Effets festifs ----------
+        // Tous les mouvements sont périodiques (cycles entiers) : le GIF boucle sans à-coup.
+
+        /** Faisceaux de projecteurs dorés qui balayent le podium. */
+        _drawBeams(ctx, S, time, u) {
+            const a = this._seg(u, 0.05, 0.3);
+            if (a <= 0) return;
+            ctx.save();
+            ctx.globalAlpha = a * 0.55;
+            [-1, 1].forEach(side => {
+                const sway = Math.sin(2 * Math.PI * time + (side > 0 ? 0 : Math.PI)) * 0.1;
+                ctx.save();
+                ctx.translate(S / 2 + side * 150, -20);
+                ctx.rotate(-side * 0.38 + sway);
+                const g = ctx.createLinearGradient(0, 0, 0, 380);
+                g.addColorStop(0, 'rgba(255,220,120,0.20)'); g.addColorStop(1, 'rgba(255,220,120,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(8, 0); ctx.lineTo(70, 380); ctx.lineTo(-70, 380); ctx.closePath(); ctx.fill();
+                ctx.restore();
+            });
+            ctx.restore();
+        },
+
+        /** Pluie de confettis (rectangles et ronds colorés qui tournent en tombant). */
+        _drawConfetti(ctx, S, time, u) {
+            const a = this._seg(u, 0.12, 0.35);
+            if (a <= 0) return;
+            const cols = ['#FF3B6B', '#FFD23F', '#3BB4FF', '#4ADE80', '#C084FC', '#FF8A3D'];
+            ctx.save();
+            for (let i = 0; i < 44; i++) {
+                const k = 1 + (i % 2);
+                const x = ((i * 73) % S) + Math.sin(2 * Math.PI * time * k + i) * 14;
+                const y = (((i * 131) % S) + time * S * k) % S;
+                const rot = i + 2 * Math.PI * time * (1 + (i % 3));
+                const w = 6 + (i % 3) * 2, h = 3 + (i % 2) * 2;
+                ctx.globalAlpha = a * 0.85;
+                ctx.fillStyle = cols[i % cols.length];
+                ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+                if (i % 4 === 0) { ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill(); }
+                else ctx.fillRect(-w / 2, -h / 2, w, h);
+                ctx.restore();
+            }
+            ctx.restore();
+        },
+
+        /** Étoile à 4 branches (étincelle). */
+        _sparkle(ctx, x, y, r) {
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const ang = i * Math.PI / 4, rad = i % 2 ? r * 0.35 : r;
+                ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(ang) * rad, y + Math.sin(ang) * rad);
+            }
+            ctx.closePath(); ctx.fill();
+        },
+
+        /** Emojis de fête qui montent sur les bords. */
+        _drawFloaters(ctx, S, time, u) {
+            const a = this._seg(u, 0.3, 0.5);
+            if (a <= 0) return;
+            const em = ['🎉', '🥳', '✨', '🔥', '🎊', '⭐', '🍾', '👏'];
+            ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            em.forEach((e, i) => {
+                const t = (time + i / em.length) % 1;
+                const left = i % 2 === 0;
+                const x = (left ? 15 : S - 15) + Math.sin(2 * Math.PI * time * 2 + i) * 3;
+                const y = S - 40 - t * (S - 150);
+                ctx.globalAlpha = a * Math.sin(Math.PI * t) * 0.95;
+                ctx.font = `${18 + (i % 3) * 2}px ${this.FONT}`;
+                ctx.fillText(e, x, y);
+            });
+            ctx.restore();
+        },
+
+        /** Emoji de réaction : fête pour le vainqueur, drame pour le dernier. */
+        _reaction(a, p) {
+            const n = a.ranked.length;
+            if (p.rank === 1) return a.tie ? '🤝' : '🥳';
+            if (!a.tie && n >= 2 && p === a.ranked[n - 1]) {
+                return ['😭', '🤡', '💀', '🫠'][Punchlines._hash(p.name) % 4];
+            }
+            return '';
+        },
+
+        _drawHeader(ctx, a, S, u) {
+            const P = this.CONFIG.PAD, F = this.FONT;
+            ctx.save();
+            ctx.globalAlpha = this._seg(u, 0, 0.1);
+            ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            ctx.font = `800 28px ${F}`; ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(this._fit(ctx, '🏆 ' + a.name, S - 2 * P - 120), P, 44);
+            ctx.font = `500 14px ${F}`; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(`${a.date} · ${a.rounds} manche${a.rounds > 1 ? 's' : ''}`, P, 66);
+            // pastille marque
+            const w = 104, x = S - P - w, y = 24;
+            ctx.fillStyle = 'rgba(255,214,102,0.12)'; this.roundRect(ctx, x, y, w, 24, 12); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,214,102,0.6)'; ctx.lineWidth = 1; this.roundRect(ctx, x, y, w, 24, 12); ctx.stroke();
+            ctx.font = `800 10px ${F}`; ctx.fillStyle = '#FFD666'; ctx.textAlign = 'center';
+            ctx.fillText('SCOREMASTER', x + w / 2, y + 16);
+            ctx.restore();
+        },
+
+        _drawPodium(ctx, a, L, S, u, time) {
+            const F = this.FONT, n = L.n;
+            const order  = n >= 3 ? [1, 0, 2] : n === 2 ? [0, 1] : [0];
+            const colW = 112, gap = 10;
+            const x0 = (S - (order.length * colW + (order.length - 1) * gap)) / 2;
+            const delay = [0.24, 0.16, 0.08];
+            const hFrac = [1, 0.78, 0.6];
+            order.forEach((pos, ci) => {
+                const p = a.ranked[pos];
+                const d = delay[pos] ?? 0.08;
+                const raw = this._clamp01((u - d) / 0.22);
+                if (raw <= 0) return;
+                const h = L.H1 * (hFrac[pos] ?? 0.5) * this._back(raw);   // léger rebond
+                const x = x0 + ci * (colW + gap), top = L.baseline - h, cx = x + colW / 2;
+                const isWin = p.rank === 1;
+                const [c1, c2] = this.MEDALS[p.rank] || ['#94A3B8', '#64748B'];
+                // colonne
+                const g = ctx.createLinearGradient(0, top, 0, L.baseline);
+                g.addColorStop(0, c1); g.addColorStop(1, c2);
+                ctx.fillStyle = g; this.roundRect(ctx, x, top, colW, h, [12, 12, 0, 0]); ctx.fill();
+                ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+                ctx.globalAlpha = this._clamp01((raw - 0.35) / 0.5);
+                if (h >= 84) { // colonne trop basse : le chiffre chevaucherait le score
+                    ctx.font = `900 ${Math.round(Math.min(46, h * 0.5))}px ${F}`;
+                    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+                    ctx.fillText(String(p.rank), cx, L.baseline - 8);
+                }
+                // score qui défile jusqu'à sa valeur finale
+                const k = this._ease((u - d - 0.08) / 0.28);
+                const shown = k >= 1 ? p.total : (Number.isInteger(p.total) ? Math.round(p.total * k) : (p.total * k).toFixed(1));
+                ctx.font = `800 21px ${F}`; ctx.fillStyle = '#1B1B2F';
+                ctx.fillText(String(shown), cx, top + 28);
+                // nom + avatar
+                ctx.font = `700 15px ${F}`; ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(this._fit(ctx, p.name, colW), cx, top - 10);
+                const r = isWin ? 22 : 19, cy = top - 28 - r;
+                if (isWin) { ctx.shadowColor = 'rgba(255,210,63,0.9)'; ctx.shadowBlur = 16; }
+                ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.lineWidth = 2.5; ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+                ctx.font = `800 ${r}px ${F}`; ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(p.name.charAt(0).toUpperCase(), cx, cy + r * 0.36);
+                // couronne qui se balance
+                if (isWin) {
+                    ctx.save(); ctx.translate(cx, cy - r - 3);
+                    ctx.rotate(Math.sin(2 * Math.PI * time * 2) * 0.12);
+                    ctx.font = `20px ${F}`; ctx.fillText('👑', 0, 0); ctx.restore();
+                    // couronne d'étincelles autour du vainqueur
+                    const burst = this._seg(u, d + 0.2, d + 0.36);
+                    ctx.fillStyle = '#FFE27A';
+                    for (let j = 0; j < 8; j++) {
+                        const ang = j * Math.PI / 4 + 2 * Math.PI * time;
+                        const dist = r + 14 + burst * 6 + Math.sin(2 * Math.PI * time * 2 + j) * 3;
+                        ctx.globalAlpha = burst * (j % 2 ? 0.6 : 0.95);
+                        this._sparkle(ctx, cx + Math.cos(ang) * dist, cy + Math.sin(ang) * dist, 3.5 + (j % 2) * 2.5);
+                    }
+                    ctx.globalAlpha = 1;
+                }
+                // réaction rigolote (🥳 / 😭 / 🤡…)
+                const em = this._reaction(a, p);
+                if (em) {
+                    ctx.font = `22px ${F}`; ctx.textAlign = 'center';
+                    const bob = Math.sin(2 * Math.PI * time * 2 + pos * 1.3) * 3;
+                    ctx.fillText(em, cx + r + 12, cy - r * 0.5 + bob);
+                }
+                ctx.restore();
             });
         },
-        
-        async shareImage(canvas) {
-            try {
-                const blob = await this.canvasToBlobAsync(canvas);
-                const file = new File([blob], 'ScoreMaster.png', { type: 'image/png' });
-                
-                if (navigator.share && navigator.canShare) {
-                    await navigator.share({ files: [file], title: 'ScoreMaster' });
-                    return true;
+
+        _drawOthers(ctx, a, L, S, u, time) {
+            if (!L.rows) return;
+            const P = this.CONFIG.PAD, F = this.FONT, W = S - 2 * P;
+            const rest = a.ranked.slice(3);
+            const shown = L.rest > 4 ? rest.slice(0, 2) : rest;
+            const items = shown.map(p => ({ p }));
+            if (L.rest > 4) items.push({ more: L.rest - 2 });
+            items.forEach((it, i) => {
+                const prog = this._seg(u, 0.4 + i * 0.04, 0.54 + i * 0.04);
+                const y = L.baseline + 12 + i * 24;
+                ctx.save(); ctx.globalAlpha = prog; ctx.translate(-(1 - prog) * 24, 0);
+                ctx.fillStyle = 'rgba(255,255,255,0.07)'; this.roundRect(ctx, P, y, W, 22, 11); ctx.fill();
+                ctx.textBaseline = 'alphabetic';
+                if (it.p) {
+                    ctx.textAlign = 'left'; ctx.font = `800 13px ${F}`; ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.fillText(String(it.p.rank), P + 12, y + 15.5);
+                    ctx.fillStyle = it.p.color; ctx.beginPath(); ctx.arc(P + 38, y + 11, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.font = `700 13px ${F}`; ctx.fillStyle = '#FFFFFF';
+                    const em = this._reaction(a, it.p);
+                    ctx.fillText(this._fit(ctx, it.p.name, W - 170), P + 52, y + 15.5);
+                    if (em) {
+                        const nw = ctx.measureText(this._fit(ctx, it.p.name, W - 170)).width;
+                        ctx.font = `14px ${F}`; ctx.fillText(em, P + 52 + nw + 8, y + 16 + Math.sin(2 * Math.PI * time * 2 + i) * 1.5);
+                        ctx.font = `700 13px ${F}`;
+                    }
+                    ctx.textAlign = 'right'; ctx.font = `800 13px ${F}`; ctx.fillStyle = '#FFD666';
+                    ctx.fillText(this._pts(it.p.total), P + W - 12, y + 15.5);
+                } else {
+                    ctx.textAlign = 'center'; ctx.font = `600 12px ${F}`; ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx.fillText(`+ ${it.more} autre${it.more > 1 ? 's' : ''} joueur${it.more > 1 ? 's' : ''}`, S / 2, y + 15);
                 }
-            } catch (e) {
-                if (e.name !== 'AbortError') console.warn('Partage annulé');
-            }
-            return false;
+                ctx.restore();
+            });
         },
-        
-        downloadGif(blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ScoreMaster_${Date.now()}.gif`;
-            a.click();
-            URL.revokeObjectURL(url);
+
+        _drawChart(ctx, a, L, S, u) {
+            if (a.rounds < 2) return;
+            const P = this.CONFIG.PAD, F = this.FONT;
+            const top = L.chartTop, bottom = L.chartBottom, W = S - 2 * P;
+            const pAll = this._seg(u, 0.42, 0.52);
+            if (pAll <= 0 || bottom - top < 70) return;
+            const R = a.rounds;
+            const series = a.ranked.slice(0, 6);
+
+            // --- cadre + titre + légende (noms colorés) ---
+            ctx.save(); ctx.globalAlpha = pAll;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)'; this.roundRect(ctx, P, top, W, bottom - top, 16); ctx.fill();
+            ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            ctx.font = `800 10px ${F}`; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText('SCORE PAR MANCHE', P + 14, top + 18);
+            ctx.font = `700 10.5px ${F}`;
+            let lx = S - P - 14;                                   // légende alignée à droite
+            [...series].reverse().forEach(sr => {
+                const label = this._fit(ctx, sr.name, 64);
+                const w = ctx.measureText(label).width;
+                if (lx - w - 14 < P + 130) return;                 // plus de place : on omet
+                lx -= w;
+                ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillText(label, lx, top + 18);
+                ctx.fillStyle = sr.color; ctx.beginPath(); ctx.arc(lx - 7, top + 15, 4, 0, Math.PI * 2); ctx.fill();
+                lx -= 20;
+            });
+            ctx.restore();
+
+            // --- zone de tracé ---
+            const compact = bottom - top < 110;
+            const px0 = P + 40, px1 = S - P - 16;
+            const py0 = top + 28, py1 = bottom - (compact ? 16 : 20);
+            let lo = 0, hi = 0;
+            series.forEach(sr => sr.curve.forEach(v => { lo = Math.min(lo, v); hi = Math.max(hi, v); }));
+            if (hi === lo) hi = lo + 1;
+            const X = i => px0 + (px1 - px0) * (i / R);
+            const Y = v => py1 - (py1 - py0) * ((v - lo) / (hi - lo));
+            const fmt = v => String(Math.round(v));
+
+            ctx.save(); ctx.globalAlpha = pAll;
+            // repères horizontaux + valeurs
+            ctx.font = `600 9.5px ${F}`; ctx.textAlign = 'right';
+            for (let g = 0; g <= 2; g++) {
+                const v = lo + (hi - lo) * (g / 2), y = Y(v);
+                ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(px0, y); ctx.lineTo(px1, y); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(fmt(v), px0 - 6, y + 3);
+            }
+            // ligne zéro mise en évidence si les scores passent en négatif
+            if (lo < 0 && hi > 0) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.setLineDash([3, 3]);
+                ctx.beginPath(); ctx.moveTo(px0, Y(0)); ctx.lineTo(px1, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+            }
+            // repères verticaux : une graduation par manche, étiquetée M1, M2…
+            const step = R <= 10 ? 1 : Math.ceil(R / 8);
+            ctx.textAlign = 'center';
+            for (let i = 1; i <= R; i++) {
+                const x = X(i), labeled = i === R || (i % step === 0 && R - i >= Math.ceil(step / 2));
+                ctx.strokeStyle = labeled ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)';
+                ctx.beginPath(); ctx.moveTo(x, py0); ctx.lineTo(x, py1); ctx.stroke();
+                if (labeled) { ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText(R <= 10 ? `M${i}` : String(i), x, py1 + 12); }
+            }
+            ctx.restore();
+
+            // --- courbes + marqueurs sur chaque manche ---
+            const f = R * this._seg(u, 0.45, 0.8);                // progression de l'animation
+            const dots = R <= 14;
+            [...series].reverse().forEach(sr => {
+                const isWin = sr.rank === 1;
+                ctx.strokeStyle = sr.color; ctx.lineWidth = isWin ? 3.2 : 2;
+                ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                ctx.globalAlpha = isWin ? 1 : 0.9;
+                ctx.beginPath(); ctx.moveTo(X(0), Y(sr.curve[0]));
+                const whole = Math.min(Math.floor(f), R);
+                for (let i = 1; i <= whole; i++) ctx.lineTo(X(i), Y(sr.curve[i]));
+                let hx = X(whole), hy = Y(sr.curve[whole]);
+                if (whole < R && f > whole) {
+                    const t = f - whole;
+                    hx = X(whole) + (X(whole + 1) - X(whole)) * t;
+                    hy = Y(sr.curve[whole]) + (Y(sr.curve[whole + 1]) - Y(sr.curve[whole])) * t;
+                    ctx.lineTo(hx, hy);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                // un point par manche (anneau sombre pour rester lisible quand les courbes se croisent)
+                if (dots || isWin) {
+                    for (let i = 1; i <= whole; i++) {
+                        ctx.fillStyle = sr.color; ctx.strokeStyle = '#0B1020'; ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.arc(X(i), Y(sr.curve[i]), isWin ? 3.6 : 2.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    }
+                }
+                // tête de courbe + valeur finale
+                ctx.fillStyle = sr.color; ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(hx, hy, isWin ? 5.2 : 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                if (isWin && f >= R) {
+                    ctx.font = `800 11px ${F}`; ctx.textAlign = 'right'; ctx.fillStyle = '#FFFFFF';
+                    const ly = hy < py0 + 14 ? hy + 16 : hy - 9;
+                    ctx.fillText(fmt(sr.curve[R]), hx - 6, ly);
+                }
+            });
+        },
+
+        _drawChips(ctx, a, L, S, u) {
+            if (!a.rounds) return;
+            const P = this.CONFIG.PAD, F = this.FONT;
+            const gap = 8, w = (S - 2 * P - 2 * gap) / 3, h = 58;
+            const b = a.best;
+            const second = a.ranked[1];
+            const chips = [
+                { label: 'MEILLEURE MANCHE', main: b.name, sub: `${b.score} pts · manche ${b.round}` },
+                a.streak.count >= 2
+                    ? { label: 'EN SÉRIE', main: a.streak.name, sub: `${a.streak.count} manches de suite` }
+                    : { label: 'MANCHES GAGNÉES', main: a.topWin.name, sub: `${a.topWin.n} sur ${a.rounds}` },
+                a.tie
+                    ? { label: 'ÉGALITÉ', main: '0 pt d\'écart', sub: `${a.ranked[0].name} = ${second.name}` }
+                    : a.changes >= 2
+                        ? { label: 'LEADER CHANGÉ', main: `${a.changes} fois`, sub: 'au classement' }
+                        : { label: 'ÉCART FINAL', main: second ? this._pts(a.gap) : '—', sub: second ? `${a.ranked[0].name} devant ${second.name}` : '' }
+            ];
+            chips.forEach((c, i) => {
+                const prog = this._seg(u, 0.68 + i * 0.06, 0.82 + i * 0.06);
+                if (prog <= 0) return;
+                const x = P + i * (w + gap), y = L.chipsY;
+                const sc = 0.88 + 0.12 * this._back(prog);
+                ctx.save(); ctx.globalAlpha = this._clamp01(prog * 1.4);
+                ctx.translate(x + w / 2, y + h / 2); ctx.scale(sc, sc); ctx.translate(-(x + w / 2), -(y + h / 2));
+                ctx.fillStyle = 'rgba(255,255,255,0.07)'; this.roundRect(ctx, x, y, w, h, 14); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 1; this.roundRect(ctx, x, y, w, h, 14); ctx.stroke();
+                ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+                ctx.font = `800 9.5px ${F}`; ctx.fillStyle = '#FFD666';
+                ctx.fillText(this._fit(ctx, c.label, w - 20), x + 10, y + 17);
+                ctx.font = `800 15px ${F}`; ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(this._fit(ctx, c.main, w - 20), x + 10, y + 36);
+                ctx.font = `500 11px ${F}`; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.fillText(this._fit(ctx, c.sub, w - 20), x + 10, y + 51);
+                ctx.restore();
+            });
+        },
+
+        _wrap(ctx, text, maxW, maxLines) {
+            const words = String(text).split(' '); const lines = []; let cur = '';
+            words.forEach(w => {
+                const t = cur ? cur + ' ' + w : w;
+                if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+            });
+            if (cur) lines.push(cur);
+            if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = this._fit(ctx, lines[maxLines - 1] + '…', maxW); }
+            return lines;
+        },
+
+        _drawFooter(ctx, a, S, u) {
+            const P = this.CONFIG.PAD;
+            ctx.save();
+            const pop = this._seg(u, 0.86, 0.98);
+            ctx.globalAlpha = pop;
+            const sc = 0.9 + 0.1 * this._back(pop);
+            ctx.translate(S / 2, 520); ctx.scale(sc, sc); ctx.translate(-S / 2, -520);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.font = `italic 600 13.5px ${this.FONT}`; ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            const lines = this._wrap(ctx, a.narrative, S - 2 * P - 36, 2);
+            lines[0] = '« ' + lines[0]; lines[lines.length - 1] += ' »';
+            const y0 = lines.length === 1 ? 524 : 515;
+            lines.forEach((ln, i) => ctx.fillText(ln, S / 2, y0 + i * 16));
+            ctx.restore();
+        },
+
+        // ---------- PNG ----------
+        generateStatic(gameState, scale = this.CONFIG.STATIC_SCALE) {
+            try {
+                const a = this.analyze(gameState);
+                if (!a) return null;
+                const S = this.CONFIG.SIZE;
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = Math.round(S * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.scale(scale, scale);
+                this.drawFrame(ctx, a, 0.35, false);
+                return canvas;
+            } catch (error) {
+                console.error('[UnifiedRecap] Erreur PNG:', error);
+                return null;
+            }
+        },
+
+        // ---------- GIF ----------
+        _calcFrameCount() {
+            const base = this.CONFIG.FPS * this.CONFIG.DURATION;
+            return (navigator.deviceMemory && navigator.deviceMemory < 4) ? Math.floor(base * 0.6) : base;
+        },
+
+        _renderFrames(a, totalFrames, updateProgress) {
+            const S = this.CONFIG.SIZE;
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = S;
+            const ctx = canvas.getContext('2d');
+            const frames = [];
+            for (let f = 0; f < totalFrames; f++) {
+                ctx.clearRect(0, 0, S, S);
+                this.drawFrame(ctx, a, f / totalFrames, true);
+                frames.push(canvas.toDataURL('image/png'));
+                if (f % 4 === 0) updateProgress(10 + Math.round((f / totalFrames) * 50), `Frame ${f + 1}/${totalFrames}`);
+            }
+            canvas.width = 1; canvas.height = 1; // libère la mémoire
+            return frames;
+        },
+
+        _onGifSuccess(obj, updateProgress) {
+            updateProgress(95, 'Finalisation...');
+            const binary = atob(obj.image.split(',')[1]);
+            const arr = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+            updateProgress(100, 'Terminé !');
+            if (app._gifTimeoutId) { clearTimeout(app._gifTimeoutId); app._gifTimeoutId = null; }
+            app._gifGenerating = false;
+            const gifBlob = new Blob([arr], { type: 'image/gif' });
+            setTimeout(() => app.onGifReady(gifBlob), 300);
+        },
+
+        _onGifFail(errorMsg) {
+            UI.hideLoading();
+            UI.showToast('❌ Erreur: ' + errorMsg, 'error');
+            app._gifGenerating = false;
+            if (app._gifTimeoutId) { clearTimeout(app._gifTimeoutId); app._gifTimeoutId = null; }
+        },
+
+        _handleGifError(error) {
+            UI.hideLoading();
+            UI.showToast('❌ Erreur: ' + error.message, 'error');
+            app._gifGenerating = false;
+        },
+
+        _encodeGIF(frames, totalFrames, updateProgress) {
+            const S = this.CONFIG.SIZE;
+            gifshot.createGIF({
+                images: frames, gifWidth: S, gifHeight: S,
+                interval: 1 / this.CONFIG.FPS, numFrames: totalFrames, frameDuration: 1,
+                sampleInterval: 8,
+                progressCallback: (p) => updateProgress(60 + Math.round(p * 35), `Encodage: ${Math.round(p * 100)}%`)
+            }, (obj) => obj.error ? this._onGifFail(obj.error) : this._onGifSuccess(obj, updateProgress));
+        },
+
+        generateAnimated(gameState, progressCallback = null) {
+            const updateProgress = (p, m) => { if (progressCallback) progressCallback(p, m); };
+            try {
+                if (typeof gifshot === 'undefined') { UI.hideLoading(); throw new Error('Bibliothèque gifshot non chargée'); }
+                updateProgress(5, 'Analyse des données...');
+                const a = this.analyze(gameState);
+                if (!a) throw new Error('Aucun joueur');
+                const total = this._calcFrameCount();
+                updateProgress(10, `Génération de ${total} images...`);
+                const frames = this._renderFrames(a, total, updateProgress);
+                updateProgress(60, 'Encodage du GIF...');
+                this._encodeGIF(frames, total, updateProgress);
+            } catch (error) {
+                this._handleGifError(error);
+            }
+        },
+
+        // ---------- Fichiers ----------
+        canvasToBlobAsync(canvas) {
+            return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'));
         }
     };
 
