@@ -33,3 +33,7 @@ python3 -m http.server 8000   # puis http://localhost:8000
 À chaque version publiée, incrémenter `scoremaster-app-vXX` et `scoremaster-cdn-vXX` dans `service-worker.js` pour que les appareils récupèrent la nouvelle version au prochain chargement.
 
 Bibliothèques CDN (versions figées) : Chart.js 4.6.1, canvas-confetti 1.6.0, gifshot 0.4.5.
+
+## Statistiques de fréquentation
+
+L'app inclut [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/) (sans cookie, sans donnée personnelle) : visites, pays, appareils, sources. Les parties ne quittent jamais l'appareil. Mention affichée dans Paramètres.
