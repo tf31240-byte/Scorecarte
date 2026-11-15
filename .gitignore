@@ -1,0 +1,9 @@
+# Système / éditeur
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Outils
+node_modules/
+*.log

@@ -1,13 +1,13 @@
 // ============================================================
-//  ScoreMaster — Service Worker v13
+//  ScoreMaster — Service Worker v14
 //  Stratégie : cache-first pour l'app shell,
 //              stale-while-revalidate pour les CDN.
 //  Résultat  : app 100 % fonctionnelle sans connexion
 //              après la première visite en ligne.
 // ============================================================
 
-const CACHE_APP = 'scoremaster-app-v13';
-const CACHE_CDN = 'scoremaster-cdn-v13';
+const CACHE_APP = 'scoremaster-app-v14';
+const CACHE_CDN = 'scoremaster-cdn-v14';
 
 // ── Ressources à précacher à l'install ──────────────────────
 const APP_SHELL = [
@@ -25,7 +25,7 @@ const APP_ICONS = [
 
 // Bibliothèques CDN (nécessitent crossorigin="anonymous" dans le HTML)
 const CDN_LIBS = [
-    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js',
     'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js',
     'https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js',
 ];
