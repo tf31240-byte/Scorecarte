@@ -1654,6 +1654,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
+            <div class="settings-section" id="community-section" style="display:none;">
+                <div class="settings-section-title">👥 Communauté</div>
+                <div id="community-status" class="settings-desc" style="margin-bottom:10px;"></div>
+                <div id="community-actions"></div>
+            </div>
+
             <div class="settings-section">
                 <div class="settings-section-title">Apparence</div>
                 <div class="settings-row">
@@ -1751,7 +1757,47 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
-            <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. Seule la fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie ni donnée personnelle (Cloudflare Web Analytics).</p>
+            <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. La fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie (Cloudflare Web Analytics). Rien d'autre n'est envoyé, sauf si vous rejoignez la communauté (facultatif, ci-dessus).</p>
+        </div>
+    </div>
+
+    <!-- Community modal (inscription facultative, avec consentement) -->
+    <div id="community-modal" class="modal-overlay" onclick="if(event.target===this) Community.later()">
+        <div class="modal-box large" style="max-height:85vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2 style="margin:0">👥 Rejoindre la communauté</h2>
+                <button onclick="Community.later()" class="btn-icon" aria-label="Fermer">✕</button>
+            </div>
+            <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Facultatif : dites-nous qui vous êtes pour que l'éditeur sache qui utilise ScoreMaster. Vos parties et vos scores restent sur votre appareil.</p>
+
+            <div class="backup-status" style="margin-bottom:10px;">
+                <b>Ce qui sera envoyé</b><br>
+                • le prénom ou pseudo que vous saisissez ci-dessous<br>
+                • le type de votre appareil (ex. iPhone, iOS 18, Safari)<br>
+                • votre nombre de parties terminées<br>
+                • la date de votre dernière partie
+            </div>
+            <div class="backup-status" style="margin-bottom:12px;">
+                <b>Ce qui n'est jamais envoyé</b><br>
+                Les scores, le contenu des parties et les noms des joueurs.
+            </div>
+
+            <label for="community-pseudo" style="display:block; font-size:12px; font-weight:800; color:var(--text-sec); margin-bottom:6px;">VOTRE PRÉNOM OU PSEUDO</label>
+            <input type="text" id="community-pseudo" maxlength="30" autocomplete="off" placeholder="Ex : Camille" oninput="Community.validate()" style="width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-size:16px; font-weight:700; background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px;">
+
+            <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin-bottom:14px; cursor:pointer;">
+                <input type="checkbox" id="community-consent" onchange="Community.validate()" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
+                <span>J'accepte que ces informations soient envoyées à l'éditeur de ScoreMaster et conservées tant que je reste inscrit(e). Je peux me retirer à tout moment dans Paramètres : mes données sont alors supprimées.</span>
+            </label>
+
+            <button class="backup-action primary" id="community-join-btn" onclick="Community.join()" disabled>
+                <span class="ba-icon">✅</span>
+                <span class="ba-text"><b>Rejoindre</b><small>Envoyer mon profil</small></span>
+            </button>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-modal-cancel" style="flex:1;" onclick="Community.later()">Plus tard</button>
+                <button class="btn-modal-cancel" style="flex:1;" onclick="Community.decline()">Non merci</button>
+            </div>
         </div>
     </div>
 
@@ -3836,6 +3882,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         showVictory(winner, score, state) {
             SoundFX.success();
+            Community.syncSoon();
             const overlay = document.getElementById('victory');
             const isLowest = state.victoryCondition === VC_LOWEST;
             const sorted = GameState.getSortedPlayers(state);
@@ -5520,6 +5567,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         renderGamesList(filter = null) {
+            try { Community.maybePrompt(); } catch(e) {}
             try { UI.renderBackup(); } catch(e) {} // met à jour la pastille « sauvegarde conseillée »
             const games = Storage.loadGames();
             const els = this._gamesListElements();
@@ -6643,6 +6691,231 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     };
     
     // ==================== PWA MANAGER ====================
+    // ==================== COMMUNAUTÉ (profil facultatif, avec consentement) ====================
+    // Envoie, UNIQUEMENT après consentement explicite : pseudo choisi, type d'appareil, nombre de parties
+    // terminées, date de la dernière partie. Jamais les scores, parties ni noms de joueurs.
+    // API_URL vide = fonctionnalité totalement désactivée (aucune interface, aucun envoi).
+    const Community = {
+        API_URL: '',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
+        KEY: 'sm_community',
+        APP_VERSION: '15',
+        SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
+        SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
+        _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
+
+        get enabled() { return !!this.API_URL; },
+
+        load() {
+            try {
+                const s = JSON.parse(localStorage.getItem(this.KEY) || 'null');
+                this._state = (s && typeof s === 'object') ? s : {};
+            } catch (e) { this._state = {}; }
+            return this._state;
+        },
+        save() { try { localStorage.setItem(this.KEY, JSON.stringify(this._state)); } catch (e) {} },
+        isMember() { const s = this.load(); return s.consent === true && !!s.id && !s.pendingDelete; },
+
+        _uuid() {
+            if (crypto.randomUUID) return crypto.randomUUID();
+            const b = crypto.getRandomValues(new Uint8Array(16));
+            b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+            const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+            return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+        },
+        _cleanPseudo(v) { return String(v || '').replace(/[\u0000-\u001f\u007f<>"'&`\\]/g, '').trim().slice(0, 30); },
+
+        /** Type d'appareil (déduit du user-agent ; modèle exact si le navigateur le fournit). */
+        async _device() {
+            const ua = navigator.userAgent || '';
+            let platform = 'Autre', os = '', model = '', browser = 'Autre';
+            if (/iPhone|iPod/.test(ua)) { platform = 'iOS'; model = 'iPhone'; }
+            else if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) { platform = 'iOS'; model = 'iPad'; }
+            else if (/Android/.test(ua)) platform = 'Android';
+            else if (/Windows/.test(ua)) platform = 'Windows';
+            else if (/CrOS/.test(ua)) platform = 'ChromeOS';
+            else if (/Mac OS X/.test(ua)) platform = 'macOS';
+            else if (/Linux/.test(ua)) platform = 'Linux';
+            let m;
+            if (platform === 'iOS' && (m = ua.match(/OS (\d+)[_.](\d+)/))) os = `iOS ${m[1]}.${m[2]}`;
+            else if (platform === 'Android' && (m = ua.match(/Android (\d+(?:\.\d+)?)/))) os = `Android ${m[1]}`;
+            else os = platform;
+            if (platform === 'Android' && (m = ua.match(/Android [^;]+; ([^;)]+?)(?: Build|\))/)) && m[1].length > 1) model = m[1].trim();
+            if (/Edg\//.test(ua)) browser = 'Edge';
+            else if (/OPR\//.test(ua)) browser = 'Opera';
+            else if (/SamsungBrowser/.test(ua)) browser = 'Samsung Internet';
+            else if (/Firefox|FxiOS/.test(ua)) browser = 'Firefox';
+            else if (/Chrome|CriOS/.test(ua)) browser = 'Chrome';
+            else if (/Safari/.test(ua)) browser = 'Safari';
+            try { // Chrome/Android : modèle et version précis
+                if (navigator.userAgentData?.getHighEntropyValues) {
+                    const hv = await navigator.userAgentData.getHighEntropyValues(['model', 'platformVersion']);
+                    if (hv.model) model = hv.model;
+                    if (platform === 'Android' && hv.platformVersion) os = `Android ${hv.platformVersion.split('.')[0]}`;
+                }
+            } catch (e) {}
+            const standalone = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone);
+            return { platform, os, browser, model, standalone };
+        },
+
+        _stats() {
+            let games = 0, last = null;
+            try {
+                Storage.loadGames().forEach(g => {
+                    if (!g.finished) return;
+                    games++;
+                    const t = new Date(g.date).getTime();
+                    if (!isNaN(t) && (last === null || t > last)) last = t;
+                });
+            } catch (e) {}
+            return { games, lastGameAt: last === null ? null : new Date(last).toISOString() };
+        },
+
+        async _post(path, body) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 10000);
+            try {
+                const res = await fetch(this.API_URL.replace(/\/$/, '') + path, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body), signal: ctrl.signal, credentials: 'omit', referrerPolicy: 'no-referrer'
+                });
+                return res.ok;
+            } catch (e) { return false; }
+            finally { clearTimeout(timer); }
+        },
+
+        /** Envoie le profil (uniquement si la personne est inscrite). */
+        async sync(force = false) {
+            if (!this.enabled || !this.isMember() || this._busy) return false;
+            const st = this._state;
+            if (!force && st.lastSync && Date.now() - st.lastSync < this.SYNC_MIN_INTERVAL) return false;
+            if (!navigator.onLine) return false;
+            this._busy = true;
+            try {
+                const { games, lastGameAt } = this._stats();
+                const ok = await this._post('/api/profile', {
+                    id: st.id, consent: true, pseudo: st.pseudo, device: await this._device(),
+                    games, lastGameAt, appVersion: this.APP_VERSION
+                });
+                if (ok) { st.lastSync = Date.now(); this.save(); }
+                return ok;
+            } finally { this._busy = false; }
+        },
+        /** Après une partie terminée : met à jour le profil (léger délai pour laisser la partie s'enregistrer). */
+        syncSoon() {
+            if (!this.enabled || !this.isMember()) return;
+            clearTimeout(this._syncTimer);
+            this._syncTimer = setTimeout(() => this.sync(true), 3000);
+        },
+
+        init() {
+            this.load();
+            this.renderSettings();
+            if (!this.enabled) return;
+            if (this._state.pendingDelete) this._flushDelete();
+            else if (this.isMember()) this.sync(false);
+            window.addEventListener('online', () => {
+                if (this._state.pendingDelete) this._flushDelete(); else this.sync(false);
+            });
+        },
+
+        // ---------- Invitation ----------
+        /** Propose l'inscription une seule fois, sur l'écran d'accueil, après une première partie terminée. */
+        maybePrompt() {
+            if (!this.enabled || this._promptedThisSession) return;
+            const s = this.load();
+            if (s.consent === true || s.declined || s.pendingDelete) return;
+            if (s.snoozeUntil && Date.now() < s.snoozeUntil) return;
+            if (this._stats().games < 1) return;
+            this._promptedThisSession = true;
+            setTimeout(() => {
+                const busy = document.querySelector('.modal-overlay.active, .victory-overlay.active');
+                const home = document.getElementById('setup');
+                if (!busy && home && getComputedStyle(home).display !== 'none') this.open();
+            }, 1200);
+        },
+        open() {
+            const input = document.getElementById('community-pseudo');
+            if (input) input.value = this._state?.pseudo || '';
+            const cb = document.getElementById('community-consent');
+            if (cb) cb.checked = false;
+            UI._close('settings-modal');
+            UI._open('community-modal');
+            this.validate();
+        },
+        validate() {
+            const ok = this._cleanPseudo(document.getElementById('community-pseudo')?.value).length > 0
+                && !!document.getElementById('community-consent')?.checked;
+            const btn = document.getElementById('community-join-btn');
+            if (btn) btn.disabled = !ok;
+        },
+        later() {
+            UI._close('community-modal');
+            const s = this.load();
+            if (!s.consent) { s.snoozeUntil = Date.now() + this.SNOOZE_MS; this.save(); }
+        },
+        decline() {
+            UI._close('community-modal');
+            const s = this.load();
+            s.declined = true; s.declinedAt = new Date().toISOString(); this.save();
+            this.renderSettings();
+        },
+        async join() {
+            const pseudo = this._cleanPseudo(document.getElementById('community-pseudo')?.value);
+            if (!pseudo || !document.getElementById('community-consent')?.checked) return;
+            const s = this.load();
+            s.id = s.id || this._uuid();
+            s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString();
+            s.declined = false; s.pendingDelete = false; delete s.snoozeUntil; delete s.lastSync;
+            this.save();
+            UI._close('community-modal');
+            this.renderSettings();
+            const ok = await this.sync(true);
+            UI.showToast(ok ? `👋 Bienvenue ${pseudo} !` : '✅ Inscription enregistrée, envoi dès que la connexion revient', ok ? 'success' : 'info');
+        },
+
+        // ---------- Retrait (suppression des données côté serveur) ----------
+        leave() {
+            UI.confirm('Quitter la communauté ? Votre profil sera supprimé du serveur.', async () => {
+                const s = this.load();
+                s.pendingDelete = true; s.consent = false; s.declined = true; this.save();
+                this.renderSettings();
+                const ok = await this._flushDelete();
+                UI.showToast(ok ? '🗑️ Profil supprimé' : '🗑️ Retrait enregistré, suppression dès que la connexion revient', ok ? 'success' : 'info');
+            });
+        },
+        async _flushDelete() {
+            const s = this.load();
+            if (!s.pendingDelete || !s.id) return true;
+            if (!navigator.onLine) return false;
+            const ok = await this._post('/api/profile/delete', { id: s.id });
+            if (ok) { delete s.id; delete s.pseudo; delete s.pendingDelete; delete s.lastSync; delete s.consentAt; this.save(); this.renderSettings(); }
+            return ok;
+        },
+
+        // ---------- Paramètres ----------
+        renderSettings() {
+            const sec = document.getElementById('community-section');
+            if (!sec) return;
+            sec.style.display = this.enabled ? '' : 'none';
+            if (!this.enabled) return;
+            const s = this.load();
+            const st = document.getElementById('community-status');
+            const act = document.getElementById('community-actions');
+            const btn = (label, icon, fn, sub) => `<button class="backup-action" onclick="${fn}"><span class="ba-icon">${icon}</span><span class="ba-text"><b>${label}</b><small>${sub}</small></span></button>`;
+            if (this.isMember()) {
+                st.textContent = `✅ Vous êtes inscrit(e) sous le nom « ${s.pseudo} ». Partagé : pseudo, type d'appareil, nombre de parties et date de la dernière partie.`;
+                act.innerHTML = btn('Modifier mon pseudo', '✏️', 'Community.open()', 'Mettre à jour mon profil')
+                              + btn('Quitter la communauté', '🗑️', 'Community.leave()', 'Supprime mon profil du serveur');
+            } else if (s.pendingDelete) {
+                st.textContent = '⏳ Retrait en cours : la suppression sera finalisée dès que la connexion revient.';
+                act.innerHTML = '';
+            } else {
+                st.textContent = 'Facultatif : rejoignez la communauté en indiquant votre prénom ou pseudo. Vos parties restent sur votre appareil.';
+                act.innerHTML = btn('Rejoindre la communauté', '👥', 'Community.open()', 'Vous choisissez ce qui est partagé');
+            }
+        }
+    };
+
     const PWA = {
         deferredPrompt: null,
         isInstalled: false,
@@ -7667,10 +7940,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
             PWA.init();
+            Community.init();
         });
     } else {
         app.init();
         PWA.init();
+        Community.init();
     }
 </script>
     <!-- Cloudflare Web Analytics -->

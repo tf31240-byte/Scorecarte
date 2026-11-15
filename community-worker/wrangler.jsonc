@@ -1,0 +1,17 @@
+{
+  "name": "scoremaster-community",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "vars": {
+    // Origines autorisées à appeler l'API (séparées par des virgules)
+    "ALLOWED_ORIGINS": "https://tf31240-byte.github.io"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "scoremaster-community",
+      "database_id": "2fe0ab97-45da-4cce-9ee6-22a3f177651e"
+    }
+  ]
+}

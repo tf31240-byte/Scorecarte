@@ -19,6 +19,7 @@ Fonctionne **hors-ligne**, s'installe sur l'écran d'accueil, et garde toutes le
 | `service-worker.js` | Cache hors-ligne (app + bibliothèques CDN) |
 | `manifest.json` | Installation PWA (icônes, raccourcis, captures) |
 | `icon-*.png`, `screenshot*.png` | Icônes et captures d'écran |
+| `community-worker/` | API facultative des profils communauté (Worker Cloudflare + D1) |
 
 ## Développement
 
@@ -37,3 +38,7 @@ Bibliothèques CDN (versions figées) : Chart.js 4.6.1, canvas-confetti 1.6.0, g
 ## Statistiques de fréquentation
 
 L'app inclut [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/) (sans cookie, sans donnée personnelle) : visites, pays, appareils, sources. Les parties ne quittent jamais l'appareil. Mention affichée dans Paramètres.
+
+## Communauté (facultatif)
+
+Sur le principe du volontariat, une personne peut rejoindre la communauté depuis l'app (pseudo + consentement explicite) ; l'éditeur voit alors son pseudo, son type d'appareil, son nombre de parties et la date de sa dernière partie. Détails, déploiement et sécurité : [`community-worker/README.md`](community-worker/README.md).
