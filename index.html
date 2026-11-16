@@ -292,6 +292,11 @@ body::before {
     white-space: nowrap;
 }
 .toast.show     { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.has-action { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
+.toast .toast-action {
+    background: rgba(255,255,255,0.25); border: none; color: inherit; font-weight: 900; font-size: 14px;
+    padding: 8px 14px; border-radius: 12px; cursor: pointer; letter-spacing: .02em;
+}
 .toast.success  { background: var(--success); color: white; border: none; }
 .toast.warning  { background: var(--dealer);  color: white; border: none; }
 .toast.error    { background: var(--danger);  color: white; border: none; }
@@ -2140,6 +2145,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     <div id="victory" class="victory-overlay">
         <div class="victory-box">
             <h2 class="text-center" style="margin:0 0 10px 0; font-size:28px;">🏆 PARTIE TERMINÉE</h2>
+            <div id="victory-series" class="hidden" style="text-align:center; font-weight:800; font-size:13px; color:var(--text-sec); margin:-2px 0 10px;"></div>
 
             <div class="victory-tabs">
                 <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')">🏆 Podium</div>
@@ -2159,8 +2165,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div id="victory-highlights"></div>
             </div>
 
-            <button class="btn-main" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:17px; margin:20px 0 12px;" onclick="app.openShareSheet()">📤 PARTAGER LE RÉSULTAT</button>
-            <button class="btn-main" style="background:var(--primary); color:white; margin:0 0 12px;" onclick="app.restartWithSamePlayers()">🔄 REJOUER (mêmes joueurs)</button>
+            <button class="btn-main" style="background:var(--primary); color:white; font-size:17px; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔁 REVANCHE <span style="font-weight:700; font-size:12px; opacity:.85;">(mêmes joueurs)</span></button>
+            <button class="btn-main" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; margin:0 0 12px;" onclick="app.openShareSheet()">📤 PARTAGER LE RÉSULTAT</button>
             <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
         </div>
     </div>
@@ -2612,6 +2618,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             };
         },
 
+        /** Série de revanches : { n: 2..99, wins: { id: 0..999 } } ; sinon rien. */
+        _sanitizeSeries(sr) {
+            if (!sr || typeof sr !== 'object') return {};
+            const n = Math.max(1, Math.min(99, parseInt(sr.n, 10) || 1));
+            const wins = {};
+            Object.entries(sr.wins && typeof sr.wins === 'object' ? sr.wins : {}).slice(0, 20).forEach(([k, v]) => {
+                const c = Math.max(0, Math.min(999, parseInt(v, 10) || 0)); if (c) wins[String(k).slice(0, 20)] = c;
+            });
+            return { series: { n, wins } };
+        },
+
         _buildSanitizedShell(game) {
             return {
                 id:               game.id || Date.now().toString(),
@@ -2621,6 +2638,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 victoryCondition: game.victoryCondition || VC_HIGHEST,
                 endCondition:     game.endCondition || { type: END_FREE, value: null },
                 finished:         Boolean(game.finished),
+                ...this._sanitizeSeries(game.series),
                 preset:           game.preset || null,
                 ...(game.lastModified ? { lastModified: String(game.lastModified) } : {}),
                 state: this._buildSanitizedState(game)
@@ -3179,12 +3197,26 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          */
         showToast(message, type = 'default') {
             const toast = document.getElementById('toast');
+            clearTimeout(this._toastTimer);
             toast.textContent = message;
             toast.className = 'toast show';
             if(type !== 'default') toast.classList.add(type);
-            setTimeout(() => toast.classList.remove('show'), 2500);
+            this._toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
             if(type === 'success') SoundFX.success();
             else if(type === 'error') SoundFX.error();
+        },
+        /** Toast avec un bouton d'action (ex. « Rétablir »), visible plus longtemps. */
+        showActionToast(message, label, onAction, ms = 6000) {
+            const toast = document.getElementById('toast');
+            clearTimeout(this._toastTimer);
+            toast.textContent = '';
+            const span = document.createElement('span'); span.textContent = message;
+            const btn = document.createElement('button'); btn.className = 'toast-action'; btn.textContent = label;
+            btn.onclick = () => { clearTimeout(this._toastTimer); toast.classList.remove('show'); onAction(); };
+            toast.append(span, btn);
+            toast.className = 'toast show info has-action';
+            this._toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
+            SoundFX.success();
         },
         confirm(message, onYes, onNo) {
             SoundFX.click();
@@ -3885,6 +3917,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this._buildStatsTab(sorted, state, isLowest);
 
             this._buildHighlightsTab(state);
+            const ser = document.getElementById('victory-series');
+            const txt = (app.currentGame?.series?.n > 1) ? app._seriesText(true) : '';
+            ser.textContent = txt ? `Revanche n°${app.currentGame.series.n} · ${txt}` : '';
+            ser.classList.toggle('hidden', !txt);
             overlay.classList.add('active');
             this.switchVictoryTab('podium');
             if(app.settings.confetti) this.launchFireworks();
@@ -5312,7 +5348,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const gameName = this.currentGame.name || (isBelote ? 'BELOTE' : 'STANDARD');
             document.getElementById('mode-title').textContent = gameName.toUpperCase();
             
-            document.getElementById('game-info').textContent = this._buildGameInfoText(isBelote);
+            document.getElementById('game-info').textContent = this._buildGameInfoText(isBelote)
+                + (this.currentGame.series?.n > 1 ? ` • Revanche n°${this.currentGame.series.n} (${this._seriesText(false)})` : '');
             
             this._toggleBeloteButtons(isBelote);
             this.render();
@@ -5756,12 +5793,45 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     players:              oldState.players.map(p => ({ ...p, total: 0, previousRank: null })),
                     history:              [],
                     temp:                 {},
-                    dealerId:             oldState.dealerId,
+                    dealerId:             this._nextDealerId(oldState),
                     celebratedMilestones: {}
                 },
                 finished: false,
-                preset:   this.currentGame.preset || null
+                preset:   this.currentGame.preset || null,
+                series:   this._nextSeries(oldState)
             };
+        },
+
+        /** Le donneur passe au joueur suivant à chaque revanche. */
+        _nextDealerId(state) {
+            const i = state.players.findIndex(p => p.id === state.dealerId);
+            return state.players[(i + 1) % state.players.length]?.id ?? state.dealerId;
+        },
+
+        /** Vainqueur de la partie (null si égalité ou aucune manche). */
+        _gameWinnerId(state) {
+            if (!state.history.length) return null;
+            const sorted = GameState.getSortedPlayers(state);
+            if (sorted.length > 1 && sorted[0].total === sorted[1].total) return null;
+            return sorted[0]?.id ?? null;
+        },
+
+        /** Série de revanches : { n: numéro de la partie, wins: { idJoueur: victoires } } avant la partie en cours. */
+        _nextSeries(oldState) {
+            const prev = this.currentGame.series || { n: 1, wins: {} };
+            const wins = { ...prev.wins };
+            const w = this._gameWinnerId(oldState);
+            if (w !== null) wins[w] = (wins[w] || 0) + 1;
+            return { n: Math.min(99, prev.n + 1), wins };
+        },
+
+        /** Texte « ALICE 2 – BOB 1 » (victoires déjà acquises, + éventuellement la partie en cours terminée). */
+        _seriesText(includeCurrent) {
+            const g = this.currentGame; if (!g || !g.series || g.series.n < 2 && !includeCurrent) return '';
+            const wins = { ...(g.series?.wins || {}) };
+            if (includeCurrent) { const w = this._gameWinnerId(g.state); if (w !== null) wins[w] = (wins[w] || 0) + 1; }
+            return g.state.players.map(p => ({ n: p.name, w: wins[p.id] || 0 }))
+                .sort((a, b) => b.w - a.w).map(x => `${x.n} ${x.w}`).join(' – ');
         },
 
         restartWithSamePlayers() {
@@ -5775,7 +5845,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             // Réinitialiser les rangs précédents pour éviter les animations incorrectes
             this.lastRanks = {};
             UI.showToast('🎮 Nouvelle partie lancée !', 'success');
-            this.render();
+            this.showGame(); // met aussi à jour le titre et la ligne « Revanche n°N »
         },
 
         /**
@@ -6636,6 +6706,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          * supprime, ajuste editIdx, sauvegarde et re-rend.
          */
         _executeDelRound(idx) {
+            const snap = { gameId: this.currentGame.id, idx, round: { ...this.currentGame.state.history[idx] }, dealerId: this.currentGame.state.dealerId };
             if (this.editIdx !== null && this.editIdx === idx) {
                 this.editIdx = null;
                 this.currentGame.state.temp = {};
@@ -6647,12 +6718,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (wasLast) { this.lastRanks = {}; this._undoDealer(); } // le donneur revient en arrière avec la dernière manche
             if (this.editIdx !== null && this.editIdx > idx) this.editIdx--;
             Storage.saveGame(this.currentGame);
-            UI.showToast('✅ Manche supprimée', 'success');
+            UI.showActionToast(`🗑️ Manche ${idx + 1} supprimée`, '↩️ Rétablir', () => this._restoreRound(snap));
+            this.render();
+        },
+
+        /** Remet une manche supprimée à sa place (donneur et totaux inclus). */
+        _restoreRound(snap) {
+            const g = this.currentGame;
+            if (!g || g.id !== snap.gameId) { UI.showToast('⚠️ Impossible de rétablir', 'warning'); return; }
+            const state = g.state;
+            const at = Math.min(snap.idx, state.history.length);
+            state.history.splice(at, 0, snap.round);
+            GameState.rebuildTotals(state);
+            state.dealerId = snap.dealerId;
+            if (this.editIdx !== null && this.editIdx >= at) this.editIdx++;
+            this.lastRanks = {};
+            Storage.saveGame(g);
+            UI.showToast(`↩️ Manche ${at + 1} rétablie`, 'success');
             this.render();
         },
 
         delRound(idx) {
-            UI.confirm('Supprimer cette manche ?', () => this._executeDelRound(idx));
+            // Plus de confirmation : « Rétablir » permet de rattraper un appui par erreur
+            this._executeDelRound(idx);
         },
 
         /** Recule le donneur d'un cran (après suppression de la dernière manche). */
@@ -6672,7 +6760,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '25', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '26', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
