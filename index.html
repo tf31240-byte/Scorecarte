@@ -603,6 +603,21 @@ body::before {
 .btn-main:active   { transform: scale(0.98); }
 .btn-main.editing  { background: var(--dealer); color: #000; }
 
+/* Mode modification d'une manche : contour orange sur tout l'écran + onglet « Manche N » */
+body.is-editing::after {
+    content: ''; position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+    border-radius: 0;
+    box-shadow: inset 0 0 0 4px var(--dealer), inset 0 0 28px rgba(255,149,0,0.35);
+}
+.edit-tab {
+    display: none; position: fixed; top: env(safe-area-inset-top); left: 50%; transform: translateX(-50%);
+    z-index: 9001; align-items: center; gap: 2px;
+    background: var(--dealer); color: #000; font-weight: 900; font-size: 11px; letter-spacing: .03em; white-space: nowrap;
+    padding: 0 2px 0 12px; height: 24px; border-radius: 0 0 12px 12px;
+}
+body.is-editing .edit-tab { display: flex; }
+.edit-tab button { background: none; border: none; color: #000; font-weight: 900; font-size: 14px; min-width: 34px; height: 24px; cursor: pointer; }
+
 
 /* =============================================================================
    SCORE INPUT SHEET — Saisie des scores
@@ -2051,7 +2066,6 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             <span>HISTORIQUE DES MANCHES</span>
             <div style="display:flex; gap:12px;">
                 <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer;">✓ TERMINER</button>
-                <button onclick="app.undo()"        style="background:none; border:none; color:var(--danger);  font-weight:900; cursor:pointer;">ANNULER</button>
             </div>
         </div>
         <div id="history"></div>
@@ -2060,6 +2074,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     <!-- ===================================================================
          DOCK — Bouton principal
          =================================================================== -->
+    <div class="edit-tab" role="status"><span id="edit-tab-text">✏️ MANCHE 1</span><button onclick="app.cancelEdit()" aria-label="Abandonner la modification" title="Abandonner la modification">✕</button></div>
     <div id="dock" class="dock hidden">
         <button id="save-btn" class="btn-main" onclick="app.validateRound()">ENREGISTRER MANCHE 1</button>
     </div>
@@ -4521,6 +4536,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             
             this.currentGame = null;
             this.editIdx = null;
+            document.body.classList.remove('is-editing');
             UI._show('setup');
             UI._hide('game');
             this.renderGamesList();
@@ -6197,10 +6213,24 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (mode === 'edit') {
                 btn.textContent = `MODIFIER MANCHE ${roundNumber}`;
                 btn.classList.add('editing');
+                const t = document.getElementById('edit-tab-text'); if (t) t.textContent = `✏️ MANCHE ${roundNumber}`;
             } else {
                 btn.textContent = `ENREGISTRER MANCHE ${roundNumber}`;
                 btn.classList.remove('editing');
             }
+            document.body.classList.toggle('is-editing', mode === 'edit');
+        },
+
+        /** Abandonne la modification en cours sans rien enregistrer. */
+        cancelEdit() {
+            if (this.editIdx === null) return;
+            SoundFX.click();
+            this.editIdx = null;
+            this.currentGame.state.temp = {};
+            this._addValPlayers.clear();
+            UI._close('sheet');
+            this._setSaveBtn('save', this.currentGame.state.history.length + 1);
+            this.render();
         },
 
         /**
@@ -6612,7 +6642,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 this._addValPlayers.clear();
                 this._setSaveBtn('save', this.currentGame.state.history.length);
             }
+            const wasLast = idx === this.currentGame.state.history.length - 1;
             GameState.deleteRound(this.currentGame.state, idx);
+            if (wasLast) { this.lastRanks = {}; this._undoDealer(); } // le donneur revient en arrière avec la dernière manche
             if (this.editIdx !== null && this.editIdx > idx) this.editIdx--;
             Storage.saveGame(this.currentGame);
             UI.showToast('✅ Manche supprimée', 'success');
@@ -6623,48 +6655,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             UI.confirm('Supprimer cette manche ?', () => this._executeDelRound(idx));
         },
 
-        /** Recule le donneur d'un cran après un undo. */
+        /** Recule le donneur d'un cran (après suppression de la dernière manche). */
         _undoDealer() {
             const state = this.currentGame.state;
             const idx  = state.players.findIndex(p => p.id === state.dealerId);
             const prev = (idx - 1 + state.players.length) % state.players.length;
             state.dealerId = state.players[prev].id;
         },
-
-        /**
-         * Réinitialise editIdx si la manche en cours d'édition vient d'être supprimée.
-         * @param {number} prevLength  Taille de l'historique avant suppression
-         */
-        _undoClearEdit(prevLength) {
-            if (this.editIdx !== null && this.editIdx >= prevLength - 1) {
-                this.editIdx = null;
-                this.currentGame.state.temp = {};
-                this._addValPlayers.clear();
-                this._setSaveBtn('save', this.currentGame.state.history.length + 1);
-            }
-        },
-
-
-        /**
-         * Exécute l'annulation : supprime la dernière manche, recule le donneur,
-         * nettoie l'édition en cours si besoin, sauvegarde et re-rend.
-         * @param {number} prevLength  Longueur de l'historique avant suppression
-         */
-        _executeUndo(prevLength) {
-            GameState.deleteRound(this.currentGame.state, prevLength - 1);
-            this.lastRanks = {};
-            this._undoDealer();
-            this._undoClearEdit(prevLength);
-            Storage.saveGame(this.currentGame);
-            UI.showToast('↩️ Manche annulée', 'success');
-            this.render();
-        },
-
-        undo() {
-            const history = this.currentGame.state.history;
-            if (history.length > 0) this._executeUndo(history.length);
-        }
-    };
+        };
     
     // ==================== PWA MANAGER ====================
     // ==================== COMMUNAUTÉ (profil facultatif, avec consentement) ====================
@@ -6674,7 +6672,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '24', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '25', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
