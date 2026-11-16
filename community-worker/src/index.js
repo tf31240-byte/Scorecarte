@@ -251,87 +251,184 @@ const tally = (arr) => {
   return [...m.entries()].sort((a, b) => b[1] - a[1]);
 };
 
-function renderDashboard(rows, backups) {
+const dayKey = (iso) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }); // AAAA-MM-JJ
+const VIEWS = { all: 'Tous', active: 'Actifs (7 j)', inactive: 'Inactifs', errors: 'Avec erreurs', outdated: 'Pas à jour', nocloud: 'Sans sauvegarde' };
+const SORTS = { recent: 'Vu récemment', games: 'Plus de parties', first: 'Plus anciens', name: 'Nom (A-Z)' };
+
+function renderDashboard(rows, backups, params = new URLSearchParams()) {
   const now = Date.now();
+  const q = String(params.get('q') || '').trim().slice(0, 40);
+  const view = VIEWS[params.get('f')] ? params.get('f') : 'all';
+  const sort = SORTS[params.get('s')] ? params.get('s') : 'recent';
   const bkBy = new Map(backups.map((b) => [b.pseudo_key, b]));
-  const people = new Set(rows.map((r) => pseudoKey(r.pseudo)));
-  const within = (r, days) => now - new Date(r.last_seen).getTime() <= days * 86400000;
-  const games = rows.reduce((s, r) => s + (r.games || 0), 0);
-  const installed = rows.filter((r) => r.standalone).length;
-  const bkSize = backups.reduce((s, b) => s + (b.size || 0), 0);
+  const ageDays = (iso) => (now - new Date(iso).getTime()) / 86400000;
   const maxVer = Math.max(0, ...rows.map((r) => parseInt(r.app_version, 10) || 0));
+  const isOutdated = (r) => (parseInt(r.app_version, 10) || 0) < maxVer;
+  const hasCloud = (r) => bkBy.has(pseudoKey(r.pseudo));
   const perPerson = new Map();
   rows.forEach((r) => perPerson.set(pseudoKey(r.pseudo), (perPerson.get(pseudoKey(r.pseudo)) || 0) + 1));
 
-  const chip = ([k, n]) => `<span class="chip">${esc(k)} <b>${n}</b></span>`;
-  const dist = (title, arr) => arr.length ? `<div class="dist"><span class="dt">${title}</span>${arr.map(chip).join('')}</div>` : '';
+  // ----- Chiffres clés -----
+  const people = new Set(rows.map((r) => pseudoKey(r.pseudo)));
+  const act = (d) => rows.filter((r) => ageDays(r.last_seen) <= d).length;
+  const games = rows.reduce((s, r) => s + (r.games || 0), 0);
+  const installed = rows.filter((r) => r.standalone).length;
+  const newWeek = rows.filter((r) => ageDays(r.first_seen) <= 7).length;
+  const bkSize = backups.reduce((s, b) => s + (b.size || 0), 0);
+  const kpi = (n, label, sub = '') => `<div class="stat"><b>${n}</b><span>${label}</span>${sub ? `<em>${sub}</em>` : ''}</div>`;
 
-  const cards = rows.map((r) => {
-    const key = pseudoKey(r.pseudo), bk = bkBy.get(key), active = within(r, 7), devs = perPerson.get(key);
+  // ----- Graphiques -----
+  const days = [];
+  for (let i = 29; i >= 0; i--) days.push(dayKey(new Date(now - i * 86400000).toISOString()));
+  const signups = new Map(days.map((d) => [d, 0]));
+  rows.forEach((r) => { const k = dayKey(r.first_seen); if (signups.has(k)) signups.set(k, signups.get(k) + 1); });
+  const sMax = Math.max(1, ...signups.values());
+  const signupChart = `<div class="bars">${days.map((d) => {
+    const n = signups.get(d);
+    return `<i title="${esc(d)} : ${n}" style="height:${n ? Math.max(8, Math.round(n / sMax * 100)) : 3}%" class="${n ? 'on' : ''}"></i>`;
+  }).join('')}</div><div class="axis"><span>${esc(days[0].slice(5))}</span><span>${rows.filter((r) => ageDays(r.first_seen) <= 30).length} inscrit(s) en 30 j</span><span>aujourd'hui</span></div>`;
+
+  const hbar = (title, entries, limit = 6) => {
+    const top = entries.slice(0, limit), max = Math.max(1, ...top.map((e) => e[1]));
+    return top.length ? `<section class="panel"><h3>${title}</h3>${top.map(([k, n]) => `<div class="hb"><span class="hl">${esc(k)}</span><span class="ht"><i style="width:${Math.round(n / max * 100)}%"></i></span><b>${n}</b></div>`).join('')}</section>` : '';
+  };
+  const buckets = [
+    ["Aujourd'hui", rows.filter((r) => ageDays(r.last_seen) < 1).length],
+    ['2 à 7 jours', rows.filter((r) => ageDays(r.last_seen) >= 1 && ageDays(r.last_seen) <= 7).length],
+    ['8 à 30 jours', rows.filter((r) => ageDays(r.last_seen) > 7 && ageDays(r.last_seen) <= 30).length],
+    ['Plus de 30 jours', rows.filter((r) => ageDays(r.last_seen) > 30).length],
+  ];
+  const topPlayers = [...rows].sort((a, b) => (b.games || 0) - (a.games || 0)).filter((r) => r.games > 0).map((r) => [r.pseudo, r.games]);
+
+  // ----- À surveiller -----
+  const names = (list) => list.slice(0, 6).map((r) => esc(r.pseudo)).join(', ') + (list.length > 6 ? '…' : '');
+  const alerts = [];
+  const withErr = rows.filter((r) => r.errors > 0), old = rows.filter(isOutdated), dormant = rows.filter((r) => ageDays(r.last_seen) > 14), noCloud = rows.filter((r) => !hasCloud(r));
+  if (withErr.length) alerts.push(`<li class="bad">🐞 <b>${withErr.length}</b> appareil(s) avec erreurs : ${names(withErr)}</li>`);
+  if (old.length) alerts.push(`<li class="warn">⬆️ <b>${old.length}</b> appareil(s) pas à jour (dernière version : v${maxVer}) : ${names(old)}</li>`);
+  if (dormant.length) alerts.push(`<li>💤 <b>${dormant.length}</b> inactif(s) depuis plus de 14 jours : ${names(dormant)}</li>`);
+  if (noCloud.length) alerts.push(`<li>☁️ <b>${noCloud.length}</b> sans sauvegarde cloud : ${names(noCloud)}</li>`);
+
+  // ----- Liste filtrée -----
+  const match = {
+    all: () => true, active: (r) => ageDays(r.last_seen) <= 7, inactive: (r) => ageDays(r.last_seen) > 7,
+    errors: (r) => r.errors > 0, outdated: isOutdated, nocloud: (r) => !hasCloud(r),
+  }[view];
+  const needle = pseudoKey(q);
+  let list = rows.filter(match).filter((r) => !needle || pseudoKey(r.pseudo).includes(needle) || pseudoKey(deviceName(r)).includes(needle));
+  const cmp = {
+    recent: (a, b) => new Date(b.last_seen) - new Date(a.last_seen),
+    games: (a, b) => (b.games || 0) - (a.games || 0),
+    first: (a, b) => new Date(a.first_seen) - new Date(b.first_seen),
+    name: (a, b) => String(a.pseudo).localeCompare(String(b.pseudo), 'fr'),
+  }[sort];
+  list = list.sort(cmp);
+
+  const href = (over) => { const p = new URLSearchParams({ ...(q ? { q } : {}), f: view, s: sort, ...over }); return '/admin?' + p.toString(); };
+  const chips = Object.entries(VIEWS).map(([k, l]) => `<a class="fc ${k === view ? 'sel' : ''}" href="${esc(href({ f: k }))}">${l}</a>`).join('');
+  const sortLinks = Object.entries(SORTS).map(([k, l]) => `<a class="fc ${k === sort ? 'sel' : ''}" href="${esc(href({ s: k }))}">${l}</a>`).join('');
+
+  const cards = list.map((r) => {
+    const key = pseudoKey(r.pseudo), bk = bkBy.get(key), active = ageDays(r.last_seen) <= 7, devs = perPerson.get(key);
     const line = (k, v) => v ? `<div class="l"><dt>${k}</dt><dd>${v}</dd></div>` : '';
     const scr = r.screen ? esc(r.screen.replace('x', ' × ').replace('@', ' pts · ') + 'x') : '';
-    return `<article class="card">
-  <header><div><b class="who">${esc(r.pseudo)}</b>${devs > 1 ? ` <span class="badge">${devs} appareils</span>` : ''}</div>
-    <span class="dot ${active ? 'on' : ''}">${active ? 'actif' : 'inactif'}</span></header>
-  <p class="seen">Vu ${esc(ago(r.last_seen, now))}</p>
+    const ver = r.app_version ? `v${esc(r.app_version)}${isOutdated(r) ? ` <span class="warn">⚠️ pas à jour (dernière : v${maxVer})</span>` : ' ✅'}` : '';
+    return `<details class="card">
+  <summary>
+    <span class="dot ${active ? 'on' : ''}" title="${active ? 'actif' : 'inactif'}"></span>
+    <span class="sm"><b class="who">${esc(r.pseudo)}</b>${devs > 1 ? ` <span class="badge">${devs} appareils</span>` : ''}${r.errors > 0 ? ' <span class="badge bad">🐞 ' + r.errors + '</span>' : ''}${isOutdated(r) ? ' <span class="badge warnb">⬆️</span>' : ''}
+      <small>${esc(deviceName(r))}</small></span>
+    <span class="sr"><b>${r.games}</b> partie${r.games > 1 ? 's' : ''}<small>${esc(ago(r.last_seen, now))}</small></span>
+  </summary>
   <dl>
-    ${line('Appareil', esc(deviceName(r)))}
     ${line('Écran', scr)}
     ${line('Utilisation', r.standalone ? '📲 app installée' : '🌐 navigateur')}
     ${line('Région', esc([r.lang, r.tz].filter(Boolean).join(' · ')))}
-    ${line('Parties', `<b>${r.games}</b>${r.players ? ` · ${r.players} joueur${r.players > 1 ? 's' : ''} différent${r.players > 1 ? 's' : ''}` : ''}`)}
+    ${line('Joueurs', r.players ? `${r.players} différent${r.players > 1 ? 's' : ''}` : '')}
     ${line('Jeu favori', esc(r.top_game || ''))}
     ${line('Lancements', r.sessions ? String(r.sessions) : '')}
     ${line('Dernière partie', r.last_game_at ? esc(ago(r.last_game_at, now)) : '')}
     ${line('Thème', r.theme === 'dark' ? '🌙 sombre' : r.theme === 'light' ? '☀️ clair' : '')}
     ${line('Cloud', bk ? `☁️ ${esc(ago(bk.updated_at, now))} · ${(bk.size / 1024).toFixed(0)} Ko · ${bk.games} partie${bk.games > 1 ? 's' : ''}` : 'pas de sauvegarde')}
     ${line('Inscrit', esc(fmtDate(r.first_seen)))}
-    ${line('Version app', r.app_version ? `v${esc(r.app_version)}${(parseInt(r.app_version, 10) || 0) < maxVer ? ` <span class="warn">⚠️ pas à jour (dernière : v${maxVer})</span>` : ' ✅'}` : '')}
+    ${line('Version app', ver)}
     ${line('Erreurs', r.errors ? `<span class="warn"><b>${r.errors}</b></span> · ${esc(ago(r.last_error_at, now))}<br><code>${esc(r.last_error || '')}</code>` : (r.sessions ? 'aucune ✅' : ''))}
   </dl>
-  <form method="post" action="/admin/delete" onsubmit="return confirm('Supprimer ce profil ?')"><input type="hidden" name="id" value="${esc(r.id)}"><button>Supprimer ce profil</button></form>
-</article>`;
+  <details class="del"><summary>🗑️ Supprimer ce profil…</summary>
+    <form method="post" action="/admin/delete"><input type="hidden" name="id" value="${esc(r.id)}"><span>Cette action est définitive.</span> <button>Confirmer la suppression</button></form>
+  </details>
+</details>`;
   }).join('');
 
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ScoreMaster — Communauté</title><meta name="robots" content="noindex">
 <style>
 :root{color-scheme:dark}
-body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:16px;background:#0f1226;color:#eef;}
-h1{margin:0 0 14px;font-size:22px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+*{box-sizing:border-box}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:16px;background:#0f1226;color:#eef;max-width:1100px;margin-inline:auto}
+header.top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+h1{margin:0;font-size:22px}.upd{font-size:12px;color:#889}.upd a{margin-left:8px}
+h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#889;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-bottom:14px}
 .stat{background:#1b1f3b;border-radius:14px;padding:12px 14px}
-.stat b{display:block;font-size:26px;color:#ffd666}.stat span{font-size:12px;color:#aab}
-.dist{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
-.dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#889;margin-right:4px}
-.chip{background:#1b1f3b;border-radius:999px;padding:4px 10px;font-size:13px}.chip b{color:#ffd666;margin-left:4px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:14px}
-.card{background:#161a33;border-radius:16px;padding:14px 16px;border:1px solid #262b52}
-.card header{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.who{font-size:18px}.badge{font-size:11px;background:#2a2f5c;border-radius:999px;padding:2px 8px;color:#bcd}
-.dot{font-size:12px;color:#889}.dot::before{content:"●";margin-right:5px;color:#666}.dot.on{color:#7be0a0}.dot.on::before{color:#37d67a}
-.warn{color:#ffb3a7}code{font-size:12px;color:#ffb3a7;word-break:break-word}
-.seen{margin:2px 0 10px;font-size:13px;color:#aab}
-dl{margin:0}.l{display:flex;gap:10px;padding:5px 0;border-top:1px solid #20254a;font-size:14px}
-dt{flex:0 0 108px;color:#889;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}dd{margin:0;flex:1;word-break:break-word}
-form{margin:10px 0 0}button{background:#3a1d2a;color:#ff8a9b;border:1px solid #6b2c3e;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+.stat b{display:block;font-size:26px;color:#ffd666}.stat span{font-size:12px;color:#aab}.stat em{display:block;font-style:normal;font-size:11px;color:#7be0a0;margin-top:2px}
+.alerts{background:#1c1730;border:1px solid #3a2f63;border-radius:14px;padding:12px 16px;margin-bottom:14px}
+.alerts ul{margin:0;padding:0;list-style:none}.alerts li{padding:4px 0;font-size:14px;line-height:1.4}
+.alerts .bad{color:#ffb3a7}.alerts .warn{color:#ffd9a0}.ok{color:#7be0a0;font-size:14px}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:18px}
+.panel{background:#161a33;border:1px solid #262b52;border-radius:14px;padding:14px 16px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:70px}
+.bars i{flex:1;background:#262b52;border-radius:2px 2px 0 0;min-height:2px}.bars i.on{background:#ffd666}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:#889;margin-top:6px}
+.hb{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0}.hl{flex:0 0 38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht{flex:1;height:8px;background:#20254a;border-radius:4px;overflow:hidden}.ht i{display:block;height:100%;background:#7fb2ff;border-radius:4px}.hb b{color:#ffd666;min-width:18px;text-align:right}
+.tools{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.tools form{display:flex;gap:8px}.tools input[type=search]{flex:1;min-width:0;background:#1b1f3b;border:1px solid #2c3260;border-radius:10px;padding:9px 12px;color:#eef;font-size:15px}
+.tools button{background:#2a3470;color:#dfe6ff;border:1px solid #3d49a0;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#889;margin-right:4px}
+.fc{background:#1b1f3b;border-radius:999px;padding:5px 11px;font-size:13px;color:#ccd;text-decoration:none;border:1px solid transparent}.fc.sel{border-color:#7fb2ff;color:#fff;background:#243064}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;align-items:start}
+.card{background:#161a33;border-radius:14px;padding:12px 14px;border:1px solid #262b52}
+.card summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}.card summary::-webkit-details-marker{display:none}
+.sm{flex:1;min-width:0}.sm small,.sr small{display:block;color:#99a;font-size:12px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr{text-align:right;font-size:13px;white-space:nowrap}.sr b{color:#ffd666;font-size:16px}
+.who{font-size:16px}.badge{font-size:11px;background:#2a2f5c;border-radius:999px;padding:2px 7px;color:#bcd;margin-left:4px}.badge.bad{background:#4a2330;color:#ffb3a7}.badge.warnb{background:#4a3a1c}
+.dot{width:10px;height:10px;border-radius:50%;background:#555;flex:0 0 10px}.dot.on{background:#37d67a;box-shadow:0 0 6px #37d67a88}
+.warn{color:#ffd9a0}code{font-size:12px;color:#ffb3a7;word-break:break-word}
+dl{margin:10px 0 0}.l{display:flex;gap:10px;padding:5px 0;border-top:1px solid #20254a;font-size:14px}
+dt{flex:0 0 105px;color:#889;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}dd{margin:0;flex:1;word-break:break-word}
+details.del{margin-top:10px}details.del summary{display:block;font-size:13px;color:#ff8a9b;cursor:pointer}.card form{margin:8px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#aab}.card button{background:#3a1d2a;color:#ff8a9b;border:1px solid #6b2c3e;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
 a{color:#7fb2ff}.foot{margin-top:18px;font-size:12px;color:#889;line-height:1.5}.empty{padding:24px;color:#889}
 </style></head><body>
-<h1>👥 Communauté ScoreMaster</h1>
+<header class="top"><h1>👥 Communauté ScoreMaster</h1><span class="upd">Mis à jour ${esc(new Date(now).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'short', timeStyle: 'short' }))}<a href="${esc(href({}))}">↻ Actualiser</a></span></header>
 <div class="stats">
-<div class="stat"><b>${people.size}</b><span>personnes</span></div>
-<div class="stat"><b>${rows.length}</b><span>appareils</span></div>
-<div class="stat"><b>${rows.filter((r) => within(r, 1)).length}</b><span>actifs (24 h)</span></div>
-<div class="stat"><b>${rows.filter((r) => within(r, 7)).length}</b><span>actifs (7 j)</span></div>
-<div class="stat"><b>${games}</b><span>parties terminées</span></div>
-<div class="stat"><b>${installed}</b><span>apps installées</span></div>
-<div class="stat"><b>${rows.filter((r) => r.errors > 0).length}</b><span>appareils avec erreurs</span></div>
-<div class="stat"><b>${backups.length}</b><span>sauvegardes cloud (${(bkSize / 1024).toFixed(0)} Ko)</span></div>
+${kpi(people.size, 'personnes', newWeek ? `+${newWeek} cette semaine` : '')}
+${kpi(rows.length, 'appareils')}
+${kpi(act(1), 'actifs 24 h')}
+${kpi(act(7), 'actifs 7 j')}
+${kpi(act(30), 'actifs 30 j')}
+${kpi(games, 'parties terminées')}
+${kpi(installed, 'apps installées')}
+${kpi(backups.length, 'sauvegardes cloud', (bkSize / 1024).toFixed(0) + ' Ko')}
 </div>
-${dist('Systèmes', tally(rows.map((r) => r.platform)))}
-${dist('Navigateurs', tally(rows.map((r) => r.browser)))}
-${dist('Jeux favoris', tally(rows.map((r) => r.top_game)))}
-<div class="grid">${cards || '<div class="empty">Aucun profil pour le moment.</div>'}</div>
+<section class="alerts"><h3>À surveiller</h3>${alerts.length ? `<ul>${alerts.join('')}</ul>` : '<div class="ok">✅ Rien à signaler</div>'}</section>
+<div class="panels">
+<section class="panel"><h3>Inscriptions (30 derniers jours)</h3>${signupChart}</section>
+<section class="panel"><h3>Dernière activité</h3>${buckets.map(([k, n]) => `<div class="hb"><span class="hl">${k}</span><span class="ht"><i style="width:${rows.length ? Math.round(n / rows.length * 100) : 0}%"></i></span><b>${n}</b></div>`).join('')}</section>
+${hbar('Systèmes', tally(rows.map((r) => r.platform)))}
+${hbar('Versions du système', tally(rows.map((r) => r.os && r.os !== r.platform ? r.os : null)))}
+${hbar('Navigateurs', tally(rows.map((r) => r.browser === 'Autre' ? null : r.browser)))}
+${hbar('Jeux favoris', tally(rows.map((r) => r.top_game)))}
+${hbar('Versions de l\'app', tally(rows.map((r) => r.app_version ? 'v' + r.app_version : null)))}
+${hbar('Parties par personne', topPlayers)}
+</div>
+<div class="tools">
+<form method="get" action="/admin"><input type="search" name="q" value="${esc(q)}" placeholder="Rechercher…" maxlength="40"><input type="hidden" name="f" value="${esc(view)}"><input type="hidden" name="s" value="${esc(sort)}"><button>Chercher</button></form>
+<div class="row"><span class="rl">Afficher</span>${chips}</div>
+<div class="row"><span class="rl">Trier</span>${sortLinks}</div>
+</div>
+<div class="row" style="margin-bottom:10px;color:#99a;font-size:13px">${list.length} appareil${list.length > 1 ? 's' : ''}${q || view !== 'all' ? ` (filtré sur ${rows.length})` : ''}</div>
+<div class="grid">${cards || '<div class="empty">Aucun résultat.</div>'}</div>
 <p class="foot">Export : <a href="/admin?format=csv">CSV</a> · <a href="/admin?format=json">JSON</a><br>Données fournies volontairement par les personnes (consentement dans l'app). Le modèle d'iPhone est une estimation d'après la taille d'écran : Safari ne communique pas le modèle exact. Chaque personne peut se retirer depuis l'app ; vous pouvez aussi supprimer un profil ici sur demande.</p>
 </body></html>`;
 }
@@ -368,7 +465,7 @@ async function admin(request, env, url) {
     return new Response('﻿' + lines.join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="scoremaster-communaute.csv"', ...secure } });
   }
   const { results: bks } = await env.DB.prepare('SELECT pseudo_key, size, games, updated_at FROM backups').all();
-  return new Response(renderDashboard(results, bks), {
+  return new Response(renderDashboard(results, bks, url.searchParams), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'", ...secure },
   });
 }
