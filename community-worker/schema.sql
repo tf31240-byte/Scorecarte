@@ -12,8 +12,17 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_game_at TEXT,                       -- date de la dernière partie terminée (ISO)
   consent_at   TEXT NOT NULL,              -- date du consentement
   first_seen   TEXT NOT NULL,
-  last_seen    TEXT NOT NULL
+  last_seen    TEXT NOT NULL,
+  screen       TEXT,                       -- ex. "393x852@3" (points, portrait, ratio de pixels)
+  lang         TEXT,                       -- ex. "fr-FR"
+  tz           TEXT,                       -- fuseau horaire, ex. "Europe/Paris"
+  sessions     INTEGER NOT NULL DEFAULT 0, -- nombre de lancements de l'app depuis l'inscription
+  players      INTEGER NOT NULL DEFAULT 0, -- nombre de joueurs différents (sans leurs noms)
+  top_game     TEXT,                       -- jeu le plus joué
+  theme        TEXT                        -- dark / light
 );
+-- Mise à jour d'une base existante (une seule fois) :
+-- ALTER TABLE profiles ADD COLUMN screen TEXT; ... lang, tz, sessions INTEGER NOT NULL DEFAULT 0, players INTEGER NOT NULL DEFAULT 0, top_game, theme
 CREATE INDEX IF NOT EXISTS idx_profiles_last_seen ON profiles(last_seen);
 
 -- Sauvegardes cloud : une ligne par pseudo (unique). La couleur n'est stockée que sous forme d'empreinte salée.

@@ -84,6 +84,10 @@ async function upsertProfile(request, env) {
   let lastGame = null;
   if (b.lastGameAt) { const d = new Date(b.lastGameAt); if (!isNaN(d)) lastGame = d.toISOString(); }
   const now = new Date().toISOString();
+  const d = b.detail && typeof b.detail === 'object' ? b.detail : {};
+  const num = (v, max) => Math.max(0, Math.min(max, parseInt(v, 10) || 0));
+  const screen = /^\d{2,5}x\d{2,5}@\d(\.\d)?$/.test(String(d.screen || '')) ? String(d.screen) : null;
+  const theme = ['dark', 'light'].includes(d.theme) ? d.theme : null;
 
   const exists = await env.DB.prepare('SELECT 1 FROM profiles WHERE id = ?').bind(b.id).first();
   if (!exists) {
@@ -91,13 +95,17 @@ async function upsertProfile(request, env) {
     if (n >= MAX_PROFILES) return json({ error: 'capacité atteinte' }, 503, cors);
   }
   await env.DB.prepare(
-    `INSERT INTO profiles (id, pseudo, platform, os, browser, model, standalone, app_version, games, last_game_at, consent_at, first_seen, last_seen)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11, ?11)
+    `INSERT INTO profiles (id, pseudo, platform, os, browser, model, standalone, app_version, games, last_game_at, consent_at, first_seen, last_seen,
+                           screen, lang, tz, sessions, players, top_game, theme)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
      ON CONFLICT(id) DO UPDATE SET pseudo = ?2, platform = ?3, os = ?4, browser = ?5, model = ?6, standalone = ?7,
-       app_version = ?8, games = ?9, last_game_at = ?10, last_seen = ?11`
+       app_version = ?8, games = ?9, last_game_at = ?10, last_seen = ?11,
+       screen = COALESCE(?12, screen), lang = COALESCE(?13, lang), tz = COALESCE(?14, tz),
+       sessions = MAX(sessions, ?15), players = ?16, top_game = COALESCE(?17, top_game), theme = COALESCE(?18, theme)`
   ).bind(
     b.id, pseudo, clean(dev.platform, 30), clean(dev.os, 40), clean(dev.browser, 40), clean(dev.model, 40),
-    dev.standalone ? 1 : 0, clean(b.appVersion, 20), games, lastGame, now
+    dev.standalone ? 1 : 0, clean(b.appVersion, 20), games, lastGame, now,
+    screen, clean(d.lang, 12) || null, clean(d.tz, 40) || null, num(d.sessions, 1e6), num(d.players, 10000), clean(d.topGame, 30) || null, theme
   ).run();
   return json({ ok: true }, 200, cors);
 }
@@ -209,49 +217,115 @@ const fmtDate = (iso) => {
   return isNaN(d) ? '—' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' });
 };
 
-function renderDashboard(rows, bk) {
-  const total = rows.length;
-  const week = Date.now() - 7 * 86400000;
-  const active = rows.filter((r) => new Date(r.last_seen).getTime() >= week).length;
+// Modèle probable d'après la taille d'écran (en points, portrait). Safari ne donne pas le modèle exact.
+const IPHONES = {
+  '320x568@2': 'iPhone SE (1re gén.)', '375x667@2': 'iPhone SE / 8', '414x736@3': 'iPhone 8 Plus',
+  '375x812@3': 'iPhone X / XS / 11 Pro / 12-13 mini', '414x896@2': 'iPhone XR / 11', '414x896@3': 'iPhone XS Max / 11 Pro Max',
+  '390x844@3': 'iPhone 12 / 13 / 14', '428x926@3': 'iPhone 12-13 Pro Max / 14 Plus',
+  '393x852@3': 'iPhone 14 Pro / 15 / 15 Pro / 16', '430x932@3': 'iPhone 14-15 Pro Max / 15-16 Plus',
+  '402x874@3': 'iPhone 16 Pro / 17 / 17 Pro', '440x956@3': 'iPhone 16-17 Pro Max', '420x912@3': 'iPhone Air',
+};
+function deviceName(r) {
+  let name = r.model || '';
+  if (r.platform === 'iOS' && /^iPhone$/i.test(name) && r.screen && IPHONES[r.screen]) name = IPHONES[r.screen] + ' (probable)';
+  if (!name) name = r.platform || '';
+  const browser = r.browser === 'Autre' ? '' : r.browser;
+  return [name, r.os && r.os !== r.platform ? r.os : '', browser].filter(Boolean).join(' · ') || '—';
+}
+const ago = (iso, now) => {
+  const t = new Date(iso).getTime();
+  if (!iso || isNaN(t)) return '—';
+  const m = Math.max(0, Math.round((now - t) / 60000));
+  if (m < 2) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const d = Math.round(h / 24);
+  return d < 60 ? `il y a ${d} j` : fmtDate(iso);
+};
+const tally = (arr) => {
+  const m = new Map(); arr.filter(Boolean).forEach((k) => m.set(k, (m.get(k) || 0) + 1));
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+};
+
+function renderDashboard(rows, backups) {
+  const now = Date.now();
+  const bkBy = new Map(backups.map((b) => [b.pseudo_key, b]));
+  const people = new Set(rows.map((r) => pseudoKey(r.pseudo)));
+  const within = (r, days) => now - new Date(r.last_seen).getTime() <= days * 86400000;
   const games = rows.reduce((s, r) => s + (r.games || 0), 0);
   const installed = rows.filter((r) => r.standalone).length;
-  const body = rows.map((r) => `<tr>
-    <td><b>${esc(r.pseudo)}</b></td>
-    <td>${esc([r.model, r.os, r.browser].filter(Boolean).join(' · ') || r.platform || '—')}</td>
-    <td>${r.standalone ? '📲 installée' : 'navigateur'}</td>
-    <td class="n">${r.games}</td>
-    <td>${fmtDate(r.last_game_at)}</td>
-    <td>${fmtDate(r.first_seen)}</td>
-    <td>${fmtDate(r.last_seen)}</td>
-    <td><form method="post" action="/admin/delete" onsubmit="return confirm('Supprimer ce profil ?')"><input type="hidden" name="id" value="${esc(r.id)}"><button>Supprimer</button></form></td>
-  </tr>`).join('');
+  const bkSize = backups.reduce((s, b) => s + (b.size || 0), 0);
+  const perPerson = new Map();
+  rows.forEach((r) => perPerson.set(pseudoKey(r.pseudo), (perPerson.get(pseudoKey(r.pseudo)) || 0) + 1));
+
+  const chip = ([k, n]) => `<span class="chip">${esc(k)} <b>${n}</b></span>`;
+  const dist = (title, arr) => arr.length ? `<div class="dist"><span class="dt">${title}</span>${arr.map(chip).join('')}</div>` : '';
+
+  const cards = rows.map((r) => {
+    const key = pseudoKey(r.pseudo), bk = bkBy.get(key), active = within(r, 7), devs = perPerson.get(key);
+    const line = (k, v) => v ? `<div class="l"><dt>${k}</dt><dd>${v}</dd></div>` : '';
+    const scr = r.screen ? esc(r.screen.replace('x', ' × ').replace('@', ' pts · ') + 'x') : '';
+    return `<article class="card">
+  <header><div><b class="who">${esc(r.pseudo)}</b>${devs > 1 ? ` <span class="badge">${devs} appareils</span>` : ''}</div>
+    <span class="dot ${active ? 'on' : ''}">${active ? 'actif' : 'inactif'}</span></header>
+  <p class="seen">Vu ${esc(ago(r.last_seen, now))}</p>
+  <dl>
+    ${line('Appareil', esc(deviceName(r)))}
+    ${line('Écran', scr)}
+    ${line('Utilisation', r.standalone ? '📲 app installée' : '🌐 navigateur')}
+    ${line('Région', esc([r.lang, r.tz].filter(Boolean).join(' · ')))}
+    ${line('Parties', `<b>${r.games}</b>${r.players ? ` · ${r.players} joueur${r.players > 1 ? 's' : ''} différent${r.players > 1 ? 's' : ''}` : ''}`)}
+    ${line('Jeu favori', esc(r.top_game || ''))}
+    ${line('Lancements', r.sessions ? String(r.sessions) : '')}
+    ${line('Dernière partie', r.last_game_at ? esc(ago(r.last_game_at, now)) : '')}
+    ${line('Thème', r.theme === 'dark' ? '🌙 sombre' : r.theme === 'light' ? '☀️ clair' : '')}
+    ${line('Cloud', bk ? `☁️ ${esc(ago(bk.updated_at, now))} · ${(bk.size / 1024).toFixed(0)} Ko · ${bk.games} partie${bk.games > 1 ? 's' : ''}` : 'pas de sauvegarde')}
+    ${line('Inscrit', esc(fmtDate(r.first_seen)))}
+    ${line('Version app', esc(r.app_version || ''))}
+  </dl>
+  <form method="post" action="/admin/delete" onsubmit="return confirm('Supprimer ce profil ?')"><input type="hidden" name="id" value="${esc(r.id)}"><button>Supprimer ce profil</button></form>
+</article>`;
+  }).join('');
+
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ScoreMaster — Communauté</title><meta name="robots" content="noindex">
 <style>
-body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:20px;background:#0f1226;color:#eef;}
-h1{margin:0 0 16px;font-size:22px}
-.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-.stat{background:#1b1f3b;border-radius:14px;padding:14px 18px;min-width:120px}
+:root{color-scheme:dark}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:16px;background:#0f1226;color:#eef;}
+h1{margin:0 0 14px;font-size:22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:#1b1f3b;border-radius:14px;padding:12px 14px}
 .stat b{display:block;font-size:26px;color:#ffd666}.stat span{font-size:12px;color:#aab}
-.wrap{overflow-x:auto;background:#161a33;border-radius:14px}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #262b52;white-space:nowrap}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#aab}
-td.n{text-align:right;font-weight:700}
-button{background:#3a1d2a;color:#ff8a9b;border:1px solid #6b2c3e;border-radius:8px;padding:4px 10px;cursor:pointer}
-a{color:#7fb2ff}.foot{margin-top:14px;font-size:12px;color:#889}
+.dist{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+.dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#889;margin-right:4px}
+.chip{background:#1b1f3b;border-radius:999px;padding:4px 10px;font-size:13px}.chip b{color:#ffd666;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:14px}
+.card{background:#161a33;border-radius:16px;padding:14px 16px;border:1px solid #262b52}
+.card header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.who{font-size:18px}.badge{font-size:11px;background:#2a2f5c;border-radius:999px;padding:2px 8px;color:#bcd}
+.dot{font-size:12px;color:#889}.dot::before{content:"●";margin-right:5px;color:#666}.dot.on{color:#7be0a0}.dot.on::before{color:#37d67a}
+.seen{margin:2px 0 10px;font-size:13px;color:#aab}
+dl{margin:0}.l{display:flex;gap:10px;padding:5px 0;border-top:1px solid #20254a;font-size:14px}
+dt{flex:0 0 108px;color:#889;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}dd{margin:0;flex:1;word-break:break-word}
+form{margin:10px 0 0}button{background:#3a1d2a;color:#ff8a9b;border:1px solid #6b2c3e;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+a{color:#7fb2ff}.foot{margin-top:18px;font-size:12px;color:#889;line-height:1.5}.empty{padding:24px;color:#889}
 </style></head><body>
 <h1>👥 Communauté ScoreMaster</h1>
 <div class="stats">
-<div class="stat"><b>${total}</b><span>profils</span></div>
-<div class="stat"><b>${active}</b><span>actifs (7 j)</span></div>
+<div class="stat"><b>${people.size}</b><span>personnes</span></div>
+<div class="stat"><b>${rows.length}</b><span>appareils</span></div>
+<div class="stat"><b>${rows.filter((r) => within(r, 1)).length}</b><span>actifs (24 h)</span></div>
+<div class="stat"><b>${rows.filter((r) => within(r, 7)).length}</b><span>actifs (7 j)</span></div>
 <div class="stat"><b>${games}</b><span>parties terminées</span></div>
 <div class="stat"><b>${installed}</b><span>apps installées</span></div>
-<div class="stat"><b>${bk.n}</b><span>sauvegardes cloud (${(bk.s / 1024).toFixed(0)} Ko)</span></div>
+<div class="stat"><b>${backups.length}</b><span>sauvegardes cloud (${(bkSize / 1024).toFixed(0)} Ko)</span></div>
 </div>
-<div class="wrap"><table><thead><tr><th>Pseudo</th><th>Appareil</th><th>Usage</th><th>Parties</th><th>Dernière partie</th><th>Inscrit</th><th>Vu</th><th></th></tr></thead>
-<tbody>${body || '<tr><td colspan="8" style="padding:24px;color:#889">Aucun profil pour le moment.</td></tr>'}</tbody></table></div>
-<p class="foot">Export : <a href="/admin?format=csv">CSV</a> · <a href="/admin?format=json">JSON</a> — Données fournies volontairement par les personnes (consentement dans l'app). Chaque personne peut se retirer depuis l'app ; vous pouvez aussi supprimer un profil ici sur demande.</p>
+${dist('Systèmes', tally(rows.map((r) => r.platform)))}
+${dist('Navigateurs', tally(rows.map((r) => r.browser)))}
+${dist('Jeux favoris', tally(rows.map((r) => r.top_game)))}
+<div class="grid">${cards || '<div class="empty">Aucun profil pour le moment.</div>'}</div>
+<p class="foot">Export : <a href="/admin?format=csv">CSV</a> · <a href="/admin?format=json">JSON</a><br>Données fournies volontairement par les personnes (consentement dans l'app). Le modèle d'iPhone est une estimation d'après la taille d'écran : Safari ne communique pas le modèle exact. Chaque personne peut se retirer depuis l'app ; vous pouvez aussi supprimer un profil ici sur demande.</p>
 </body></html>`;
 }
 
@@ -281,13 +355,13 @@ async function admin(request, env, url) {
   const secure = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
   if (fmt === 'json') return json(results, 200, secure);
   if (fmt === 'csv') {
-    const head = ['pseudo', 'plateforme', 'os', 'navigateur', 'modèle', 'installée', 'parties', 'dernière_partie', 'inscrit', 'vu'];
+    const head = ['pseudo', 'plateforme', 'os', 'navigateur', 'modèle', 'écran', 'langue', 'fuseau', 'installée', 'parties', 'joueurs', 'jeu_favori', 'lancements', 'dernière_partie', 'inscrit', 'vu'];
     const lines = [head.join(',')].concat(results.map((r) =>
-      [r.pseudo, r.platform, r.os, r.browser, r.model, r.standalone ? 'oui' : 'non', r.games, r.last_game_at, r.first_seen, r.last_seen].map(csvCell).join(',')));
+      [r.pseudo, r.platform, r.os, r.browser, r.model, r.screen, r.lang, r.tz, r.standalone ? 'oui' : 'non', r.games, r.players, r.top_game, r.sessions, r.last_game_at, r.first_seen, r.last_seen].map(csvCell).join(',')));
     return new Response('﻿' + lines.join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="scoremaster-communaute.csv"', ...secure } });
   }
-  const bk = await env.DB.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(size), 0) AS s FROM backups').first();
-  return new Response(renderDashboard(results, bk), {
+  const { results: bks } = await env.DB.prepare('SELECT pseudo_key, size, games, updated_at FROM backups').all();
+  return new Response(renderDashboard(results, bks), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'", ...secure },
   });
 }

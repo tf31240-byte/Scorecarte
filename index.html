@@ -6714,7 +6714,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             else if (/Mac OS X/.test(ua)) platform = 'macOS';
             else if (/Linux/.test(ua)) platform = 'Linux';
             let m;
-            if (platform === 'iOS' && (m = ua.match(/OS (\d+)[_.](\d+)/))) os = `iOS ${m[1]}.${m[2]}`;
+            if (platform === 'iOS') {
+                // Le « OS 18_x » du user-agent est figé par Apple : la vraie version se lit dans « Version/xx » (Safari).
+                if ((m = ua.match(/Version\/(\d+)(?:\.(\d+))?/))) os = `iOS ${m[1]}${m[2] ? '.' + m[2] : ''}`;
+                else if (window.CSS?.supports?.('anchor-name: --a')) os = 'iOS 26+';          // app installée : pas de « Version/ »
+                else if ((m = ua.match(/OS (\d+)[_.](\d+)/))) os = `iOS ${m[1]}.${m[2]}`;
+                else os = 'iOS';
+            }
             else if (platform === 'Android' && (m = ua.match(/Android (\d+(?:\.\d+)?)/))) os = `Android ${m[1]}`;
             else os = platform;
             if (platform === 'Android' && (m = ua.match(/Android [^;]+; ([^;)]+?)(?: Build|\))/)) && m[1].length > 1) model = m[1].trim();
@@ -6724,6 +6730,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             else if (/Firefox|FxiOS/.test(ua)) browser = 'Firefox';
             else if (/Chrome|CriOS/.test(ua)) browser = 'Chrome';
             else if (/Safari/.test(ua)) browser = 'Safari';
+            else if (platform === 'iOS') browser = 'Safari'; // app installée sur l'écran d'accueil (WebKit sans mention Safari)
             try { // Chrome/Android : modèle et version précis
                 if (navigator.userAgentData?.getHighEntropyValues) {
                     const hv = await navigator.userAgentData.getHighEntropyValues(['model', 'platformVersion']);
@@ -6735,17 +6742,35 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return { platform, os, browser, model, standalone };
         },
 
+        /** Informations détaillées (consentement v2) : écran, langue, fuseau, thème, usage. Aucun nom de joueur. */
+        _detail() {
+            const w = Math.min(screen.width, screen.height), h = Math.max(screen.width, screen.height);
+            const dpr = Math.round((window.devicePixelRatio || 1) * 10) / 10;
+            const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+                || (document.documentElement.getAttribute('data-theme') !== 'light' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+            let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+            const st = this._stats();
+            return { screen: `${w}x${h}@${dpr}`, lang: navigator.language || '', tz, theme: dark ? 'dark' : 'light',
+                     sessions: this.load().sessions || 0, players: st.players, topGame: st.topGame };
+        },
+
         _stats() {
             let games = 0, last = null;
+            const names = new Set(), byGame = {};
             try {
                 Storage.loadGames().forEach(g => {
                     if (!g.finished) return;
                     games++;
+                    (g.state?.players || []).forEach(p => names.add(String(p.name).toLowerCase()));
+                    const k = g.preset || g.mode || 'standard'; byGame[k] = (byGame[k] || 0) + 1;
                     const t = new Date(g.date).getTime();
                     if (!isNaN(t) && (last === null || t > last)) last = t;
                 });
             } catch (e) {}
-            return { games, lastGameAt: last === null ? null : new Date(last).toISOString() };
+            const topKey = Object.entries(byGame).sort((a, b) => b[1] - a[1])[0]?.[0];
+            let topGame = topKey || '';
+            try { topGame = app.getAllPresets()[topKey]?.name || topKey || ''; } catch (e) {}
+            return { games, lastGameAt: last === null ? null : new Date(last).toISOString(), players: names.size, topGame };
         },
 
         async _post(path, body) {
@@ -6772,7 +6797,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 const { games, lastGameAt } = this._stats();
                 const ok = await this._post('/api/profile', {
                     id: st.id, consent: true, pseudo: st.pseudo, device: await this._device(),
-                    games, lastGameAt, appVersion: this.APP_VERSION
+                    games, lastGameAt, appVersion: this.APP_VERSION,
+                    ...(st.consentV >= 2 ? { detail: this._detail() } : {})
                 });
                 if (ok) { st.lastSync = Date.now(); this.save(); }
                 return ok;
@@ -6787,6 +6813,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         init() {
             this.load();
+            if (this.isMember() && this._state.consentV >= 2) { this._state.sessions = (this._state.sessions || 0) + 1; this.save(); }
             this.renderSettings();
             if (!this.enabled) return;
             if (this._state.pendingDelete) this._flushDelete();
@@ -6800,7 +6827,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         enroll(pseudo) {
             const s = this.load();
             s.id = s.id || this._uuid();
-            s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString();
+            s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString(); s.consentV = 2;
             s.declined = false; s.pendingDelete = false; delete s.snoozeUntil; delete s.lastSync;
             this.save();
             return this.sync(true);
@@ -6819,7 +6846,15 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (ok) { delete s.id; delete s.pseudo; delete s.pendingDelete; delete s.lastSync; delete s.consentAt; this.save(); }
             return ok;
         },
-        renderSettings() { const sec = document.getElementById('community-section'); if (sec) sec.style.display = 'none'; }
+        renderSettings() { const sec = document.getElementById('community-section'); if (sec) sec.style.display = 'none'; },
+        /** Profil créé avant l'ajout des informations détaillées : elles ne sont envoyées qu'après accord explicite. */
+        upgradeConsent() {
+            const s = this.load(); if (!s.id) return;
+            s.consentV = 2; s.consentAt = new Date().toISOString(); this.save();
+            this.sync(true);
+            Cloud.renderSettings();
+            UI.showToast('✅ Merci ! Informations détaillées activées', 'success');
+        }
     };
 
     // ======================================================================
@@ -7114,7 +7149,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                         : 'Entrez votre pseudo et votre couleur préférée pour retrouver vos données sur cet appareil.'}</p>
                     ${create ? `<div class="backup-status" style="margin-bottom:12px;">
                         <b>Ce qui est envoyé</b><br>
-                        • votre pseudo, le type de votre appareil (ex. iPhone, Safari), votre nombre de parties et la date de la dernière : visibles par l'éditeur de ScoreMaster<br>
+                        • votre pseudo ; votre appareil (modèle approximatif, système, navigateur, taille d'écran, thème) ; votre langue et fuseau horaire ; app installée ou non : visibles par l'éditeur de ScoreMaster<br>
+                        • des statistiques d'usage : nombre de lancements, de parties, de joueurs différents (sans leurs noms), jeu le plus joué, date de la dernière partie<br>
                         • une copie de vos parties, joueurs et réglages, gardée dans le cloud pour la restauration
                     </div>` : ''}
                     <label for="cloud-pseudo" style="${label}">VOTRE PSEUDO</label>
@@ -7242,8 +7278,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const adv = document.getElementById('cloud-adv-actions');
             if (adv) adv.innerHTML = '';
             if (this.isActive()) {
-                st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, type d'appareil, nombre de parties, date de la dernière partie. Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
-                act.innerHTML = b('Synchroniser maintenant', '🔄', 'Cloud.backup(true)', 'Récupère les parties des autres appareils et envoie les vôtres')
+                st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, appareil, écran, langue et fuseau, statistiques d'usage (lancements, parties, nombre de joueurs, jeu favori). Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
+                act.innerHTML = ((Community.load().consentV || 1) >= 2 ? '' : b('Partager les infos détaillées', '📊', 'Community.upgradeConsent()', 'Écran, langue, lancements, jeu favori… (facultatif, à votre accord)'))
+                    + b('Synchroniser maintenant', '🔄', 'Cloud.backup(true)', 'Récupère les parties des autres appareils et envoie les vôtres')
                     + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud');
                 if (adv) adv.innerHTML = b('Utiliser un autre profil', '🔁', 'Cloud.open(\'enter\')', 'Autre pseudo (ex. une autre personne sur ce téléphone)')
                     + b('Supprimer mon profil', '🗑️', 'Cloud.disable()', 'Efface pseudo et sauvegarde du serveur');
