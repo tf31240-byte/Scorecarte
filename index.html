@@ -7001,6 +7001,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         /** Appareil vide mais profil connu : on propose de retrouver les données (la personne répond oui ou non). */
         async _offerRestore() {
             if (this._askedThisSession || !this.isActive() || this._hasData() || !navigator.onLine) return false;
+            if (this._state.restoreSnoozeUntil && Date.now() < this._state.restoreSnoozeUntil) return false;
             this._askedThisSession = true;
             const { pseudo, color } = this._auth();
             const r = await this._fetch(pseudo, color);
@@ -7049,6 +7050,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const s = this.load();
             if (!s.consent) { s.snoozeUntil = Date.now() + this.SNOOZE_MS; this.save(); }
             this.close();
+        },
+        declineOffer() {
+            const s = this.load(); s.restoreSnoozeUntil = Date.now() + this.SNOOZE_MS; this.save(); this.close();
         },
         decline() {
             const s = this.load(); s.declined = true; this.save(); this.close();
@@ -7143,7 +7147,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <div class="backup-status" style="margin:10px 0 14px;">Sauvegardé le ${escapeHtml(this._fmtDate(meta.updatedAt))}${meta.device ? `<br>depuis : ${escapeHtml(meta.device)}` : ''}</div>
                     ${this._btn('Restaurer', '♻️', 'Cloud.confirmRestore(\'replace\')', local.length ? `Remplace les ${local.length} partie(s) de cet appareil` : 'Récupère toutes vos données', 'primary')}
                     ${local.length ? this._btn('Fusionner', '➕', 'Cloud.confirmRestore(\'merge\')', 'Ajoute seulement les parties absentes', '', fresh === 0 ? 'disabled' : '') : ''}
-                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">${offer ? 'Non merci' : 'Annuler'}</button>`;
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.${offer ? 'declineOffer' : 'close'}()">${offer ? 'Non merci' : 'Annuler'}</button>`;
             }
         },
 

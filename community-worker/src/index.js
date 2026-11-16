@@ -147,7 +147,7 @@ async function backup(request, env, url) {
   if (key.length < 2 || key.length > 30) return json({ error: 'pseudo invalide' }, 400, cors);
   const pseudo = clean(b.pseudo, 30);
   const now = Date.now();
-  const row = await env.DB.prepare('SELECT * FROM backups WHERE pseudo_key = ?').bind(key).first();
+  const row = await env.DB.prepare('SELECT pseudo_key, pseudo, salt, color_hash, fails, locked_until, enc, size, games, device, app_version, updated_at FROM backups WHERE pseudo_key = ?').bind(key).first();
 
   if (action === 'check') return json({ ok: true, exists: !!row }, 200, cors);
 
@@ -192,7 +192,7 @@ async function backup(request, env, url) {
   if (action === 'get' || action === 'info') {
     if (!row) return json({ error: 'introuvable' }, 404, cors);
     const out = { ok: true, pseudo: row.pseudo, enc: row.enc, size: row.size, games: row.games, device: row.device, appVersion: row.app_version, updatedAt: row.updated_at };
-    if (action === 'get') out.payload = row.payload;
+    if (action === 'get') out.payload = (await env.DB.prepare('SELECT payload FROM backups WHERE pseudo_key = ?').bind(key).first())?.payload;
     return json(out, 200, cors);
   }
   if (action === 'delete') {
