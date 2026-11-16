@@ -1350,6 +1350,8 @@ body::before {
 
 /* Sections paramètres */
 .settings-section { margin-bottom: 20px; }
+.settings-advanced summary::-webkit-details-marker { display: none; }
+.settings-advanced[open] summary > span[aria-hidden] { transform: rotate(180deg); }
 .settings-section-title {
     font-size: 12px;
     font-weight: 800;
@@ -1643,17 +1645,6 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <button onclick="UI.closeSettings()" class="btn-icon" >✕</button>
             </div>
 
-            <div class="settings-section">
-                <div class="settings-section-title">💾 Sauvegarde</div>
-                <div class="settings-row" style="cursor:pointer;" onclick="UI.showBackup()">
-                    <div class="settings-label">
-                        <div class="settings-name">💾 Sauvegarde &amp; export</div>
-                        <div class="settings-desc">Sauvegarder, exporter en tableur, restaurer</div>
-                    </div>
-                    <div class="icon-primary">→</div>
-                </div>
-            </div>
-
             <div class="settings-section" id="cloud-section" style="display:none;">
                 <div class="settings-section-title">☁️ Mon profil &amp; sauvegarde</div>
                 <div id="cloud-status" class="settings-desc" style="margin-bottom:10px;"></div>
@@ -1739,23 +1730,35 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
-            <div class="settings-section">
-                <div class="settings-section-title">🔧 Avancé</div>
-                <div class="settings-row" style="cursor:pointer;" onclick="app.clearRecentPlayers()">
-                    <div class="settings-label">
-                        <div class="settings-name">🗑️ Effacer joueurs récents</div>
-                        <div class="settings-desc">Vider la liste des noms suggérés</div>
+            <details class="settings-section settings-advanced">
+                <summary class="settings-section-title" style="cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🔧 Paramètres avancés</span><span aria-hidden="true">▾</span>
+                </summary>
+                <div style="margin-top:10px;">
+                    <div class="settings-row" style="cursor:pointer;" onclick="UI.showBackup()">
+                        <div class="settings-label">
+                            <div class="settings-name">💾 Fichier de sauvegarde &amp; export</div>
+                            <div class="settings-desc">Exporter/importer un fichier, exporter en tableur (sans compte, sans cloud)</div>
+                        </div>
+                        <div class="icon-primary">→</div>
                     </div>
-                    <div class="icon-primary">→</div>
-                </div>
-                <div class="settings-row" style="cursor:pointer;" onclick="app.resetStats()">
-                    <div class="settings-label">
-                        <div class="settings-name">📊 Réinitialiser les stats</div>
-                        <div class="settings-desc">Remettre à zéro les classements</div>
+                    <div id="cloud-adv-actions"></div>
+                    <div class="settings-row" style="cursor:pointer;" onclick="app.clearRecentPlayers()">
+                        <div class="settings-label">
+                            <div class="settings-name">🗑️ Effacer joueurs récents</div>
+                            <div class="settings-desc">Vider la liste des noms suggérés</div>
+                        </div>
+                        <div class="icon-primary">→</div>
                     </div>
-                    <div class="icon-primary">→</div>
+                    <div class="settings-row" style="cursor:pointer;" onclick="app.resetStats()">
+                        <div class="settings-label">
+                            <div class="settings-name">📊 Réinitialiser les stats</div>
+                            <div class="settings-desc">Remettre à zéro les classements</div>
+                        </div>
+                        <div class="icon-primary">→</div>
+                    </div>
                 </div>
-            </div>
+            </details>
 
             <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. La fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie (Cloudflare Web Analytics). Rien d'autre n'est envoyé, sauf si vous créez un profil (facultatif, ci-dessus).</p>
         </div>
@@ -6928,6 +6931,22 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         // ---------- Sauvegarde ----------
+        /** Multi-appareils : si un autre appareil a sauvegardé depuis, ajoute ses parties absentes ici (par identifiant). */
+        async _pullOthers() {
+            const st = this._state;
+            const i = await this._call('/api/backup/info', this._auth());
+            if (!i.ok || !i.json?.updatedAt || i.json.updatedAt === st.lastBackupAt) return 0;
+            const r = await this._fetch(st.pseudo, st.color);
+            if (r.error || !Array.isArray(r.data?.games)) return 0;
+            const local = Storage.loadGames();
+            const ids = new Set(local.map(g => String(g.id)));
+            const added = r.data.games.filter(g => g && !ids.has(String(g.id)));
+            if (!added.length) return 0;
+            Storage.importGames([...local, ...added]);
+            try { app.renderGamesList(); } catch (e) {}
+            UI.showToast(`☁️ ${added.length} partie(s) d'un autre appareil ajoutée(s)`, 'success');
+            return added.length;
+        },
         /** Envoie la sauvegarde. manual = true : retour visuel et envoi même sans changement. */
         async backup(manual = false) {
             if (!this.enabled || !this.isActive() || this._busy) return false;
@@ -6936,6 +6955,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this._busy = true; this._lastAttempt = Date.now();
             try {
                 const st = this._state;
+                try { await this._pullOthers(); } catch (e) {}
                 const text = this._snapshot();
                 const fp = this._fingerprint(text);
                 if (!manual && fp === st.lastHash) return true;
@@ -7001,7 +7021,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 if (this._state.pendingDelete) this._flushDelete(); else this.backupSoon(2000);
             });
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden' && Date.now() - this._lastAttempt > this.AUTO_MIN_INTERVAL) this.backup(false);
+                if (Date.now() - this._lastAttempt <= this.AUTO_MIN_INTERVAL) return;
+                if (document.visibilityState === 'hidden') this.backup(false);
+                else if (this.isActive()) this.backupSoon(2500); // retour sur l'app : récupère les parties des autres appareils
             });
             if (this.isActive()) {
                 if (await this._offerRestore()) return;
@@ -7205,11 +7227,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const st = document.getElementById('cloud-status');
             const act = document.getElementById('cloud-actions');
             const b = (l, i, f, sub) => this._btn(l, i, f, sub);
+            const adv = document.getElementById('cloud-adv-actions');
+            if (adv) adv.innerHTML = '';
             if (this.isActive()) {
                 st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, type d'appareil, nombre de parties, date de la dernière partie. Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
-                act.innerHTML = b('Sauvegarder maintenant', '⬆️', 'Cloud.backup(true)', 'Envoyer une copie à jour')
-                    + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud')
-                    + b('Changer de profil', '🔁', 'Cloud.open(\'enter\')', 'Retrouver un autre pseudo')
+                act.innerHTML = b('Synchroniser maintenant', '🔄', 'Cloud.backup(true)', 'Récupère les parties des autres appareils et envoie les vôtres')
+                    + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud');
+                if (adv) adv.innerHTML = b('Utiliser un autre profil', '🔁', 'Cloud.open(\'enter\')', 'Autre pseudo (ex. une autre personne sur ce téléphone)')
                     + b('Supprimer mon profil', '🗑️', 'Cloud.disable()', 'Efface pseudo et sauvegarde du serveur');
             } else if (s.pendingDelete) {
                 st.textContent = '⏳ Suppression en cours : elle sera finalisée dès que la connexion revient.';
