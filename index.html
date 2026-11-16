@@ -2607,6 +2607,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 endCondition:     game.endCondition || { type: END_FREE, value: null },
                 finished:         Boolean(game.finished),
                 preset:           game.preset || null,
+                ...(game.lastModified ? { lastModified: String(game.lastModified) } : {}),
                 state: this._buildSanitizedState(game)
             };
         },
@@ -6939,13 +6940,20 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const r = await this._fetch(st.pseudo, st.color);
             if (r.error || !Array.isArray(r.data?.games)) return 0;
             const local = Storage.loadGames();
-            const ids = new Set(local.map(g => String(g.id)));
-            const added = r.data.games.filter(g => g && !ids.has(String(g.id)));
-            if (!added.length) return 0;
-            Storage.importGames([...local, ...added]);
+            const byId = new Map(local.map(g => [String(g.id), g]));
+            const added = [], newer = new Map();
+            r.data.games.forEach(g => {
+                if (!g) return;
+                const mine = byId.get(String(g.id));
+                if (!mine) added.push(g);
+                else if (g.lastModified && (!mine.lastModified || g.lastModified > mine.lastModified)) newer.set(String(g.id), g); // plus récente ailleurs
+            });
+            if (!added.length && !newer.size) return 0;
+            Storage.importGames([...local.map(g => newer.get(String(g.id)) || g), ...added]);
             try { app.renderGamesList(); } catch (e) {}
-            UI.showToast(`☁️ ${added.length} partie(s) d'un autre appareil ajoutée(s)`, 'success');
-            return added.length;
+            const n = added.length + newer.size;
+            UI.showToast(`☁️ ${n} partie(s) mise(s) à jour depuis un autre appareil`, 'success');
+            return n;
         },
         /** Envoie la sauvegarde. manual = true : retour visuel et envoi même sans changement. */
         async backup(manual = false) {
