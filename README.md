@@ -42,3 +42,5 @@ L'app inclut [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics
 ## Communauté (facultatif)
 
 Sur le principe du volontariat, une personne peut rejoindre la communauté depuis l'app (pseudo + consentement explicite) ; l'éditeur voit alors son pseudo, son type d'appareil, son nombre de parties et la date de sa dernière partie. Détails, déploiement et sécurité : [`community-worker/README.md`](community-worker/README.md).
+
+**Sauvegarde cloud (facultative)** : dans Paramètres, l'utilisateur peut activer une copie de ses parties dans Cloudflare. Un navigateur ne pouvant pas identifier un téléphone de façon fiable, l'appareil est « reconnu » grâce à un **code de récupération** personnel (20 caractères) créé et mémorisé sur l'appareil : restauration automatique si l'appareil est vide, restauration manuelle avec le code sur un nouvel appareil, bouton « Sauvegarder maintenant ». Le serveur ne conserve que l'empreinte SHA-256 du code.

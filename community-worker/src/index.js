@@ -2,12 +2,19 @@
 // Routes :
 //   POST /api/profile         crée/met à jour le profil de la personne (consentement donné dans l'app)
 //   POST /api/profile/delete  supprime le profil (retrait du consentement)
+//   POST /api/backup/put      enregistre la sauvegarde cloud (clé = code de récupération)
+//   POST /api/backup/get      récupère la sauvegarde complète
+//   POST /api/backup/info     métadonnées seulement (date, appareil, nb de parties)
+//   POST /api/backup/delete   supprime la sauvegarde
 //   GET  /admin               tableau de bord (Basic Auth : mot de passe = secret ADMIN_KEY)
 //   POST /admin/delete        suppression manuelle d'un profil depuis le tableau de bord
 //   GET  /admin?format=json|csv
 
 const MAX_BODY = 2048;
 const MAX_PROFILES = 5000;
+const MAX_BACKUPS = 2000;
+const MAX_BACKUP_BODY = 1_500_000;   // ~1,5 Mo (limite de ligne D1 : 2 Mo)
+const MIN_BACKUP_INTERVAL_MS = 4000; // anti-rafale : une écriture toutes les 4 s au plus par sauvegarde
 
 // ---------- utilitaires ----------
 const clean = (v, max) => String(v ?? '').replace(/[\u0000-\u001f\u007f<>"'&`\\]/g, '').trim().slice(0, max);
@@ -104,6 +111,68 @@ async function deleteProfile(request, env) {
   return json({ ok: true }, 200, cors);
 }
 
+
+// ---------- sauvegarde cloud ----------
+// Le code de récupération (20 caractères, ~100 bits) est la seule clé : le serveur n'en garde que l'empreinte SHA-256.
+const CODE_RE = /^[0-9A-HJKMNP-TV-Z]{20}$/;
+const normCode = (v) => String(v ?? '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, '');
+
+async function codeHash(code) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('scoremaster-backup:' + code));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function readBackupBody(request, max) {
+  const text = await request.text();
+  if (text.length > max) throw new Error('payload trop gros');
+  return JSON.parse(text);
+}
+
+async function backup(request, env, url) {
+  const cors = corsHeaders(request, env);
+  if (!cors['Access-Control-Allow-Origin']) return json({ error: 'origine non autorisée' }, 403);
+  const action = url.pathname.replace('/api/backup/', '');
+  let b;
+  try { b = await readBackupBody(request, action === 'put' ? MAX_BACKUP_BODY : MAX_BODY); }
+  catch (e) { return json({ error: e.message === 'payload trop gros' ? 'payload trop gros' : 'requête invalide' }, e.message === 'payload trop gros' ? 413 : 400, cors); }
+  const code = normCode(b.code);
+  if (!CODE_RE.test(code)) return json({ error: 'code invalide' }, 400, cors);
+  const hash = await codeHash(code);
+  const now = new Date().toISOString();
+
+  if (action === 'put') {
+    if (typeof b.payload !== 'string' || !b.payload.length) return json({ error: 'sauvegarde vide' }, 400, cors);
+    const enc = b.enc === 'gzip' ? 'gzip' : 'json';
+    const games = Math.max(0, Math.min(100000, parseInt(b.meta?.games, 10) || 0));
+    const device = clean(b.meta?.device, 80);
+    const row = await env.DB.prepare('SELECT updated_at FROM backups WHERE code_hash = ?').bind(hash).first();
+    if (row) {
+      if (Date.now() - new Date(row.updated_at).getTime() < MIN_BACKUP_INTERVAL_MS) return json({ error: 'trop rapide' }, 429, cors);
+    } else {
+      const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM backups').first();
+      if (n >= MAX_BACKUPS) return json({ error: 'capacité atteinte' }, 503, cors);
+    }
+    await env.DB.prepare(
+      `INSERT INTO backups (code_hash, payload, enc, size, games, device, app_version, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)
+       ON CONFLICT(code_hash) DO UPDATE SET payload = ?2, enc = ?3, size = ?4, games = ?5, device = ?6, app_version = ?7, updated_at = ?8`
+    ).bind(hash, b.payload, enc, b.payload.length, games, device, clean(b.meta?.appVersion, 20), now).run();
+    return json({ ok: true, updatedAt: now }, 200, cors);
+  }
+  if (action === 'get' || action === 'info') {
+    const r = await env.DB.prepare(`SELECT ${action === 'get' ? 'payload,' : ''} enc, size, games, device, app_version, updated_at FROM backups WHERE code_hash = ?`).bind(hash).first();
+    if (!r) return json({ error: 'introuvable' }, 404, cors);
+    const out = { ok: true, enc: r.enc, size: r.size, games: r.games, device: r.device, appVersion: r.app_version, updatedAt: r.updated_at };
+    if (action === 'get') out.payload = r.payload;
+    return json(out, 200, cors);
+  }
+  if (action === 'delete') {
+    await env.DB.prepare('DELETE FROM backups WHERE code_hash = ?').bind(hash).run();
+    return json({ ok: true }, 200, cors);
+  }
+  return json({ error: 'action inconnue' }, 404, cors);
+}
+
 // ---------- tableau de bord ----------
 const fmtDate = (iso) => {
   if (!iso) return '—';
@@ -111,7 +180,7 @@ const fmtDate = (iso) => {
   return isNaN(d) ? '—' : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' });
 };
 
-function renderDashboard(rows) {
+function renderDashboard(rows, bk) {
   const total = rows.length;
   const week = Date.now() - 7 * 86400000;
   const active = rows.filter((r) => new Date(r.last_seen).getTime() >= week).length;
@@ -149,6 +218,7 @@ a{color:#7fb2ff}.foot{margin-top:14px;font-size:12px;color:#889}
 <div class="stat"><b>${active}</b><span>actifs (7 j)</span></div>
 <div class="stat"><b>${games}</b><span>parties terminées</span></div>
 <div class="stat"><b>${installed}</b><span>apps installées</span></div>
+<div class="stat"><b>${bk.n}</b><span>sauvegardes cloud (${(bk.s / 1024).toFixed(0)} Ko)</span></div>
 </div>
 <div class="wrap"><table><thead><tr><th>Pseudo</th><th>Appareil</th><th>Usage</th><th>Parties</th><th>Dernière partie</th><th>Inscrit</th><th>Vu</th><th></th></tr></thead>
 <tbody>${body || '<tr><td colspan="8" style="padding:24px;color:#889">Aucun profil pour le moment.</td></tr>'}</tbody></table></div>
@@ -187,7 +257,8 @@ async function admin(request, env, url) {
       [r.pseudo, r.platform, r.os, r.browser, r.model, r.standalone ? 'oui' : 'non', r.games, r.last_game_at, r.first_seen, r.last_seen].map(csvCell).join(',')));
     return new Response('﻿' + lines.join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="scoremaster-communaute.csv"', ...secure } });
   }
-  return new Response(renderDashboard(results), {
+  const bk = await env.DB.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(size), 0) AS s FROM backups').first();
+  return new Response(renderDashboard(results, bk), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'", ...secure },
   });
 }
@@ -200,6 +271,7 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(request, env) });
       if (url.pathname === '/api/profile' && request.method === 'POST') return await upsertProfile(request, env);
       if (url.pathname === '/api/profile/delete' && request.method === 'POST') return await deleteProfile(request, env);
+      if (/^\/api\/backup\/(put|get|info|delete)$/.test(url.pathname) && request.method === 'POST') return await backup(request, env, url);
       if (url.pathname.startsWith('/admin')) return await admin(request, env, url);
       if (url.pathname === '/') return new Response('ScoreMaster community API', { headers: { 'Content-Type': 'text/plain' } });
       return new Response('Not found', { status: 404 });

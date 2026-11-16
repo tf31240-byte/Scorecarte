@@ -15,3 +15,16 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_seen    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_profiles_last_seen ON profiles(last_seen);
+
+-- Sauvegardes cloud : une ligne par code de récupération (seule l'empreinte du code est conservée)
+CREATE TABLE IF NOT EXISTS backups (
+  code_hash   TEXT PRIMARY KEY,   -- SHA-256 du code de récupération
+  payload     TEXT NOT NULL,      -- sauvegarde (JSON, éventuellement gzip + base64)
+  enc         TEXT NOT NULL,      -- 'json' ou 'gzip'
+  size        INTEGER NOT NULL,
+  games       INTEGER NOT NULL DEFAULT 0,
+  device      TEXT,               -- libellé de l'appareil ayant fait la sauvegarde
+  app_version TEXT,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);

@@ -1660,6 +1660,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div id="community-actions"></div>
             </div>
 
+            <div class="settings-section" id="cloud-section" style="display:none;">
+                <div class="settings-section-title">☁️ Sauvegarde cloud</div>
+                <div id="cloud-status" class="settings-desc" style="margin-bottom:10px;"></div>
+                <div id="cloud-actions"></div>
+            </div>
+
             <div class="settings-section">
                 <div class="settings-section-title">Apparence</div>
                 <div class="settings-row">
@@ -1798,6 +1804,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <button class="btn-modal-cancel" style="flex:1;" onclick="Community.later()">Plus tard</button>
                 <button class="btn-modal-cancel" style="flex:1;" onclick="Community.decline()">Non merci</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Cloud backup modal -->
+    <div id="cloud-modal" class="modal-overlay" onclick="if(event.target===this) Cloud.close()">
+        <div class="modal-box large" style="max-height:85vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2 style="margin:0">☁️ Sauvegarde cloud</h2>
+                <button onclick="Cloud.close()" class="btn-icon" aria-label="Fermer">✕</button>
+            </div>
+            <div id="cloud-body"></div>
         </div>
     </div>
 
@@ -3883,6 +3900,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         showVictory(winner, score, state) {
             SoundFX.success();
             Community.syncSoon();
+            Cloud.backupSoon();
             const overlay = document.getElementById('victory');
             const isLowest = state.victoryCondition === VC_LOWEST;
             const sorted = GameState.getSortedPlayers(state);
@@ -6916,6 +6934,363 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         }
     };
 
+    // ======================================================================
+    // SAUVEGARDE CLOUD (facultative, code de récupération)
+    // Le code (20 caractères) est généré ici et sert de clé : le serveur n'en garde que l'empreinte.
+    // Sans le code, personne (pas même l'éditeur) ne peut lire la sauvegarde via l'app.
+    // ======================================================================
+    const Cloud = {
+        KEY: 'sm_cloud',
+        ALPHABET: '0123456789ABCDEFGHJKMNPQRSTVWXYZ',
+        MAX_CHARS: 1400000,
+        AUTO_MIN_INTERVAL: 20000,
+        _state: null, _busy: false, _timer: null, _pending: null, _lastAttempt: 0,
+
+        get apiUrl() { return Community.API_URL; },
+        get enabled() { return !!this.apiUrl; },
+
+        load() {
+            try {
+                const s = JSON.parse(localStorage.getItem(this.KEY) || 'null');
+                this._state = (s && typeof s === 'object') ? s : {};
+            } catch (e) { this._state = {}; }
+            return this._state;
+        },
+        save() { try { localStorage.setItem(this.KEY, JSON.stringify(this._state)); } catch (e) {} },
+        isActive() { const s = this.load(); return !!s.code && s.consent === true; },
+
+        // ---------- Code de récupération ----------
+        _newCode() {
+            const b = crypto.getRandomValues(new Uint8Array(20));
+            return [...b].map(x => this.ALPHABET[x & 31]).join('');
+        },
+        _norm(v) { return String(v || '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, ''); },
+        _validCode(c) { return /^[0-9A-HJKMNP-TV-Z]{20}$/.test(c); },
+        _fmt(c) { return (c.match(/.{1,4}/g) || []).join('-'); },
+
+        // ---------- Réseau ----------
+        async _call(path, body) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 20000);
+            try {
+                const res = await fetch(this.apiUrl.replace(/\/$/, '') + path, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body), signal: ctrl.signal, credentials: 'omit', referrerPolicy: 'no-referrer'
+                });
+                let j = null; try { j = await res.json(); } catch (e) {}
+                return { ok: res.ok, status: res.status, json: j };
+            } catch (e) { return { ok: false, status: 0, json: null }; }
+            finally { clearTimeout(timer); }
+        },
+
+        // ---------- Compression ----------
+        async _pack(text) {
+            if (typeof CompressionStream === 'undefined') return { enc: 'json', payload: text };
+            try {
+                const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+                const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+                let bin = '';
+                for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+                return { enc: 'gzip', payload: btoa(bin) };
+            } catch (e) { return { enc: 'json', payload: text }; }
+        },
+        async _unpack(payload, enc) {
+            if (enc !== 'gzip') return JSON.parse(payload);
+            const bin = atob(payload);
+            const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+            const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+            return JSON.parse(await new Response(stream).text());
+        },
+        _fingerprint(s) {
+            let h = 5381;
+            for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+            return `${s.length}:${h}`;
+        },
+
+        // ---------- Données locales ----------
+        _hasData() {
+            try {
+                return Storage.loadGames().length > 0
+                    || (app.savedPlayers || []).length > 0
+                    || Object.keys(app._readJsonKey(Storage.CUSTOM_PRESETS_KEY, {})).length > 0;
+            } catch (e) { return false; }
+        },
+        _snapshot() {
+            const data = app._buildExportData(Storage.loadCurrentGame());
+            delete data.exportDate;
+            return JSON.stringify(data);
+        },
+        async _deviceLabel() {
+            try {
+                const d = await Community._device();
+                return [d.model || d.platform, d.browser].filter(Boolean).join(' · ').slice(0, 60);
+            } catch (e) { return ''; }
+        },
+        _fmtDate(iso) {
+            const d = new Date(iso);
+            return isNaN(d) ? 'date inconnue' : d.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+        },
+
+        // ---------- Sauvegarde ----------
+        /** Envoie la sauvegarde. manual = true : retour visuel et envoi même sans changement. */
+        async backup(manual = false) {
+            if (!this.enabled || !this.isActive() || this._busy) return false;
+            if (!navigator.onLine) { if (manual) UI.showToast('📵 Pas de connexion — réessayez plus tard', 'warning'); return false; }
+            if (!this._hasData()) { if (manual) UI.showToast('Rien à sauvegarder pour le moment', 'info'); return false; }
+            this._busy = true; this._lastAttempt = Date.now();
+            try {
+                const st = this._state;
+                const text = this._snapshot();
+                const fp = this._fingerprint(text);
+                if (!manual && fp === st.lastHash) return true;
+                const { enc, payload } = await this._pack(text);
+                if (payload.length > this.MAX_CHARS) {
+                    if (manual) UI.showToast('❌ Sauvegarde trop volumineuse pour le cloud — utilisez l\'export fichier', 'error');
+                    return false;
+                }
+                const r = await this._call('/api/backup/put', {
+                    code: st.code, payload, enc,
+                    meta: { games: Storage.loadGames().length, device: await this._deviceLabel(), appVersion: Community.APP_VERSION }
+                });
+                if (r.ok) {
+                    st.lastHash = fp; st.lastBackupAt = r.json?.updatedAt || new Date().toISOString(); st.lastError = null; this.save();
+                    this.renderSettings();
+                    if (manual) UI.showToast('☁️ Sauvegarde envoyée', 'success');
+                    return true;
+                }
+                if (manual) UI.showToast(r.status === 429 ? '⏳ Un instant, puis réessayez' : '❌ Sauvegarde cloud impossible pour le moment', 'error');
+                return false;
+            } finally { this._busy = false; }
+        },
+        backupSoon(delay = 5000) {
+            if (!this.enabled || !this.isActive()) return;
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => this.backup(false), delay);
+        },
+
+        // ---------- Restauration ----------
+        async _fetch(code) {
+            const r = await this._call('/api/backup/get', { code });
+            if (!r.ok) return { error: r.status === 404 ? 'notfound' : (r.status === 0 ? 'offline' : 'error') };
+            try {
+                const data = await this._unpack(r.json.payload, r.json.enc);
+                app._validateImportData(data);
+                return { data, meta: r.json };
+            } catch (e) { return { error: 'corrupt' }; }
+        },
+        _apply(data, meta, mode) {
+            data.exportDate = meta?.updatedAt || data.exportDate;
+            app._restoreImportedData(data, mode);
+        },
+        /** Restauration automatique : uniquement si cet appareil n'a plus aucune donnée et connaît déjà son code. */
+        async _autoRestore() {
+            if (!this.isActive() || this._hasData() || !navigator.onLine) return false;
+            const r = await this._fetch(this._state.code);
+            if (r.error || !r.data) return false;
+            if (this._hasData()) return false; // l'utilisateur a commencé à jouer entre-temps
+            this._state.lastBackupAt = r.meta.updatedAt; this._state.lastHash = null; this.save();
+            this._apply(r.data, r.meta, 'replace');
+            setTimeout(() => UI.showToast('☁️ Vos données ont été restaurées depuis le cloud', 'success'), 900);
+            return true;
+        },
+
+        // ---------- Initialisation ----------
+        async init() {
+            this.load();
+            this.renderSettings();
+            if (!this.enabled) return;
+            if (this._state.pendingDelete) this._flushDelete();
+            window.addEventListener('online', () => {
+                if (this._state.pendingDelete) this._flushDelete(); else this.backupSoon(2000);
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden' && Date.now() - this._lastAttempt > this.AUTO_MIN_INTERVAL) this.backup(false);
+            });
+            if (this.isActive()) {
+                if (await this._autoRestore()) return;
+                this.backupSoon(6000);
+            }
+        },
+
+        // ---------- Fenêtre ----------
+        _el() { return document.getElementById('cloud-body'); },
+        open(view = 'intro') {
+            UI._close('settings-modal');
+            UI._open('cloud-modal');
+            this._pending = null;
+            this._view(view);
+        },
+        close() { UI._close('cloud-modal'); this._pending = null; this.renderSettings(); },
+        _btn(label, icon, fn, sub, cls = '', extra = '') {
+            return `<button class="backup-action ${cls}" onclick="${fn}" ${extra}><span class="ba-icon">${icon}</span><span class="ba-text"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span></button>`;
+        },
+        _view(name, ctx = {}) {
+            const el = this._el(); if (!el) return;
+            const input = 'width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-size:17px; font-weight:800; background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px; font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:1px; text-align:center;';
+            if (name === 'intro') {
+                el.innerHTML = `
+                    <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Gardez une copie de vos parties dans le cloud pour les retrouver si vous changez de téléphone ou perdez vos données.</p>
+                    <div class="backup-status" style="margin-bottom:10px;"><b>Ce qui est sauvegardé</b><br>vos parties (scores, noms des joueurs), vos joueurs enregistrés, vos jeux personnalisés et vos réglages.</div>
+                    <div class="backup-status" style="margin-bottom:12px;"><b>Comment ça marche</b><br>Un <b>code de récupération</b> personnel est créé sur cet appareil. Ce code est la seule clé de votre sauvegarde : notez-le bien, il ne peut pas être retrouvé s'il est perdu. Un navigateur ne peut pas identifier votre téléphone de façon fiable : c'est le code qui permet de retrouver vos données sur un nouvel appareil.</div>
+                    <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin-bottom:14px; cursor:pointer;">
+                        <input type="checkbox" id="cloud-consent" onchange="document.getElementById('cloud-go').disabled=!this.checked" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
+                        <span>J'accepte que mes parties et mes noms de joueurs soient envoyés et conservés sur les serveurs de l'éditeur (Cloudflare) tant que la sauvegarde cloud est activée. Je peux la désactiver à tout moment : la copie est alors supprimée.</span>
+                    </label>
+                    ${this._btn('Activer et créer mon code', '☁️', 'Cloud.activate()', 'Première sauvegarde immédiate', 'primary', 'id="cloud-go" disabled')}
+                    <button class="btn-modal-cancel" style="width:100%; margin-bottom:8px;" onclick="Cloud._view('enter')">J'ai déjà un code (restaurer)</button>
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Plus tard</button>`;
+            } else if (name === 'code') {
+                const code = this._fmt(this._state.code);
+                el.innerHTML = `
+                    <p style="margin:0 0 10px; font-size:14px; line-height:1.45;">✅ Sauvegarde activée. Voici votre <b>code de récupération</b> :</p>
+                    <div id="cloud-code" style="${input} font-size:20px; padding:16px 8px; user-select:all; -webkit-user-select:all;">${escapeHtml(code)}</div>
+                    <div class="backup-status" style="margin-bottom:12px;">⚠️ Notez-le dans un endroit sûr (gestionnaire de mots de passe, note, capture d'écran). Toute personne qui possède ce code peut lire votre sauvegarde ; sans lui, elle est introuvable.</div>
+                    ${this._btn('Copier le code', '📋', 'Cloud.copyCode()', '')}
+                    ${navigator.share ? this._btn('Envoyer à moi-même', '📤', 'Cloud.shareCode()', 'Message, notes, e-mail…') : ''}
+                    <label style="display:flex; gap:10px; align-items:center; font-size:13px; margin:12px 0; cursor:pointer;">
+                        <input type="checkbox" onchange="document.getElementById('cloud-done').disabled=!this.checked" style="width:18px; height:18px;">
+                        <span>J'ai noté mon code</span>
+                    </label>
+                    <button class="btn-modal-cancel" id="cloud-done" style="width:100%;" onclick="Cloud.close()" disabled>Terminer</button>`;
+            } else if (name === 'enter') {
+                el.innerHTML = `
+                    <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Saisissez votre code de récupération pour retrouver vos données sur cet appareil.</p>
+                    <input type="text" id="cloud-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" style="${input}" oninput="Cloud._onInput(this)">
+                    <div id="cloud-msg" style="font-size:13px; min-height:18px; margin-bottom:10px; color:var(--danger, #e74c3c);"></div>
+                    ${this._btn('Retrouver ma sauvegarde', '🔎', 'Cloud.lookup()', 'Rien n\'est modifié avant votre confirmation', 'primary', 'id="cloud-find" disabled')}
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Annuler</button>`;
+                setTimeout(() => document.getElementById('cloud-code-input')?.focus(), 50);
+            } else if (name === 'preview') {
+                const { data, meta } = this._pending;
+                const n = Array.isArray(data.games) ? data.games.length : 0;
+                const ids = new Set(Storage.loadGames().map(g => String(g.id)));
+                const fresh = (data.games || []).filter(g => g && !ids.has(String(g.id))).length;
+                const local = Storage.loadGames().length;
+                el.innerHTML = `
+                    <div class="backup-stats">
+                        <div><b>${n}</b><span>parties dans la sauvegarde</span></div>
+                        <div><b>${fresh}</b><span>nouvelles pour cet appareil</span></div>
+                    </div>
+                    <div class="backup-status" style="margin:10px 0 14px;">Sauvegardé le ${escapeHtml(this._fmtDate(meta.updatedAt))}${meta.device ? `<br>depuis : ${escapeHtml(meta.device)}` : ''}</div>
+                    ${this._btn('Restaurer', '♻️', 'Cloud.confirmRestore(\'replace\')', local ? `Remplace les ${local} partie(s) de cet appareil` : 'Récupère toutes vos données', 'primary')}
+                    ${this._btn('Fusionner', '➕', 'Cloud.confirmRestore(\'merge\')', 'Ajoute seulement les parties absentes', '', fresh === 0 ? 'disabled' : '')}
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Annuler</button>`;
+            }
+        },
+        _onInput(inp) {
+            const c = this._norm(inp.value).slice(0, 20);
+            inp.value = this._fmt(c);
+            document.getElementById('cloud-find').disabled = !this._validCode(c);
+            const m = document.getElementById('cloud-msg'); if (m) m.textContent = '';
+        },
+        async copyCode() {
+            const code = this._fmt(this._state.code);
+            try { await navigator.clipboard.writeText(code); UI.showToast('📋 Code copié', 'success'); return; } catch (e) {}
+            try {
+                const r = document.createRange(); r.selectNodeContents(document.getElementById('cloud-code'));
+                const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+                UI.showToast('Code sélectionné : copiez-le', 'info');
+            } catch (e) {}
+        },
+        async shareCode() {
+            try { await navigator.share({ title: 'ScoreMaster', text: `Mon code de récupération ScoreMaster : ${this._fmt(this._state.code)}` }); }
+            catch (e) { /* annulé */ }
+        },
+
+        // ---------- Actions ----------
+        async activate() {
+            if (!document.getElementById('cloud-consent')?.checked) return;
+            const s = this.load();
+            if (s.code) { this._view('code'); return; }
+            s.code = this._newCode(); s.consent = true; s.consentAt = new Date().toISOString();
+            s.lastHash = null; delete s.pendingDelete; this.save();
+            this._view('code');
+            this.renderSettings();
+            const ok = await this.backup(true);
+            if (!ok) UI.showToast('☁️ Activé — la première sauvegarde partira dès que possible', 'info');
+        },
+        async lookup() {
+            const code = this._norm(document.getElementById('cloud-code-input')?.value);
+            const msg = document.getElementById('cloud-msg');
+            if (!this._validCode(code)) return;
+            if (!navigator.onLine) { msg.textContent = '📵 Pas de connexion.'; return; }
+            const btn = document.getElementById('cloud-find'); btn.disabled = true;
+            const r = await this._fetch(code);
+            if (r.error) {
+                btn.disabled = false;
+                msg.textContent = { notfound: 'Aucune sauvegarde trouvée pour ce code. Vérifiez la saisie.', offline: 'Serveur injoignable, réessayez.', corrupt: 'Sauvegarde illisible.', error: 'Erreur du serveur, réessayez.' }[r.error];
+                return;
+            }
+            this._pending = { ...r, code };
+            this._view('preview');
+        },
+        async restoreFromCloud() { // bouton Paramètres : relit la sauvegarde liée à cet appareil
+            if (!this.isActive()) return;
+            if (!navigator.onLine) { UI.showToast('📵 Pas de connexion', 'warning'); return; }
+            const r = await this._fetch(this._state.code);
+            if (r.error) { UI.showToast(r.error === 'notfound' ? 'Aucune sauvegarde trouvée dans le cloud' : '❌ Lecture de la sauvegarde impossible', 'error'); return; }
+            UI._close('settings-modal'); UI._open('cloud-modal');
+            this._pending = { ...r, code: this._state.code };
+            this._view('preview');
+        },
+        confirmRestore(mode) {
+            const p = this._pending; if (!p) return;
+            const s = this.load();
+            s.code = p.code; s.consent = true; s.consentAt = s.consentAt || new Date().toISOString();
+            s.lastBackupAt = p.meta.updatedAt; s.lastHash = null; this.save();
+            UI._close('cloud-modal'); this._pending = null;
+            try { this._apply(p.data, p.meta, mode); }
+            catch (e) { console.error(e); UI.showToast(`❌ Restauration échouée : ${e.message}`, 'error'); }
+            this.renderSettings();
+        },
+        showCode() { if (!this.isActive()) return; this.open('code'); },
+        disable() {
+            UI.confirm('Désactiver la sauvegarde cloud ? La copie sera supprimée du serveur (vos parties restent sur cet appareil).', async () => {
+                const s = this.load();
+                s.pendingDelete = s.code; delete s.code; delete s.consent; delete s.lastHash; delete s.lastBackupAt;
+                this.save(); this.renderSettings();
+                const ok = await this._flushDelete();
+                UI.showToast(ok ? '🗑️ Sauvegarde cloud supprimée' : '🗑️ Suppression dès que la connexion revient', ok ? 'success' : 'info');
+            });
+        },
+        async _flushDelete() {
+            const s = this.load();
+            if (!s.pendingDelete || !navigator.onLine) return false;
+            const r = await this._call('/api/backup/delete', { code: s.pendingDelete });
+            if (r.ok) { delete s.pendingDelete; this.save(); this.renderSettings(); }
+            return r.ok;
+        },
+
+        // ---------- Paramètres ----------
+        renderSettings() {
+            const sec = document.getElementById('cloud-section');
+            if (!sec) return;
+            sec.style.display = this.enabled ? '' : 'none';
+            if (!this.enabled) return;
+            const s = this.load();
+            const st = document.getElementById('cloud-status');
+            const act = document.getElementById('cloud-actions');
+            const b = (l, i, f, sub) => this._btn(l, i, f, sub);
+            if (this.isActive()) {
+                st.textContent = s.lastBackupAt
+                    ? `☁️ Active — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}. Mise à jour automatique après chaque partie ; restauration automatique si cet appareil est vide.`
+                    : '☁️ Active — première sauvegarde en attente.';
+                act.innerHTML = b('Sauvegarder maintenant', '⬆️', 'Cloud.backup(true)', 'Envoyer une copie à jour')
+                    + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud')
+                    + b('Afficher mon code', '🔑', 'Cloud.showCode()', 'Pour retrouver mes données ailleurs')
+                    + b('Utiliser un autre code', '🔁', 'Cloud.open(\'enter\')', 'Restaurer depuis un autre appareil')
+                    + b('Désactiver et supprimer', '🗑️', 'Cloud.disable()', 'Efface la copie du serveur');
+            } else if (s.pendingDelete) {
+                st.textContent = '⏳ Suppression en cours : elle sera finalisée dès que la connexion revient.';
+                act.innerHTML = '';
+            } else {
+                st.textContent = 'Facultatif : gardez une copie de vos parties dans le cloud et retrouvez-les sur un nouvel appareil avec un code personnel.';
+                act.innerHTML = b('Activer la sauvegarde cloud', '☁️', 'Cloud.open(\'intro\')', 'Avec un code de récupération')
+                    + b('Restaurer avec un code', '🔑', 'Cloud.open(\'enter\')', 'Nouvel appareil');
+            }
+        }
+    };
+
     const PWA = {
         deferredPrompt: null,
         isInstalled: false,
@@ -7941,11 +8316,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             app.init();
             PWA.init();
             Community.init();
+            Cloud.init();
         });
     } else {
         app.init();
         PWA.init();
         Community.init();
+        Cloud.init();
     }
 </script>
     <!-- Cloudflare Web Analytics -->

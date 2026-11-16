@@ -38,3 +38,9 @@ Tableau de bord (profils, actifs sur 7 jours, parties totales, apps installées)
 npx wrangler d1 execute DB --local --file=schema.sql
 npx wrangler dev --local --var ADMIN_KEY:test --var ALLOWED_ORIGINS:http://localhost:8000
 ```
+
+
+## Sauvegarde cloud
+
+Routes POST `/api/backup/put|get|info|delete` (code de récupération dans le corps, seule son empreinte SHA-256 est stockée dans la table `backups`). Limites : 1,5 Mo par sauvegarde, 2000 sauvegardes, une écriture toutes les 4 s par code. Le tableau de bord n'affiche que le nombre et le poids des sauvegardes, jamais leur contenu.
+Après mise à jour : `npx wrangler d1 execute DB --remote --file=schema.sql` (déjà fait pour la table `backups`), puis `npx wrangler deploy`.
