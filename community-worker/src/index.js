@@ -2,7 +2,8 @@
 // Routes :
 //   POST /api/profile         crée/met à jour le profil de la personne (consentement donné dans l'app)
 //   POST /api/profile/delete  supprime le profil (retrait du consentement)
-//   POST /api/backup/put      enregistre la sauvegarde cloud (clé = code de récupération)
+//   POST /api/backup/put      enregistre la sauvegarde cloud (identité = pseudo unique + couleur préférée)
+//   POST /api/backup/check    indique si un pseudo existe déjà
 //   POST /api/backup/get      récupère la sauvegarde complète
 //   POST /api/backup/info     métadonnées seulement (date, appareil, nb de parties)
 //   POST /api/backup/delete   supprime la sauvegarde
@@ -113,14 +114,20 @@ async function deleteProfile(request, env) {
 
 
 // ---------- sauvegarde cloud ----------
-// Le code de récupération (20 caractères, ~100 bits) est la seule clé : le serveur n'en garde que l'empreinte SHA-256.
-const CODE_RE = /^[0-9A-HJKMNP-TV-Z]{20}$/;
-const normCode = (v) => String(v ?? '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, '');
+// Identité = pseudo (unique) + couleur préférée. La couleur n'est jamais stockée en clair :
+// seule une empreinte salée est conservée. 5 essais ratés bloquent le pseudo 15 minutes.
+const COLORS = ['rouge', 'orange', 'jaune', 'vert', 'turquoise', 'bleu', 'violet', 'rose', 'marron', 'noir', 'blanc', 'gris'];
+const MAX_FAILS = 5;
+const LOCK_MS = 15 * 60 * 1000;
 
-async function codeHash(code) {
-  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('scoremaster-backup:' + code));
+function pseudoKey(v) {
+  return String(v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+async function sha(text) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+const colorHash = (salt, key, color) => sha(`scoremaster-backup:${salt}:${key}:${color}`);
 
 async function readBackupBody(request, max) {
   const text = await request.text();
@@ -135,39 +142,61 @@ async function backup(request, env, url) {
   let b;
   try { b = await readBackupBody(request, action === 'put' ? MAX_BACKUP_BODY : MAX_BODY); }
   catch (e) { return json({ error: e.message === 'payload trop gros' ? 'payload trop gros' : 'requête invalide' }, e.message === 'payload trop gros' ? 413 : 400, cors); }
-  const code = normCode(b.code);
-  if (!CODE_RE.test(code)) return json({ error: 'code invalide' }, 400, cors);
-  const hash = await codeHash(code);
-  const now = new Date().toISOString();
+
+  const key = pseudoKey(b.pseudo);
+  if (key.length < 2 || key.length > 30) return json({ error: 'pseudo invalide' }, 400, cors);
+  const pseudo = clean(b.pseudo, 30);
+  const now = Date.now();
+  const row = await env.DB.prepare('SELECT * FROM backups WHERE pseudo_key = ?').bind(key).first();
+
+  if (action === 'check') return json({ ok: true, exists: !!row }, 200, cors);
+
+  const color = String(b.color ?? '');
+  if (!COLORS.includes(color)) return json({ error: 'couleur invalide' }, 400, cors);
+
+  // Authentification (si le pseudo existe déjà)
+  if (row) {
+    if (row.locked_until && row.locked_until > now) {
+      return json({ error: 'verrouillé', retryInSec: Math.ceil((row.locked_until - now) / 1000) }, 429, cors);
+    }
+    if ((await colorHash(row.salt, key, color)) !== row.color_hash) {
+      const fails = (row.fails || 0) + 1;
+      const lock = fails >= MAX_FAILS ? now + LOCK_MS : 0;
+      await env.DB.prepare('UPDATE backups SET fails = ?, locked_until = ? WHERE pseudo_key = ?').bind(lock ? 0 : fails, lock, key).run();
+      return json({ error: 'identifiants incorrects', left: lock ? 0 : MAX_FAILS - fails }, 403, cors);
+    }
+    if (row.fails || row.locked_until) await env.DB.prepare('UPDATE backups SET fails = 0, locked_until = 0 WHERE pseudo_key = ?').bind(key).run();
+  }
 
   if (action === 'put') {
     if (typeof b.payload !== 'string' || !b.payload.length) return json({ error: 'sauvegarde vide' }, 400, cors);
     const enc = b.enc === 'gzip' ? 'gzip' : 'json';
     const games = Math.max(0, Math.min(100000, parseInt(b.meta?.games, 10) || 0));
     const device = clean(b.meta?.device, 80);
-    const row = await env.DB.prepare('SELECT updated_at FROM backups WHERE code_hash = ?').bind(hash).first();
+    const iso = new Date(now).toISOString();
     if (row) {
-      if (Date.now() - new Date(row.updated_at).getTime() < MIN_BACKUP_INTERVAL_MS) return json({ error: 'trop rapide' }, 429, cors);
+      if (now - new Date(row.updated_at).getTime() < MIN_BACKUP_INTERVAL_MS) return json({ error: 'trop rapide' }, 429, cors);
+      await env.DB.prepare('UPDATE backups SET payload=?1, enc=?2, size=?3, games=?4, device=?5, app_version=?6, updated_at=?7 WHERE pseudo_key=?8')
+        .bind(b.payload, enc, b.payload.length, games, device, clean(b.meta?.appVersion, 20), iso, key).run();
     } else {
       const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM backups').first();
       if (n >= MAX_BACKUPS) return json({ error: 'capacité atteinte' }, 503, cors);
+      const salt = crypto.randomUUID();
+      await env.DB.prepare(
+        `INSERT INTO backups (pseudo_key, pseudo, salt, color_hash, fails, locked_until, payload, enc, size, games, device, app_version, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, 0, 0, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11)`
+      ).bind(key, pseudo, salt, await colorHash(salt, key, color), b.payload, enc, b.payload.length, games, device, clean(b.meta?.appVersion, 20), iso).run();
     }
-    await env.DB.prepare(
-      `INSERT INTO backups (code_hash, payload, enc, size, games, device, app_version, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)
-       ON CONFLICT(code_hash) DO UPDATE SET payload = ?2, enc = ?3, size = ?4, games = ?5, device = ?6, app_version = ?7, updated_at = ?8`
-    ).bind(hash, b.payload, enc, b.payload.length, games, device, clean(b.meta?.appVersion, 20), now).run();
-    return json({ ok: true, updatedAt: now }, 200, cors);
+    return json({ ok: true, updatedAt: iso }, 200, cors);
   }
   if (action === 'get' || action === 'info') {
-    const r = await env.DB.prepare(`SELECT ${action === 'get' ? 'payload,' : ''} enc, size, games, device, app_version, updated_at FROM backups WHERE code_hash = ?`).bind(hash).first();
-    if (!r) return json({ error: 'introuvable' }, 404, cors);
-    const out = { ok: true, enc: r.enc, size: r.size, games: r.games, device: r.device, appVersion: r.app_version, updatedAt: r.updated_at };
-    if (action === 'get') out.payload = r.payload;
+    if (!row) return json({ error: 'introuvable' }, 404, cors);
+    const out = { ok: true, pseudo: row.pseudo, enc: row.enc, size: row.size, games: row.games, device: row.device, appVersion: row.app_version, updatedAt: row.updated_at };
+    if (action === 'get') out.payload = row.payload;
     return json(out, 200, cors);
   }
   if (action === 'delete') {
-    await env.DB.prepare('DELETE FROM backups WHERE code_hash = ?').bind(hash).run();
+    await env.DB.prepare('DELETE FROM backups WHERE pseudo_key = ?').bind(key).run();
     return json({ ok: true }, 200, cors);
   }
   return json({ error: 'action inconnue' }, 404, cors);
@@ -271,7 +300,7 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(request, env) });
       if (url.pathname === '/api/profile' && request.method === 'POST') return await upsertProfile(request, env);
       if (url.pathname === '/api/profile/delete' && request.method === 'POST') return await deleteProfile(request, env);
-      if (/^\/api\/backup\/(put|get|info|delete)$/.test(url.pathname) && request.method === 'POST') return await backup(request, env, url);
+      if (/^\/api\/backup\/(put|get|info|delete|check)$/.test(url.pathname) && request.method === 'POST') return await backup(request, env, url);
       if (url.pathname.startsWith('/admin')) return await admin(request, env, url);
       if (url.pathname === '/') return new Response('ScoreMaster community API', { headers: { 'Content-Type': 'text/plain' } });
       return new Response('Not found', { status: 404 });

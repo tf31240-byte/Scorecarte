@@ -16,15 +16,20 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 CREATE INDEX IF NOT EXISTS idx_profiles_last_seen ON profiles(last_seen);
 
--- Sauvegardes cloud : une ligne par code de récupération (seule l'empreinte du code est conservée)
+-- Sauvegardes cloud : une ligne par pseudo (unique). La couleur n'est stockée que sous forme d'empreinte salée.
 CREATE TABLE IF NOT EXISTS backups (
-  code_hash   TEXT PRIMARY KEY,   -- SHA-256 du code de récupération
-  payload     TEXT NOT NULL,      -- sauvegarde (JSON, éventuellement gzip + base64)
-  enc         TEXT NOT NULL,      -- 'json' ou 'gzip'
-  size        INTEGER NOT NULL,
-  games       INTEGER NOT NULL DEFAULT 0,
-  device      TEXT,               -- libellé de l'appareil ayant fait la sauvegarde
-  app_version TEXT,
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL
+  pseudo_key   TEXT PRIMARY KEY,   -- pseudo normalisé (minuscules, sans accents ni espaces)
+  pseudo       TEXT NOT NULL,
+  salt         TEXT NOT NULL,
+  color_hash   TEXT NOT NULL,
+  fails        INTEGER NOT NULL DEFAULT 0,
+  locked_until INTEGER NOT NULL DEFAULT 0,
+  payload      TEXT NOT NULL,      -- sauvegarde (JSON, éventuellement gzip + base64)
+  enc          TEXT NOT NULL,
+  size         INTEGER NOT NULL,
+  games        INTEGER NOT NULL DEFAULT 0,
+  device       TEXT,
+  app_version  TEXT,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
 );

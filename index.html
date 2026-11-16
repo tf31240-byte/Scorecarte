@@ -1654,14 +1654,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
-            <div class="settings-section" id="community-section" style="display:none;">
-                <div class="settings-section-title">👥 Communauté</div>
-                <div id="community-status" class="settings-desc" style="margin-bottom:10px;"></div>
-                <div id="community-actions"></div>
-            </div>
-
             <div class="settings-section" id="cloud-section" style="display:none;">
-                <div class="settings-section-title">☁️ Sauvegarde cloud</div>
+                <div class="settings-section-title">☁️ Mon profil &amp; sauvegarde</div>
                 <div id="cloud-status" class="settings-desc" style="margin-bottom:10px;"></div>
                 <div id="cloud-actions"></div>
             </div>
@@ -1763,47 +1757,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
-            <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. La fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie (Cloudflare Web Analytics). Rien d'autre n'est envoyé, sauf si vous rejoignez la communauté (facultatif, ci-dessus).</p>
-        </div>
-    </div>
-
-    <!-- Community modal (inscription facultative, avec consentement) -->
-    <div id="community-modal" class="modal-overlay" onclick="if(event.target===this) Community.later()">
-        <div class="modal-box large" style="max-height:85vh; overflow-y:auto;">
-            <div class="modal-header">
-                <h2 style="margin:0">👥 Rejoindre la communauté</h2>
-                <button onclick="Community.later()" class="btn-icon" aria-label="Fermer">✕</button>
-            </div>
-            <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Facultatif : dites-nous qui vous êtes pour que l'éditeur sache qui utilise ScoreMaster. Vos parties et vos scores restent sur votre appareil.</p>
-
-            <div class="backup-status" style="margin-bottom:10px;">
-                <b>Ce qui sera envoyé</b><br>
-                • le prénom ou pseudo que vous saisissez ci-dessous<br>
-                • le type de votre appareil (ex. iPhone, iOS 18, Safari)<br>
-                • votre nombre de parties terminées<br>
-                • la date de votre dernière partie
-            </div>
-            <div class="backup-status" style="margin-bottom:12px;">
-                <b>Ce qui n'est jamais envoyé</b><br>
-                Les scores, le contenu des parties et les noms des joueurs.
-            </div>
-
-            <label for="community-pseudo" style="display:block; font-size:12px; font-weight:800; color:var(--text-sec); margin-bottom:6px;">VOTRE PRÉNOM OU PSEUDO</label>
-            <input type="text" id="community-pseudo" maxlength="30" autocomplete="off" placeholder="Ex : Camille" oninput="Community.validate()" style="width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-size:16px; font-weight:700; background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px;">
-
-            <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin-bottom:14px; cursor:pointer;">
-                <input type="checkbox" id="community-consent" onchange="Community.validate()" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
-                <span>J'accepte que ces informations soient envoyées à l'éditeur de ScoreMaster et conservées tant que je reste inscrit(e). Je peux me retirer à tout moment dans Paramètres : mes données sont alors supprimées.</span>
-            </label>
-
-            <button class="backup-action primary" id="community-join-btn" onclick="Community.join()" disabled>
-                <span class="ba-icon">✅</span>
-                <span class="ba-text"><b>Rejoindre</b><small>Envoyer mon profil</small></span>
-            </button>
-            <div style="display:flex; gap:8px;">
-                <button class="btn-modal-cancel" style="flex:1;" onclick="Community.later()">Plus tard</button>
-                <button class="btn-modal-cancel" style="flex:1;" onclick="Community.decline()">Non merci</button>
-            </div>
+            <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. La fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie (Cloudflare Web Analytics). Rien d'autre n'est envoyé, sauf si vous créez un profil (facultatif, ci-dessus).</p>
         </div>
     </div>
 
@@ -1811,7 +1765,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     <div id="cloud-modal" class="modal-overlay" onclick="if(event.target===this) Cloud.close()">
         <div class="modal-box large" style="max-height:85vh; overflow-y:auto;">
             <div class="modal-header">
-                <h2 style="margin:0">☁️ Sauvegarde cloud</h2>
+                <h2 style="margin:0">☁️ Mon profil</h2>
                 <button onclick="Cloud.close()" class="btn-icon" aria-label="Fermer">✕</button>
             </div>
             <div id="cloud-body"></div>
@@ -5585,7 +5539,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         renderGamesList(filter = null) {
-            try { Community.maybePrompt(); } catch(e) {}
+            try { Cloud.maybePrompt(); } catch(e) {}
             try { UI.renderBackup(); } catch(e) {} // met à jour la pastille « sauvegarde conseillée »
             const games = Storage.loadGames();
             const els = this._gamesListElements();
@@ -6724,10 +6678,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         get enabled() { return !!this.API_URL; },
 
         load() {
-            try {
-                const s = JSON.parse(localStorage.getItem(this.KEY) || 'null');
-                this._state = (s && typeof s === 'object') ? s : {};
-            } catch (e) { this._state = {}; }
+            let s = {};
+            try { const p = JSON.parse(localStorage.getItem(this.KEY) || 'null'); if (p && typeof p === 'object') s = p; } catch (e) {}
+            // mise à jour en place : les références déjà prises (ex. pendant un envoi) restent valides
+            if (!this._state) this._state = {};
+            Object.keys(this._state).forEach(k => delete this._state[k]);
+            Object.assign(this._state, s);
             return this._state;
         },
         save() { try { localStorage.setItem(this.KEY, JSON.stringify(this._state)); } catch (e) {} },
@@ -6836,137 +6792,67 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             });
         },
 
-        // ---------- Invitation ----------
-        /** Propose l'inscription une seule fois, sur l'écran d'accueil, après une première partie terminée. */
-        maybePrompt() {
-            if (!this.enabled || this._promptedThisSession) return;
-            const s = this.load();
-            if (s.consent === true || s.declined || s.pendingDelete) return;
-            if (s.snoozeUntil && Date.now() < s.snoozeUntil) return;
-            if (this._stats().games < 1) return;
-            this._promptedThisSession = true;
-            setTimeout(() => {
-                const busy = document.querySelector('.modal-overlay.active, .victory-overlay.active');
-                const home = document.getElementById('setup');
-                if (!busy && home && getComputedStyle(home).display !== 'none') this.open();
-            }, 1200);
-        },
-        open() {
-            const input = document.getElementById('community-pseudo');
-            if (input) input.value = this._state?.pseudo || '';
-            const cb = document.getElementById('community-consent');
-            if (cb) cb.checked = false;
-            UI._close('settings-modal');
-            UI._open('community-modal');
-            this.validate();
-        },
-        validate() {
-            const ok = this._cleanPseudo(document.getElementById('community-pseudo')?.value).length > 0
-                && !!document.getElementById('community-consent')?.checked;
-            const btn = document.getElementById('community-join-btn');
-            if (btn) btn.disabled = !ok;
-        },
-        later() {
-            UI._close('community-modal');
-            const s = this.load();
-            if (!s.consent) { s.snoozeUntil = Date.now() + this.SNOOZE_MS; this.save(); }
-        },
-        decline() {
-            UI._close('community-modal');
-            const s = this.load();
-            s.declined = true; s.declinedAt = new Date().toISOString(); this.save();
-            this.renderSettings();
-        },
-        async join() {
-            const pseudo = this._cleanPseudo(document.getElementById('community-pseudo')?.value);
-            if (!pseudo || !document.getElementById('community-consent')?.checked) return;
+        // ---------- Inscription / retrait (pilotés par le module Cloud : un seul consentement) ----------
+        enroll(pseudo) {
             const s = this.load();
             s.id = s.id || this._uuid();
             s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString();
             s.declined = false; s.pendingDelete = false; delete s.snoozeUntil; delete s.lastSync;
             this.save();
-            UI._close('community-modal');
-            this.renderSettings();
-            const ok = await this.sync(true);
-            UI.showToast(ok ? `👋 Bienvenue ${pseudo} !` : '✅ Inscription enregistrée, envoi dès que la connexion revient', ok ? 'success' : 'info');
+            return this.sync(true);
         },
-
-        // ---------- Retrait (suppression des données côté serveur) ----------
-        leave() {
-            UI.confirm('Quitter la communauté ? Votre profil sera supprimé du serveur.', async () => {
-                const s = this.load();
-                s.pendingDelete = true; s.consent = false; s.declined = true; this.save();
-                this.renderSettings();
-                const ok = await this._flushDelete();
-                UI.showToast(ok ? '🗑️ Profil supprimé' : '🗑️ Retrait enregistré, suppression dès que la connexion revient', ok ? 'success' : 'info');
-            });
+        unenroll() {
+            const s = this.load();
+            if (!s.id) return Promise.resolve(true);
+            s.pendingDelete = true; s.consent = false; this.save();
+            return this._flushDelete();
         },
         async _flushDelete() {
             const s = this.load();
             if (!s.pendingDelete || !s.id) return true;
             if (!navigator.onLine) return false;
             const ok = await this._post('/api/profile/delete', { id: s.id });
-            if (ok) { delete s.id; delete s.pseudo; delete s.pendingDelete; delete s.lastSync; delete s.consentAt; this.save(); this.renderSettings(); }
+            if (ok) { delete s.id; delete s.pseudo; delete s.pendingDelete; delete s.lastSync; delete s.consentAt; this.save(); }
             return ok;
         },
-
-        // ---------- Paramètres ----------
-        renderSettings() {
-            const sec = document.getElementById('community-section');
-            if (!sec) return;
-            sec.style.display = this.enabled ? '' : 'none';
-            if (!this.enabled) return;
-            const s = this.load();
-            const st = document.getElementById('community-status');
-            const act = document.getElementById('community-actions');
-            const btn = (label, icon, fn, sub) => `<button class="backup-action" onclick="${fn}"><span class="ba-icon">${icon}</span><span class="ba-text"><b>${label}</b><small>${sub}</small></span></button>`;
-            if (this.isMember()) {
-                st.textContent = `✅ Vous êtes inscrit(e) sous le nom « ${s.pseudo} ». Partagé : pseudo, type d'appareil, nombre de parties et date de la dernière partie.`;
-                act.innerHTML = btn('Modifier mon pseudo', '✏️', 'Community.open()', 'Mettre à jour mon profil')
-                              + btn('Quitter la communauté', '🗑️', 'Community.leave()', 'Supprime mon profil du serveur');
-            } else if (s.pendingDelete) {
-                st.textContent = '⏳ Retrait en cours : la suppression sera finalisée dès que la connexion revient.';
-                act.innerHTML = '';
-            } else {
-                st.textContent = 'Facultatif : rejoignez la communauté en indiquant votre prénom ou pseudo. Vos parties restent sur votre appareil.';
-                act.innerHTML = btn('Rejoindre la communauté', '👥', 'Community.open()', 'Vous choisissez ce qui est partagé');
-            }
-        }
+        renderSettings() { const sec = document.getElementById('community-section'); if (sec) sec.style.display = 'none'; }
     };
 
     // ======================================================================
-    // SAUVEGARDE CLOUD (facultative, code de récupération)
-    // Le code (20 caractères) est généré ici et sert de clé : le serveur n'en garde que l'empreinte.
-    // Sans le code, personne (pas même l'éditeur) ne peut lire la sauvegarde via l'app.
+    // MON PROFIL & SAUVEGARDE CLOUD (facultatif, un seul consentement)
+    // Identité = pseudo (unique) + couleur préférée. Le profil partage avec l'éditeur : pseudo,
+    // type d'appareil, nombre de parties, date de la dernière partie ; et il sauvegarde les parties
+    // (noms des joueurs inclus) dans le cloud pour les retrouver sur un autre appareil.
     // ======================================================================
     const Cloud = {
         KEY: 'sm_cloud',
-        ALPHABET: '0123456789ABCDEFGHJKMNPQRSTVWXYZ',
+        COLORS: [
+            ['rouge', '#e74c3c'], ['orange', '#f39c12'], ['jaune', '#f1c40f'], ['vert', '#2ecc71'],
+            ['turquoise', '#1abc9c'], ['bleu', '#3498db'], ['violet', '#9b59b6'], ['rose', '#fd79a8'],
+            ['marron', '#8d6e63'], ['noir', '#222222'], ['blanc', '#ffffff'], ['gris', '#95a5a6']
+        ],
         MAX_CHARS: 1400000,
         AUTO_MIN_INTERVAL: 20000,
+        SNOOZE_MS: 7 * 86400 * 1000,
         _state: null, _busy: false, _timer: null, _pending: null, _lastAttempt: 0,
+        _color: null, _mode: 'create', _askedThisSession: false, _promptedThisSession: false,
 
         get apiUrl() { return Community.API_URL; },
         get enabled() { return !!this.apiUrl; },
 
         load() {
-            try {
-                const s = JSON.parse(localStorage.getItem(this.KEY) || 'null');
-                this._state = (s && typeof s === 'object') ? s : {};
-            } catch (e) { this._state = {}; }
+            let s = {};
+            try { const p = JSON.parse(localStorage.getItem(this.KEY) || 'null'); if (p && typeof p === 'object') s = p; } catch (e) {}
+            // mise à jour en place : les références déjà prises (ex. pendant un envoi) restent valides
+            if (!this._state) this._state = {};
+            Object.keys(this._state).forEach(k => delete this._state[k]);
+            Object.assign(this._state, s);
             return this._state;
         },
         save() { try { localStorage.setItem(this.KEY, JSON.stringify(this._state)); } catch (e) {} },
-        isActive() { const s = this.load(); return !!s.code && s.consent === true; },
-
-        // ---------- Code de récupération ----------
-        _newCode() {
-            const b = crypto.getRandomValues(new Uint8Array(20));
-            return [...b].map(x => this.ALPHABET[x & 31]).join('');
-        },
-        _norm(v) { return String(v || '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, ''); },
-        _validCode(c) { return /^[0-9A-HJKMNP-TV-Z]{20}$/.test(c); },
-        _fmt(c) { return (c.match(/.{1,4}/g) || []).join('-'); },
+        isActive() { const s = this.load(); return !!s.pseudo && !!s.color && s.consent === true; },
+        _cleanPseudo(v) { return Community._cleanPseudo(v); },
+        _auth() { const s = this.load(); return { pseudo: s.pseudo, color: s.color }; },
 
         // ---------- Réseau ----------
         async _call(path, body) {
@@ -6981,6 +6867,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 return { ok: res.ok, status: res.status, json: j };
             } catch (e) { return { ok: false, status: 0, json: null }; }
             finally { clearTimeout(timer); }
+        },
+        _errText(r) {
+            if (r.status === 0) return 'Serveur injoignable, réessayez.';
+            if (r.status === 404) return 'Aucun profil trouvé avec ce pseudo.';
+            if (r.status === 403) {
+                const left = r.json?.left;
+                return `Pseudo ou couleur incorrects${left > 0 ? ` (${left} essai${left > 1 ? 's' : ''} restant${left > 1 ? 's' : ''})` : ''}.`;
+            }
+            if (r.status === 429 && r.json?.error === 'verrouillé') return `Trop d'essais : réessayez dans ${Math.ceil((r.json.retryInSec || 900) / 60)} min.`;
+            return 'Erreur du serveur, réessayez.';
         },
 
         // ---------- Compression ----------
@@ -7049,16 +6945,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     return false;
                 }
                 const r = await this._call('/api/backup/put', {
-                    code: st.code, payload, enc,
+                    ...this._auth(), payload, enc,
                     meta: { games: Storage.loadGames().length, device: await this._deviceLabel(), appVersion: Community.APP_VERSION }
                 });
                 if (r.ok) {
-                    st.lastHash = fp; st.lastBackupAt = r.json?.updatedAt || new Date().toISOString(); st.lastError = null; this.save();
+                    st.lastHash = fp; st.lastBackupAt = r.json?.updatedAt || new Date().toISOString(); this.save();
                     this.renderSettings();
                     if (manual) UI.showToast('☁️ Sauvegarde envoyée', 'success');
                     return true;
                 }
-                if (manual) UI.showToast(r.status === 429 ? '⏳ Un instant, puis réessayez' : '❌ Sauvegarde cloud impossible pour le moment', 'error');
+                if (manual) UI.showToast(r.status === 429 ? '⏳ Un instant, puis réessayez' : `❌ ${this._errText(r)}`, 'error');
                 return false;
             } finally { this._busy = false; }
         },
@@ -7069,28 +6965,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         // ---------- Restauration ----------
-        async _fetch(code) {
-            const r = await this._call('/api/backup/get', { code });
-            if (!r.ok) return { error: r.status === 404 ? 'notfound' : (r.status === 0 ? 'offline' : 'error') };
+        async _fetch(pseudo, color) {
+            const r = await this._call('/api/backup/get', { pseudo, color });
+            if (!r.ok) return { error: this._errText(r), status: r.status };
             try {
                 const data = await this._unpack(r.json.payload, r.json.enc);
                 app._validateImportData(data);
                 return { data, meta: r.json };
-            } catch (e) { return { error: 'corrupt' }; }
+            } catch (e) { return { error: 'Sauvegarde illisible.', status: 0 }; }
         },
         _apply(data, meta, mode) {
             data.exportDate = meta?.updatedAt || data.exportDate;
             app._restoreImportedData(data, mode);
         },
-        /** Restauration automatique : uniquement si cet appareil n'a plus aucune donnée et connaît déjà son code. */
-        async _autoRestore() {
-            if (!this.isActive() || this._hasData() || !navigator.onLine) return false;
-            const r = await this._fetch(this._state.code);
-            if (r.error || !r.data) return false;
-            if (this._hasData()) return false; // l'utilisateur a commencé à jouer entre-temps
-            this._state.lastBackupAt = r.meta.updatedAt; this._state.lastHash = null; this.save();
-            this._apply(r.data, r.meta, 'replace');
-            setTimeout(() => UI.showToast('☁️ Vos données ont été restaurées depuis le cloud', 'success'), 900);
+        /** Appareil vide mais profil connu : on propose de retrouver les données (la personne répond oui ou non). */
+        async _offerRestore() {
+            if (this._askedThisSession || !this.isActive() || this._hasData() || !navigator.onLine) return false;
+            this._askedThisSession = true;
+            const { pseudo, color } = this._auth();
+            const r = await this._fetch(pseudo, color);
+            if (r.error || this._hasData()) return false;
+            this._pending = { ...r, pseudo, color, offer: true };
+            UI._close('settings-modal'); UI._open('cloud-modal');
+            this._view('preview');
             return true;
         },
 
@@ -7107,158 +7004,195 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 if (document.visibilityState === 'hidden' && Date.now() - this._lastAttempt > this.AUTO_MIN_INTERVAL) this.backup(false);
             });
             if (this.isActive()) {
-                if (await this._autoRestore()) return;
+                if (await this._offerRestore()) return;
                 this.backupSoon(6000);
             }
         },
 
+        // ---------- Invitation (une seule fois, après une première partie terminée) ----------
+        maybePrompt() {
+            if (!this.enabled || this._promptedThisSession) return;
+            const s = this.load();
+            if (s.consent === true || s.declined || s.pendingDelete) return;
+            if (s.snoozeUntil && Date.now() < s.snoozeUntil) return;
+            if (Community._stats().games < 1) return;
+            this._promptedThisSession = true;
+            setTimeout(() => {
+                const busy = document.querySelector('.modal-overlay.active, .victory-overlay.active');
+                const home = document.getElementById('setup');
+                if (!busy && home && getComputedStyle(home).display !== 'none') this.open('create');
+            }, 1200);
+        },
+        later() {
+            const s = this.load();
+            if (!s.consent) { s.snoozeUntil = Date.now() + this.SNOOZE_MS; this.save(); }
+            this.close();
+        },
+        decline() {
+            const s = this.load(); s.declined = true; this.save(); this.close();
+        },
+
         // ---------- Fenêtre ----------
         _el() { return document.getElementById('cloud-body'); },
-        open(view = 'intro') {
+        open(mode = 'create') {
             UI._close('settings-modal');
             UI._open('cloud-modal');
-            this._pending = null;
-            this._view(view);
+            this._pending = null; this._color = null;
+            this._view(mode === 'enter' ? 'enter' : 'create');
         },
         close() { UI._close('cloud-modal'); this._pending = null; this.renderSettings(); },
         _btn(label, icon, fn, sub, cls = '', extra = '') {
             return `<button class="backup-action ${cls}" onclick="${fn}" ${extra}><span class="ba-icon">${icon}</span><span class="ba-text"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</span></button>`;
         },
-        _view(name, ctx = {}) {
+        _swatches() {
+            return `<div id="cloud-colors" role="radiogroup" aria-label="Couleur préférée" style="display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:14px;">${
+                this.COLORS.map(([n, c]) => `<button type="button" role="radio" aria-checked="false" aria-label="${n}" data-color="${n}" onclick="Cloud.pick('${n}')" style="aspect-ratio:1; border-radius:50%; border:3px solid var(--border); background:${c}; cursor:pointer; padding:0;"></button>`).join('')
+            }</div>`;
+        },
+        pick(name) {
+            this._color = name;
+            document.querySelectorAll('#cloud-colors button').forEach(b => {
+                const on = b.dataset.color === name;
+                b.setAttribute('aria-checked', on);
+                b.style.borderColor = on ? 'var(--text)' : 'var(--border)';
+                b.style.transform = on ? 'scale(1.12)' : '';
+            });
+            const l = document.getElementById('cloud-color-label'); if (l) l.textContent = name;
+            this.validate();
+        },
+        validate() {
+            const pseudo = this._cleanPseudo(document.getElementById('cloud-pseudo')?.value);
+            const consent = !!document.getElementById('cloud-consent')?.checked;
+            const btn = document.getElementById('cloud-go');
+            if (btn) btn.disabled = !(pseudo.length >= 2 && this._color && consent);
+            const m = document.getElementById('cloud-msg'); if (m) m.textContent = '';
+        },
+        _view(name) {
             const el = this._el(); if (!el) return;
-            const input = 'width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-size:17px; font-weight:800; background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px; font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:1px; text-align:center;';
-            if (name === 'intro') {
+            const field = 'width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-size:16px; font-weight:700; background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px;';
+            const label = 'display:block; font-size:12px; font-weight:800; color:var(--text-sec); margin-bottom:6px;';
+            if (name === 'create' || name === 'enter') {
+                const create = name === 'create';
+                this._mode = name;
                 el.innerHTML = `
-                    <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Gardez une copie de vos parties dans le cloud pour les retrouver si vous changez de téléphone ou perdez vos données.</p>
-                    <div class="backup-status" style="margin-bottom:10px;"><b>Ce qui est sauvegardé</b><br>vos parties (scores, noms des joueurs), vos joueurs enregistrés, vos jeux personnalisés et vos réglages.</div>
-                    <div class="backup-status" style="margin-bottom:12px;"><b>Comment ça marche</b><br>Un <b>code de récupération</b> personnel est créé sur cet appareil. Ce code est la seule clé de votre sauvegarde : notez-le bien, il ne peut pas être retrouvé s'il est perdu. Un navigateur ne peut pas identifier votre téléphone de façon fiable : c'est le code qui permet de retrouver vos données sur un nouvel appareil.</div>
-                    <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin-bottom:14px; cursor:pointer;">
-                        <input type="checkbox" id="cloud-consent" onchange="document.getElementById('cloud-go').disabled=!this.checked" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
-                        <span>J'accepte que mes parties et mes noms de joueurs soient envoyés et conservés sur les serveurs de l'éditeur (Cloudflare) tant que la sauvegarde cloud est activée. Je peux la désactiver à tout moment : la copie est alors supprimée.</span>
+                    <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">${create
+                        ? 'Facultatif : créez votre profil pour retrouver vos parties si vous changez de téléphone ou perdez vos données.'
+                        : 'Entrez votre pseudo et votre couleur préférée pour retrouver vos données sur cet appareil.'}</p>
+                    ${create ? `<div class="backup-status" style="margin-bottom:12px;">
+                        <b>Ce qui est envoyé</b><br>
+                        • votre pseudo, le type de votre appareil (ex. iPhone, Safari), votre nombre de parties et la date de la dernière : visibles par l'éditeur de ScoreMaster<br>
+                        • une copie de vos parties, joueurs et réglages, gardée dans le cloud pour la restauration
+                    </div>` : ''}
+                    <label for="cloud-pseudo" style="${label}">VOTRE PSEUDO</label>
+                    <input type="text" id="cloud-pseudo" maxlength="30" autocomplete="off" autocapitalize="words" placeholder="Ex : Camille" oninput="Cloud.validate()" style="${field}">
+                    <label style="${label}">VOTRE COULEUR PRÉFÉRÉE : <span id="cloud-color-label" style="text-transform:uppercase; color:var(--text);">—</span></label>
+                    ${this._swatches()}
+                    <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.4; margin-bottom:12px; cursor:pointer;">
+                        <input type="checkbox" id="cloud-consent" onchange="Cloud.validate()" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
+                        <span>J'accepte que ces informations soient envoyées à l'éditeur de ScoreMaster et conservées (chez Cloudflare) tant que mon profil existe. Je peux le supprimer à tout moment dans Paramètres : tout est alors effacé.</span>
                     </label>
-                    ${this._btn('Activer et créer mon code', '☁️', 'Cloud.activate()', 'Première sauvegarde immédiate', 'primary', 'id="cloud-go" disabled')}
-                    <button class="btn-modal-cancel" style="width:100%; margin-bottom:8px;" onclick="Cloud._view('enter')">J'ai déjà un code (restaurer)</button>
-                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Plus tard</button>`;
-            } else if (name === 'code') {
-                const code = this._fmt(this._state.code);
-                el.innerHTML = `
-                    <p style="margin:0 0 10px; font-size:14px; line-height:1.45;">✅ Sauvegarde activée. Voici votre <b>code de récupération</b> :</p>
-                    <div id="cloud-code" style="${input} font-size:20px; padding:16px 8px; user-select:all; -webkit-user-select:all;">${escapeHtml(code)}</div>
-                    <div class="backup-status" style="margin-bottom:12px;">⚠️ Notez-le dans un endroit sûr (gestionnaire de mots de passe, note, capture d'écran). Toute personne qui possède ce code peut lire votre sauvegarde ; sans lui, elle est introuvable.</div>
-                    ${this._btn('Copier le code', '📋', 'Cloud.copyCode()', '')}
-                    ${navigator.share ? this._btn('Envoyer à moi-même', '📤', 'Cloud.shareCode()', 'Message, notes, e-mail…') : ''}
-                    <label style="display:flex; gap:10px; align-items:center; font-size:13px; margin:12px 0; cursor:pointer;">
-                        <input type="checkbox" onchange="document.getElementById('cloud-done').disabled=!this.checked" style="width:18px; height:18px;">
-                        <span>J'ai noté mon code</span>
-                    </label>
-                    <button class="btn-modal-cancel" id="cloud-done" style="width:100%;" onclick="Cloud.close()" disabled>Terminer</button>`;
-            } else if (name === 'enter') {
-                el.innerHTML = `
-                    <p style="margin:0 0 12px; font-size:14px; line-height:1.45;">Saisissez votre code de récupération pour retrouver vos données sur cet appareil.</p>
-                    <input type="text" id="cloud-code-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" style="${input}" oninput="Cloud._onInput(this)">
                     <div id="cloud-msg" style="font-size:13px; min-height:18px; margin-bottom:10px; color:var(--danger, #e74c3c);"></div>
-                    ${this._btn('Retrouver ma sauvegarde', '🔎', 'Cloud.lookup()', 'Rien n\'est modifié avant votre confirmation', 'primary', 'id="cloud-find" disabled')}
-                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Annuler</button>`;
-                setTimeout(() => document.getElementById('cloud-code-input')?.focus(), 50);
-            } else if (name === 'preview') {
-                const { data, meta } = this._pending;
-                const n = Array.isArray(data.games) ? data.games.length : 0;
-                const ids = new Set(Storage.loadGames().map(g => String(g.id)));
-                const fresh = (data.games || []).filter(g => g && !ids.has(String(g.id))).length;
-                const local = Storage.loadGames().length;
+                    ${this._btn(create ? 'Créer mon profil' : 'Retrouver mes données', create ? '✅' : '🔎', 'Cloud.submit()', create ? 'Première sauvegarde immédiate' : 'Rien n\'est modifié avant votre confirmation', 'primary', 'id="cloud-go" disabled')}
+                    <button class="btn-modal-cancel" style="width:100%; margin-bottom:8px;" onclick="Cloud._view('${create ? 'enter' : 'create'}')">${create ? 'J\'ai déjà un profil' : 'Créer un nouveau profil'}</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-modal-cancel" style="flex:1;" onclick="Cloud.later()">Plus tard</button>
+                        ${create ? '<button class="btn-modal-cancel" style="flex:1;" onclick="Cloud.decline()">Non merci</button>' : ''}
+                    </div>`;
+                this._color = null;
+                setTimeout(() => document.getElementById('cloud-pseudo')?.focus(), 60);
+            } else if (name === 'done') {
+                const s = this.load();
                 el.innerHTML = `
+                    <p style="margin:0 0 12px; font-size:14px; line-height:1.5;">✅ Profil <b>${escapeHtml(s.pseudo)}</b> créé. Pour retrouver vos données plus tard : votre pseudo et la couleur <b>${escapeHtml(s.color)}</b>.</p>
+                    <div class="backup-status" style="margin-bottom:14px;">Sur cet appareil, tout se fera automatiquement : si vos données disparaissent, l'app vous proposera de les retrouver.</div>
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Terminer</button>`;
+            } else if (name === 'preview') {
+                const { data, meta, offer, pseudo } = this._pending;
+                const n = Array.isArray(data.games) ? data.games.length : 0;
+                const local = Storage.loadGames();
+                const ids = new Set(local.map(g => String(g.id)));
+                const fresh = (data.games || []).filter(g => g && !ids.has(String(g.id))).length;
+                el.innerHTML = `
+                    ${offer ? `<p style="margin:0 0 12px; font-size:15px; line-height:1.45; font-weight:700;">Retrouver vos données de « ${escapeHtml(pseudo)} » ?</p>` : ''}
                     <div class="backup-stats">
                         <div><b>${n}</b><span>parties dans la sauvegarde</span></div>
                         <div><b>${fresh}</b><span>nouvelles pour cet appareil</span></div>
                     </div>
                     <div class="backup-status" style="margin:10px 0 14px;">Sauvegardé le ${escapeHtml(this._fmtDate(meta.updatedAt))}${meta.device ? `<br>depuis : ${escapeHtml(meta.device)}` : ''}</div>
-                    ${this._btn('Restaurer', '♻️', 'Cloud.confirmRestore(\'replace\')', local ? `Remplace les ${local} partie(s) de cet appareil` : 'Récupère toutes vos données', 'primary')}
-                    ${this._btn('Fusionner', '➕', 'Cloud.confirmRestore(\'merge\')', 'Ajoute seulement les parties absentes', '', fresh === 0 ? 'disabled' : '')}
-                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">Annuler</button>`;
+                    ${this._btn('Restaurer', '♻️', 'Cloud.confirmRestore(\'replace\')', local.length ? `Remplace les ${local.length} partie(s) de cet appareil` : 'Récupère toutes vos données', 'primary')}
+                    ${local.length ? this._btn('Fusionner', '➕', 'Cloud.confirmRestore(\'merge\')', 'Ajoute seulement les parties absentes', '', fresh === 0 ? 'disabled' : '') : ''}
+                    <button class="btn-modal-cancel" style="width:100%;" onclick="Cloud.close()">${offer ? 'Non merci' : 'Annuler'}</button>`;
             }
-        },
-        _onInput(inp) {
-            const c = this._norm(inp.value).slice(0, 20);
-            inp.value = this._fmt(c);
-            document.getElementById('cloud-find').disabled = !this._validCode(c);
-            const m = document.getElementById('cloud-msg'); if (m) m.textContent = '';
-        },
-        async copyCode() {
-            const code = this._fmt(this._state.code);
-            try { await navigator.clipboard.writeText(code); UI.showToast('📋 Code copié', 'success'); return; } catch (e) {}
-            try {
-                const r = document.createRange(); r.selectNodeContents(document.getElementById('cloud-code'));
-                const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-                UI.showToast('Code sélectionné : copiez-le', 'info');
-            } catch (e) {}
-        },
-        async shareCode() {
-            try { await navigator.share({ title: 'ScoreMaster', text: `Mon code de récupération ScoreMaster : ${this._fmt(this._state.code)}` }); }
-            catch (e) { /* annulé */ }
         },
 
         // ---------- Actions ----------
-        async activate() {
-            if (!document.getElementById('cloud-consent')?.checked) return;
-            const s = this.load();
-            if (s.code) { this._view('code'); return; }
-            s.code = this._newCode(); s.consent = true; s.consentAt = new Date().toISOString();
-            s.lastHash = null; delete s.pendingDelete; this.save();
-            this._view('code');
-            this.renderSettings();
-            const ok = await this.backup(true);
-            if (!ok) UI.showToast('☁️ Activé — la première sauvegarde partira dès que possible', 'info');
-        },
-        async lookup() {
-            const code = this._norm(document.getElementById('cloud-code-input')?.value);
-            const msg = document.getElementById('cloud-msg');
-            if (!this._validCode(code)) return;
+        async submit() {
+            const pseudo = this._cleanPseudo(document.getElementById('cloud-pseudo')?.value);
+            const color = this._color, msg = document.getElementById('cloud-msg'), btn = document.getElementById('cloud-go');
+            if (pseudo.length < 2 || !color || !document.getElementById('cloud-consent')?.checked) return;
             if (!navigator.onLine) { msg.textContent = '📵 Pas de connexion.'; return; }
-            const btn = document.getElementById('cloud-find'); btn.disabled = true;
-            const r = await this._fetch(code);
-            if (r.error) {
-                btn.disabled = false;
-                msg.textContent = { notfound: 'Aucune sauvegarde trouvée pour ce code. Vérifiez la saisie.', offline: 'Serveur injoignable, réessayez.', corrupt: 'Sauvegarde illisible.', error: 'Erreur du serveur, réessayez.' }[r.error];
-                return;
+            btn.disabled = true;
+            if (this._mode === 'create') {
+                const c = await this._call('/api/backup/check', { pseudo });
+                if (!c.ok) { msg.textContent = this._errText(c); btn.disabled = false; return; }
+                if (c.json.exists) {
+                    msg.textContent = 'Ce pseudo existe déjà. Si c\'est vous, touchez « J\'ai déjà un profil » ; sinon choisissez un autre pseudo.';
+                    btn.disabled = false; return;
+                }
+                const s = this.load();
+                Object.assign(s, { pseudo, color, consent: true, consentAt: new Date().toISOString(), declined: false, lastHash: null });
+                delete s.snoozeUntil; delete s.pendingDelete; this.save();
+                this._view('done');
+                this.renderSettings();
+                Community.enroll(pseudo);
+                const ok = this._hasData() ? await this.backup(true) : true;
+                if (!ok) UI.showToast('☁️ Profil créé — la première sauvegarde partira dès que possible', 'info');
+            } else {
+                const r = await this._fetch(pseudo, color);
+                if (r.error) { msg.textContent = r.error; btn.disabled = false; return; }
+                this._pending = { ...r, pseudo, color };
+                this._view('preview');
             }
-            this._pending = { ...r, code };
-            this._view('preview');
         },
-        async restoreFromCloud() { // bouton Paramètres : relit la sauvegarde liée à cet appareil
+        async restoreFromCloud() { // bouton Paramètres
             if (!this.isActive()) return;
             if (!navigator.onLine) { UI.showToast('📵 Pas de connexion', 'warning'); return; }
-            const r = await this._fetch(this._state.code);
-            if (r.error) { UI.showToast(r.error === 'notfound' ? 'Aucune sauvegarde trouvée dans le cloud' : '❌ Lecture de la sauvegarde impossible', 'error'); return; }
+            const { pseudo, color } = this._auth();
+            const r = await this._fetch(pseudo, color);
+            if (r.error) { UI.showToast(`❌ ${r.error}`, 'error'); return; }
             UI._close('settings-modal'); UI._open('cloud-modal');
-            this._pending = { ...r, code: this._state.code };
+            this._pending = { ...r, pseudo, color };
             this._view('preview');
         },
         confirmRestore(mode) {
             const p = this._pending; if (!p) return;
             const s = this.load();
-            s.code = p.code; s.consent = true; s.consentAt = s.consentAt || new Date().toISOString();
-            s.lastBackupAt = p.meta.updatedAt; s.lastHash = null; this.save();
+            Object.assign(s, { pseudo: p.pseudo, color: p.color, consent: true, consentAt: s.consentAt || new Date().toISOString(), declined: false, lastBackupAt: p.meta.updatedAt, lastHash: null });
+            delete s.pendingDelete; this.save();
+            Community.enroll(p.pseudo);
             UI._close('cloud-modal'); this._pending = null;
             try { this._apply(p.data, p.meta, mode); }
             catch (e) { console.error(e); UI.showToast(`❌ Restauration échouée : ${e.message}`, 'error'); }
             this.renderSettings();
         },
-        showCode() { if (!this.isActive()) return; this.open('code'); },
         disable() {
-            UI.confirm('Désactiver la sauvegarde cloud ? La copie sera supprimée du serveur (vos parties restent sur cet appareil).', async () => {
+            UI.confirm('Supprimer votre profil ? Votre pseudo et la copie cloud de vos parties seront effacés du serveur (vos parties restent sur cet appareil).', async () => {
                 const s = this.load();
-                s.pendingDelete = s.code; delete s.code; delete s.consent; delete s.lastHash; delete s.lastBackupAt;
+                s.pendingDelete = { pseudo: s.pseudo, color: s.color };
+                ['pseudo', 'color', 'consent', 'lastHash', 'lastBackupAt'].forEach(k => delete s[k]);
+                s.declined = true;
                 this.save(); this.renderSettings();
+                Community.unenroll();
                 const ok = await this._flushDelete();
-                UI.showToast(ok ? '🗑️ Sauvegarde cloud supprimée' : '🗑️ Suppression dès que la connexion revient', ok ? 'success' : 'info');
+                UI.showToast(ok ? '🗑️ Profil et sauvegarde supprimés' : '🗑️ Suppression dès que la connexion revient', ok ? 'success' : 'info');
             });
         },
         async _flushDelete() {
             const s = this.load();
             if (!s.pendingDelete || !navigator.onLine) return false;
-            const r = await this._call('/api/backup/delete', { code: s.pendingDelete });
-            if (r.ok) { delete s.pendingDelete; this.save(); this.renderSettings(); }
-            return r.ok;
+            const r = await this._call('/api/backup/delete', { pseudo: s.pendingDelete.pseudo, color: s.pendingDelete.color });
+            if (r.ok || r.status === 404 || r.status === 403) { delete s.pendingDelete; this.save(); this.renderSettings(); return true; }
+            return false;
         },
 
         // ---------- Paramètres ----------
@@ -7272,21 +7206,18 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const act = document.getElementById('cloud-actions');
             const b = (l, i, f, sub) => this._btn(l, i, f, sub);
             if (this.isActive()) {
-                st.textContent = s.lastBackupAt
-                    ? `☁️ Active — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}. Mise à jour automatique après chaque partie ; restauration automatique si cet appareil est vide.`
-                    : '☁️ Active — première sauvegarde en attente.';
+                st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, type d'appareil, nombre de parties, date de la dernière partie. Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
                 act.innerHTML = b('Sauvegarder maintenant', '⬆️', 'Cloud.backup(true)', 'Envoyer une copie à jour')
                     + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud')
-                    + b('Afficher mon code', '🔑', 'Cloud.showCode()', 'Pour retrouver mes données ailleurs')
-                    + b('Utiliser un autre code', '🔁', 'Cloud.open(\'enter\')', 'Restaurer depuis un autre appareil')
-                    + b('Désactiver et supprimer', '🗑️', 'Cloud.disable()', 'Efface la copie du serveur');
+                    + b('Changer de profil', '🔁', 'Cloud.open(\'enter\')', 'Retrouver un autre pseudo')
+                    + b('Supprimer mon profil', '🗑️', 'Cloud.disable()', 'Efface pseudo et sauvegarde du serveur');
             } else if (s.pendingDelete) {
                 st.textContent = '⏳ Suppression en cours : elle sera finalisée dès que la connexion revient.';
                 act.innerHTML = '';
             } else {
-                st.textContent = 'Facultatif : gardez une copie de vos parties dans le cloud et retrouvez-les sur un nouvel appareil avec un code personnel.';
-                act.innerHTML = b('Activer la sauvegarde cloud', '☁️', 'Cloud.open(\'intro\')', 'Avec un code de récupération')
-                    + b('Restaurer avec un code', '🔑', 'Cloud.open(\'enter\')', 'Nouvel appareil');
+                st.textContent = 'Facultatif : créez un profil (pseudo + couleur préférée) pour sauvegarder vos parties dans le cloud et les retrouver sur un nouvel appareil.';
+                act.innerHTML = b('Créer mon profil', '👤', 'Cloud.open(\'create\')', 'Pseudo + couleur préférée')
+                    + b('J\'ai déjà un profil', '🔎', 'Cloud.open(\'enter\')', 'Retrouver mes données');
             }
         }
     };
