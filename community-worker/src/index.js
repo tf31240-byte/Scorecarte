@@ -88,6 +88,7 @@ async function upsertProfile(request, env) {
   const num = (v, max) => Math.max(0, Math.min(max, parseInt(v, 10) || 0));
   const screen = /^\d{2,5}x\d{2,5}@\d(\.\d)?$/.test(String(d.screen || '')) ? String(d.screen) : null;
   const theme = ['dark', 'light'].includes(d.theme) ? d.theme : null;
+  let lastErrAt = null; if (d.lastErrorAt) { const e = new Date(d.lastErrorAt); if (!isNaN(e)) lastErrAt = e.toISOString(); }
 
   const exists = await env.DB.prepare('SELECT 1 FROM profiles WHERE id = ?').bind(b.id).first();
   if (!exists) {
@@ -96,16 +97,18 @@ async function upsertProfile(request, env) {
   }
   await env.DB.prepare(
     `INSERT INTO profiles (id, pseudo, platform, os, browser, model, standalone, app_version, games, last_game_at, consent_at, first_seen, last_seen,
-                           screen, lang, tz, sessions, players, top_game, theme)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+                           screen, lang, tz, sessions, players, top_game, theme, errors, last_error, last_error_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?11, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)
      ON CONFLICT(id) DO UPDATE SET pseudo = ?2, platform = ?3, os = ?4, browser = ?5, model = ?6, standalone = ?7,
        app_version = ?8, games = ?9, last_game_at = ?10, last_seen = ?11,
        screen = COALESCE(?12, screen), lang = COALESCE(?13, lang), tz = COALESCE(?14, tz),
-       sessions = MAX(sessions, ?15), players = ?16, top_game = COALESCE(?17, top_game), theme = COALESCE(?18, theme)`
+       sessions = MAX(sessions, ?15), players = ?16, top_game = COALESCE(?17, top_game), theme = COALESCE(?18, theme),
+       errors = MAX(errors, ?19), last_error = COALESCE(?20, last_error), last_error_at = COALESCE(?21, last_error_at)`
   ).bind(
     b.id, pseudo, clean(dev.platform, 30), clean(dev.os, 40), clean(dev.browser, 40), clean(dev.model, 40),
     dev.standalone ? 1 : 0, clean(b.appVersion, 20), games, lastGame, now,
-    screen, clean(d.lang, 12) || null, clean(d.tz, 40) || null, num(d.sessions, 1e6), num(d.players, 10000), clean(d.topGame, 30) || null, theme
+    screen, clean(d.lang, 12) || null, clean(d.tz, 40) || null, num(d.sessions, 1e6), num(d.players, 10000), clean(d.topGame, 30) || null, theme,
+    num(d.errors, 1e6), clean(d.lastError, 160) || null, lastErrAt
   ).run();
   return json({ ok: true }, 200, cors);
 }
@@ -256,6 +259,7 @@ function renderDashboard(rows, backups) {
   const games = rows.reduce((s, r) => s + (r.games || 0), 0);
   const installed = rows.filter((r) => r.standalone).length;
   const bkSize = backups.reduce((s, b) => s + (b.size || 0), 0);
+  const maxVer = Math.max(0, ...rows.map((r) => parseInt(r.app_version, 10) || 0));
   const perPerson = new Map();
   rows.forEach((r) => perPerson.set(pseudoKey(r.pseudo), (perPerson.get(pseudoKey(r.pseudo)) || 0) + 1));
 
@@ -282,7 +286,8 @@ function renderDashboard(rows, backups) {
     ${line('Thème', r.theme === 'dark' ? '🌙 sombre' : r.theme === 'light' ? '☀️ clair' : '')}
     ${line('Cloud', bk ? `☁️ ${esc(ago(bk.updated_at, now))} · ${(bk.size / 1024).toFixed(0)} Ko · ${bk.games} partie${bk.games > 1 ? 's' : ''}` : 'pas de sauvegarde')}
     ${line('Inscrit', esc(fmtDate(r.first_seen)))}
-    ${line('Version app', esc(r.app_version || ''))}
+    ${line('Version app', r.app_version ? `v${esc(r.app_version)}${(parseInt(r.app_version, 10) || 0) < maxVer ? ` <span class="warn">⚠️ pas à jour (dernière : v${maxVer})</span>` : ' ✅'}` : '')}
+    ${line('Erreurs', r.errors ? `<span class="warn"><b>${r.errors}</b></span> · ${esc(ago(r.last_error_at, now))}<br><code>${esc(r.last_error || '')}</code>` : (r.sessions ? 'aucune ✅' : ''))}
   </dl>
   <form method="post" action="/admin/delete" onsubmit="return confirm('Supprimer ce profil ?')"><input type="hidden" name="id" value="${esc(r.id)}"><button>Supprimer ce profil</button></form>
 </article>`;
@@ -305,6 +310,7 @@ h1{margin:0 0 14px;font-size:22px}
 .card header{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .who{font-size:18px}.badge{font-size:11px;background:#2a2f5c;border-radius:999px;padding:2px 8px;color:#bcd}
 .dot{font-size:12px;color:#889}.dot::before{content:"●";margin-right:5px;color:#666}.dot.on{color:#7be0a0}.dot.on::before{color:#37d67a}
+.warn{color:#ffb3a7}code{font-size:12px;color:#ffb3a7;word-break:break-word}
 .seen{margin:2px 0 10px;font-size:13px;color:#aab}
 dl{margin:0}.l{display:flex;gap:10px;padding:5px 0;border-top:1px solid #20254a;font-size:14px}
 dt{flex:0 0 108px;color:#889;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}dd{margin:0;flex:1;word-break:break-word}
@@ -319,6 +325,7 @@ a{color:#7fb2ff}.foot{margin-top:18px;font-size:12px;color:#889;line-height:1.5}
 <div class="stat"><b>${rows.filter((r) => within(r, 7)).length}</b><span>actifs (7 j)</span></div>
 <div class="stat"><b>${games}</b><span>parties terminées</span></div>
 <div class="stat"><b>${installed}</b><span>apps installées</span></div>
+<div class="stat"><b>${rows.filter((r) => r.errors > 0).length}</b><span>appareils avec erreurs</span></div>
 <div class="stat"><b>${backups.length}</b><span>sauvegardes cloud (${(bkSize / 1024).toFixed(0)} Ko)</span></div>
 </div>
 ${dist('Systèmes', tally(rows.map((r) => r.platform)))}
@@ -355,9 +362,9 @@ async function admin(request, env, url) {
   const secure = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
   if (fmt === 'json') return json(results, 200, secure);
   if (fmt === 'csv') {
-    const head = ['pseudo', 'plateforme', 'os', 'navigateur', 'modèle', 'écran', 'langue', 'fuseau', 'installée', 'parties', 'joueurs', 'jeu_favori', 'lancements', 'dernière_partie', 'inscrit', 'vu'];
+    const head = ['pseudo', 'plateforme', 'os', 'navigateur', 'modèle', 'écran', 'langue', 'fuseau', 'installée', 'parties', 'joueurs', 'jeu_favori', 'lancements', 'version', 'erreurs', 'dernière_erreur', 'dernière_partie', 'inscrit', 'vu'];
     const lines = [head.join(',')].concat(results.map((r) =>
-      [r.pseudo, r.platform, r.os, r.browser, r.model, r.screen, r.lang, r.tz, r.standalone ? 'oui' : 'non', r.games, r.players, r.top_game, r.sessions, r.last_game_at, r.first_seen, r.last_seen].map(csvCell).join(',')));
+      [r.pseudo, r.platform, r.os, r.browser, r.model, r.screen, r.lang, r.tz, r.standalone ? 'oui' : 'non', r.games, r.players, r.top_game, r.sessions, r.app_version, r.errors, r.last_error, r.last_game_at, r.first_seen, r.last_seen].map(csvCell).join(',')));
     return new Response('﻿' + lines.join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="scoremaster-communaute.csv"', ...secure } });
   }
   const { results: bks } = await env.DB.prepare('SELECT pseudo_key, size, games, updated_at FROM backups').all();

@@ -6674,7 +6674,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '15',
+        APP_VERSION: '24', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -6742,6 +6742,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return { platform, os, browser, model, standalone };
         },
 
+        // ---------- Erreurs techniques (consentement v3 pour l'envoi ; comptage local sinon) ----------
+        ERR_KEY: 'sm_errors',
+        _errorInfo() {
+            try { const e = JSON.parse(localStorage.getItem(this.ERR_KEY) || '{}'); return { errors: e.count || 0, lastError: e.last || '', lastErrorAt: e.lastAt || null }; }
+            catch (x) { return { errors: 0 }; }
+        },
+        _watchErrors() {
+            if (this._watching) return; this._watching = true;
+            const rec = (raw) => {
+                // on retire tout texte entre guillemets et les adresses : aucun contenu de partie ne doit partir
+                const msg = String(raw || '').replace(/(["'`])(?:(?!\1).)*\1/g, '$1…$1').replace(/https?:\/\/\S+/g, '<url>').slice(0, 150);
+                if (!msg || /ResizeObserver|Script error/i.test(msg)) return;
+                try {
+                    const e = JSON.parse(localStorage.getItem(this.ERR_KEY) || '{}');
+                    e.count = (e.count || 0) + 1; e.last = msg; e.lastAt = new Date().toISOString();
+                    localStorage.setItem(this.ERR_KEY, JSON.stringify(e));
+                } catch (x) {}
+                if (this._state?.consentV >= 3 && this.enabled) { clearTimeout(this._errTimer); this._errTimer = setTimeout(() => this.sync(true), 30000); }
+            };
+            window.addEventListener('error', ev => rec(ev.message + (ev.lineno ? ` (ligne ${ev.lineno})` : '')));
+            window.addEventListener('unhandledrejection', ev => rec('Promesse rejetée : ' + (ev.reason?.message || ev.reason)));
+        },
+
         /** Informations détaillées (consentement v2) : écran, langue, fuseau, thème, usage. Aucun nom de joueur. */
         _detail() {
             const w = Math.min(screen.width, screen.height), h = Math.max(screen.width, screen.height);
@@ -6751,7 +6774,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
             const st = this._stats();
             return { screen: `${w}x${h}@${dpr}`, lang: navigator.language || '', tz, theme: dark ? 'dark' : 'light',
-                     sessions: this.load().sessions || 0, players: st.players, topGame: st.topGame };
+                     sessions: this.load().sessions || 0, players: st.players, topGame: st.topGame,
+                     ...(this.load().consentV >= 3 ? this._errorInfo() : {}) };
         },
 
         _stats() {
@@ -6813,6 +6837,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         init() {
             this.load();
+            this._watchErrors();
             if (this.isMember() && this._state.consentV >= 2) { this._state.sessions = (this._state.sessions || 0) + 1; this.save(); }
             this.renderSettings();
             if (!this.enabled) return;
@@ -6827,7 +6852,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         enroll(pseudo) {
             const s = this.load();
             s.id = s.id || this._uuid();
-            s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString(); s.consentV = 2;
+            s.pseudo = pseudo; s.consent = true; s.consentAt = new Date().toISOString(); s.consentV = 3;
             s.declined = false; s.pendingDelete = false; delete s.snoozeUntil; delete s.lastSync;
             this.save();
             return this.sync(true);
@@ -6850,7 +6875,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         /** Profil créé avant l'ajout des informations détaillées : elles ne sont envoyées qu'après accord explicite. */
         upgradeConsent() {
             const s = this.load(); if (!s.id) return;
-            s.consentV = 2; s.consentAt = new Date().toISOString(); this.save();
+            s.consentV = 3; s.consentAt = new Date().toISOString(); this.save();
             this.sync(true);
             Cloud.renderSettings();
             UI.showToast('✅ Merci ! Informations détaillées activées', 'success');
@@ -7151,6 +7176,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                         <b>Ce qui est envoyé</b><br>
                         • votre pseudo ; votre appareil (modèle approximatif, système, navigateur, taille d'écran, thème) ; votre langue et fuseau horaire ; app installée ou non : visibles par l'éditeur de ScoreMaster<br>
                         • des statistiques d'usage : nombre de lancements, de parties, de joueurs différents (sans leurs noms), jeu le plus joué, date de la dernière partie<br>
+                        • la version de l'app et les erreurs techniques rencontrées (leur nombre et le dernier message, sans contenu de vos parties)<br>
                         • une copie de vos parties, joueurs et réglages, gardée dans le cloud pour la restauration
                     </div>` : ''}
                     <label for="cloud-pseudo" style="${label}">VOTRE PSEUDO</label>
@@ -7278,8 +7304,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const adv = document.getElementById('cloud-adv-actions');
             if (adv) adv.innerHTML = '';
             if (this.isActive()) {
-                st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, appareil, écran, langue et fuseau, statistiques d'usage (lancements, parties, nombre de joueurs, jeu favori). Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
-                act.innerHTML = ((Community.load().consentV || 1) >= 2 ? '' : b('Partager les infos détaillées', '📊', 'Community.upgradeConsent()', 'Écran, langue, lancements, jeu favori… (facultatif, à votre accord)'))
+                st.textContent = `✅ Profil « ${s.pseudo} »${s.lastBackupAt ? ` — dernière sauvegarde le ${this._fmtDate(s.lastBackupAt)}` : ' — première sauvegarde en attente'}. Partagé avec l'éditeur : pseudo, appareil, écran, langue et fuseau, statistiques d'usage (lancements, parties, nombre de joueurs, jeu favori), version de l'app et erreurs techniques. Sauvegardé dans le cloud : parties, joueurs et réglages (mise à jour automatique).`;
+                act.innerHTML = ((Community.load().consentV || 1) >= 3 ? '' : b('Partager les infos détaillées', '📊', 'Community.upgradeConsent()', 'Écran, langue, lancements, jeu favori, erreurs techniques… (facultatif, à votre accord)'))
                     + b('Synchroniser maintenant', '🔄', 'Cloud.backup(true)', 'Récupère les parties des autres appareils et envoie les vôtres')
                     + b('Restaurer ma sauvegarde', '⬇️', 'Cloud.restoreFromCloud()', 'Relire la copie du cloud');
                 if (adv) adv.innerHTML = b('Utiliser un autre profil', '🔁', 'Cloud.open(\'enter\')', 'Autre pseudo (ex. une autre personne sur ce téléphone)')
