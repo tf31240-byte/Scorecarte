@@ -679,6 +679,13 @@ body.is-editing .edit-tab { display: flex; }
 #sheet.belote #ok-btn { background:var(--primary); color:white; border:none; }
 .sel-box .sel-total { font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; margin-top:2px; }
 .sel-box .sel-up { color:#22c55e; } .sel-box .sel-down { color:#ef4444; }
+#save-btn.ready { background:var(--success); color:#fff; animation:readyPulse 1.4s ease-in-out infinite; }
+@keyframes readyPulse { 0%,100% { transform:scale(1); box-shadow:0 5px 15px rgba(0,0,0,0.1); } 50% { transform:scale(1.03); box-shadow:0 8px 24px rgba(52,199,89,0.45); } }
+@media (prefers-reduced-motion: reduce) { #save-btn.ready { animation:none; } }
+#history-toggle { background:none; border:none; padding:0; font:inherit; color:inherit; cursor:pointer; text-align:left; letter-spacing:inherit; }
+#history-toggle .chev { display:inline-block; transition:transform .2s; margin-right:4px; }
+#history-toggle[aria-expanded="true"] .chev { transform:rotate(90deg); }
+#history.collapsed { display:none; }
 .sel-box .sel-val.untouched { color:var(--text-sec); opacity:.6; }
 
 /* Pavé numérique */
@@ -2078,7 +2085,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         <div id="grid" class="players-grid"></div>
 
         <div id="history-header" style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
-            <span>HISTORIQUE DES MANCHES</span>
+            <button id="history-toggle" aria-expanded="false" onclick="app.toggleHistory()"><span class="chev">▸</span>HISTORIQUE DES MANCHES <span id="history-count"></span></button>
             <div style="display:flex; gap:12px;">
                 <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer;">✓ TERMINER</button>
             </div>
@@ -3681,9 +3688,20 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return row;
         },
 
+        _histCollapsed() {
+            try { return localStorage.getItem('sm_hist_collapsed') !== '0'; } catch (e) { return true; }
+        },
+        _applyHistoryState(n) {
+            const collapsed = this._histCollapsed();
+            const h = document.getElementById('history'), t = document.getElementById('history-toggle'), c = document.getElementById('history-count');
+            if (h) h.classList.toggle('collapsed', collapsed);
+            if (t) t.setAttribute('aria-expanded', String(!collapsed));
+            if (c) c.textContent = n ? `(${n})` : '';
+        },
         renderHistory(state, editIdx) {
             const hist = document.getElementById('history');
             hist.innerHTML = '';
+            this._applyHistoryState(state.history.length);
             state.history.slice().reverse().forEach((r, i) => {
                 const idx = state.history.length - 1 - i;
                 const isEditing = idx === editIdx;
@@ -6295,6 +6313,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _setSaveBtn(mode, roundNumber) {
             const btn = document.getElementById('save-btn');
             if (!btn) return;
+            btn.classList.remove('ready');
             if (mode === 'edit') {
                 btn.textContent = `MODIFIER MANCHE ${roundNumber}`;
                 btn.classList.add('editing');
@@ -6332,6 +6351,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         openSheet(playerId) {
             SoundFX.click();
             this.activePlayerId = playerId;
+            const sb0 = document.getElementById('save-btn'); if (sb0) sb0.classList.remove('ready');
             const isBelote = this.currentGame.mode === 'belote';
             this._toggleBeloteButtons(isBelote);
             this.renderSwitcher();
@@ -6342,7 +6362,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             // Ne PAS réinitialiser editIdx ni temp ici
             // L'utilisateur doit valider via le bouton dock
             // validateRound() s'en chargera après validation
-            this.render(); 
+            this.render();
+            // Tout le monde a un score (hors Belote) : on met « Enregistrer » en avant
+            const st = this.currentGame.state;
+            const ready = this.currentGame.mode !== 'belote' && st.players.every(p => st.temp[p.id] !== undefined)
+                && Object.values(st.temp).some(v => v !== 0);
+            const sb = document.getElementById('save-btn'); if (sb) sb.classList.toggle('ready', ready);
         },
         renderSwitcher() {
             const cont = document.getElementById('input-switcher');
@@ -6377,27 +6402,40 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${isActive ? p.color : 'var(--text-sec)'}">${escapeHtml(p.name)}</div><div class="sel-val${(!isBelote && !touched) ? ' untouched' : ''}" style="font-size:20px; font-weight:900">${valHtml}</div>` + (isBelote ? '' : `<div class="sel-total">${extra || '&nbsp;'}</div>`);
                 cont.appendChild(div);
             });
-            // Bouton « Suivant » / « Enregistrer »
+            // Bouton « Suivant » → « OK » quand il n'y a plus personne à remplir
             const nb = document.getElementById('next-btn');
             if (nb) {
-                const last = state.players[state.players.length - 1];
-                nb.textContent = last && this.activePlayerId === last.id
-                    ? (this.editIdx !== null ? '✓ MODIFIER' : '✓ ENREGISTRER') : 'Suivant →';
+                const ps = state.players, ai = ps.findIndex(p => p.id === this.activePlayerId);
+                const more = this.editIdx !== null ? ai < ps.length - 1
+                    : ps.some(p => p.id !== this.activePlayerId && state.temp[p.id] === undefined);
+                nb.textContent = more ? 'Suivant →' : '✓ OK';
             }
             const act = cont.querySelector('.sel-box.active');
             if (act && act.scrollIntoView) act.scrollIntoView({ inline: 'center', block: 'nearest' });
         },
+        toggleHistory() {
+            const collapsed = !app.currentGame ? true : UI._histCollapsed();
+            try { localStorage.setItem('sm_hist_collapsed', collapsed ? '0' : '1'); } catch (e) {}
+            UI._applyHistoryState(this.currentGame ? this.currentGame.state.history.length : 0);
+            SoundFX.click();
+        },
         nextInSheet() {
             const players = this.currentGame.state.players;
+            const temp = this.currentGame.state.temp;
             const idx = players.findIndex(p => p.id === this.activePlayerId);
-            if (idx < players.length - 1) {
-                this.activePlayerId = players[idx + 1].id;
-                SoundFX.click();
-                this.renderSwitcher();
+            let next = null;
+            if (this.editIdx !== null) {
+                // Modification : tour dans l'ordre, fin après le dernier
+                next = players[idx + 1] || null;
             } else {
-                UI._close('sheet');
-                this.validateRound();
+                // Saisie : prochain joueur sans score (en repartant du début si besoin)
+                for (let k = 1; k < players.length; k++) {
+                    const q = players[(idx + k) % players.length];
+                    if (temp[q.id] === undefined) { next = q; break; }
+                }
             }
+            if (next) { this.activePlayerId = next.id; SoundFX.click(); this.renderSwitcher(); }
+            else this.closeSheet(); // tout est rempli : on ferme, « Enregistrer » est mis en avant
         },
         _sheetKey(e) {
             const sheet = document.getElementById('sheet');
@@ -6835,7 +6873,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '27', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '28', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
