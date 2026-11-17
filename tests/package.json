@@ -1,0 +1,7 @@
+{
+  "name": "scoremaster-tests",
+  "private": true,
+  "description": "Tests de bout en bout de ScoreMaster (Playwright)",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "^1.48.0" }
+}

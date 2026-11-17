@@ -5,8 +5,12 @@ Fonctionne **hors-ligne**, s'installe sur l'écran d'accueil, et garde toutes le
 
 ## Fonctionnalités
 
-- Saisie rapide des scores (clavier dédié), mode Belote (capot, « reste »), manches modifiables, annulation
-- Statistiques par joueur et par jeu, courbes d'évolution
+- Saisie rapide des scores (clavier dédié), bouton **Suivant** qui boucle sur les joueurs sans score, aperçu du total et du classement, clavier physique, mode Belote (capot, « reste »)
+- Manches modifiables (cadre orange), suppression avec « Rétablir », **revanche** en un clic avec compteur de série
+- Historique des manches repliable ; **mode Zen** (plein écran, écran maintenu allumé)
+- **Thèmes** : mode Auto / Clair / Sombre + palettes (Océan, Forêt, Crépuscule, Minuit, Tapis vert) et une palette **Perso** (couleurs au choix)
+- **Statistiques** : filtres par jeu et par période, classement équitable (pourcentage dès 3 parties), fiche joueur (forme, courbe, par jeu), **duels** entre deux joueurs, records et anecdotes, partage en texte
+  - Règles : égalité en tête = pas de vainqueur, parties sans manche ignorées, Belote = équipes, records comparés jeu par jeu
 - Fin de partie : partage du résultat en **texte**, **image** (1080×1080) ou **GIF animé**
 - **Sauvegarde** (Paramètres → Sauvegarde) : fichier JSON complet, export CSV, restauration avec aperçu (fusion ou remplacement)
 - Mode hors-ligne via Service Worker, indicateur 📵 discret
@@ -20,6 +24,7 @@ Fonctionne **hors-ligne**, s'installe sur l'écran d'accueil, et garde toutes le
 | `manifest.json` | Installation PWA (icônes, raccourcis, captures) |
 | `icon-*.png`, `screenshot*.png` | Icônes et captures d'écran |
 | `community-worker/` | API facultative des profils communauté (Worker Cloudflare + D1) |
+| `tests/` | Tests de bout en bout (Playwright) sur le vrai `index.html` |
 
 ## Développement
 
@@ -28,6 +33,19 @@ Aucune étape de build : ouvrir `index.html` via un serveur statique (le Service
 ```bash
 python3 -m http.server 8000   # puis http://localhost:8000
 ```
+
+## Tests
+
+Suite de bout en bout (Playwright / Chromium) qui pilote le vrai `index.html` : saisie, modification, revanche, zen, thèmes, statistiques (dont la cohérence des règles), robustesse et 600 parties aléatoires.
+
+```bash
+cd tests
+npm install && npx playwright install chromium   # une seule fois
+node run.js            # toute la suite
+node run.js stats      # seulement les fichiers contenant « stats »
+```
+
+Chaque fichier `*.test.js` affiche ✅ / ❌ par vérification ; `run.js` renvoie un code de sortie 1 en cas d'échec. Les tests du Worker communauté (profils, sauvegarde cloud) demandent `wrangler dev` en local et ne font pas partie de cette suite.
 
 ## Mise à jour du cache hors-ligne
 
