@@ -3,8 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0A84FF" media="(prefers-color-scheme: dark)">
+    <meta id="theme-color-meta" name="theme-color" content="#007AFF">
+    <script>
+    // Applique mode + palette avant le premier rendu (évite le flash de thème)
+    (function(){try{var d=document.documentElement,t=localStorage.getItem('sm_theme'),p=localStorage.getItem('sm_palette');
+    if(t==='light'||t==='dark')d.setAttribute('data-theme',t);
+    if(p&&/^[a-z]+$/.test(p)&&p!=='ocean')d.setAttribute('data-palette',p);
+    var dark=t==='dark'||(t!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+    d.setAttribute('data-scheme',dark?'dark':'light');}catch(e){}})();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ScoreMaster">
@@ -91,6 +98,25 @@
         --bg-gradient:  radial-gradient(circle at 50% 0%, #2c2c2e, #000000);
     }
 }
+
+/* ===== Palettes de thème (mode clair / sombre résolu via data-scheme) ===== */
+[data-palette="forest"][data-scheme="light"] { --primary:#1F8A4C; --accent:#2E7D6B; --bg:#F1F6F2; --card:#FFFFFF; --text:#14241A; --text-sec:#6B7F73; --border:#D9E6DD; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F1F6F2); }
+[data-palette="forest"][data-scheme="dark"] { --primary:#34C77B; --accent:#3FB59A; --bg:#07120B; --card:#12201A; --text:#EAF4EE; --text-sec:#8CA396; --border:#24382C; --glass-bg:rgba(18,32,26,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #14271C, #07120B); }
+[data-palette="dusk"][data-scheme="light"] { --primary:#8E4DE0; --accent:#E0489A; --bg:#F6F2FA; --card:#FFFFFF; --text:#221A2E; --text-sec:#857A94; --border:#E6DDF0; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F6F2FA); }
+[data-palette="dusk"][data-scheme="dark"] { --primary:#A56BFF; --accent:#FF5FAE; --bg:#0D0814; --card:#1D1428; --text:#F3EEFA; --text-sec:#A194B3; --border:#3A2C4C; --glass-bg:rgba(29,20,40,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #2a1b3d, #0D0814); }
+[data-palette="midnight"][data-scheme="light"] { --primary:#B8860B; --accent:#8A6A1F; --bg:#F7F3EA; --card:#FFFFFF; --text:#1E1A12; --text-sec:#8B8472; --border:#E8E0CC; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F7F3EA); }
+[data-palette="midnight"][data-scheme="dark"] { --primary:#E8B64C; --accent:#C99A2E; --bg:#000000; --card:#111111; --text:#F4EFE3; --text-sec:#9A9486; --border:#2B2820; --glass-bg:rgba(17,17,17,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #1a1710, #000000); }
+[data-palette="felt"][data-scheme="light"] { --primary:#1B6B3A; --accent:#B8860B; --bg:#DCEBDD; --card:#FBF8EE; --text:#1B2A1F; --text-sec:#5F7566; --border:#BFD6C4; --glass-bg:rgba(251,248,238,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #E8F3EA, #CFE3D3); }
+[data-palette="felt"][data-scheme="dark"] { --primary:#3FBF73; --accent:#E2B04A; --bg:#0B2416; --card:#14331F; --text:#F2EBD3; --text-sec:#9DB5A2; --border:#24492F; --glass-bg:rgba(20,51,31,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #1B4A2E, #0B2416); }
+
+/* Sélecteur d'apparence (Paramètres) */
+.seg { display:flex; gap:4px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:3px; margin-bottom:14px; }
+.seg button { flex:1; border:none; background:transparent; color:var(--text-sec); font-weight:800; font-size:13px; padding:9px 6px; border-radius:9px; cursor:pointer; }
+.seg button.active { background:var(--card); color:var(--text); box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+.palette-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.palette-btn { border:2px solid var(--border); background:var(--card); border-radius:14px; padding:10px 6px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--text); font-size:12px; font-weight:800; }
+.palette-btn.active { border-color:var(--primary); box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent); }
+.palette-btn .sw { width:44px; height:44px; border-radius:50%; border:1px solid rgba(0,0,0,0.12); }
 
 
 /* =============================================================================
@@ -795,7 +821,7 @@ body.is-editing .edit-tab { display: flex; }
         color: white;
         border-color: var(--primary);
         transform: translateX(-4px);
-        box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+        box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent);
     }
     .recent-suggestion-item:hover .add-icon {
         background: white;
@@ -1022,7 +1048,7 @@ body.is-editing .edit-tab { display: flex; }
     transition: all 0.2s;
     position: relative;
 }
-.current-game-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(0,122,255,0.12); }
+.current-game-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 12%, transparent); }
 .current-game-item:active { transform: scale(0.99); }
 
 .current-game-item .current-header     { display: flex; align-items: center; gap: 12px; }
@@ -1695,15 +1721,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
             <div class="settings-section">
                 <div class="settings-section-title">Apparence</div>
-                <div class="settings-row">
-                    <div class="settings-label">
-                        <div class="settings-name">🌙 Mode sombre</div>
-                        <div class="settings-desc">Activer le thème sombre</div>
-                    </div>
-                    <button id="settings-theme-btn" class="settings-toggle" onclick="app.toggleTheme(); UI.updateSettingsUI();">
-                        <span class="toggle-slider"></span>
-                    </button>
+                <div class="seg" id="theme-mode" role="group" aria-label="Mode">
+                    <button data-mode="auto" onclick="app.setThemeMode('auto')">🌓 Auto</button>
+                    <button data-mode="light" onclick="app.setThemeMode('light')">☀️ Clair</button>
+                    <button data-mode="dark" onclick="app.setThemeMode('dark')">🌙 Sombre</button>
                 </div>
+                <div class="palette-grid" id="palette-grid" role="group" aria-label="Palette"></div>
             </div>
 
             <div class="settings-section">
@@ -2510,6 +2533,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         LEGACY_GAMES_KEY:  'sm_v11_games',
         LEGACY_CURRENT_KEY:'sm_v11_current',
         THEME_KEY:         'sm_theme',
+        PALETTE_KEY:       'sm_palette',
         SOUND_KEY:         'sm_sound',
         SETTINGS_KEY:      'sm_settings',
         SAVED_PLAYERS_KEY: 'sm_saved_players',
@@ -3343,12 +3367,27 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (mergeBtn) mergeBtn.disabled = n === 0 || fresh === 0;
             this._open('backup-modal');
         },
+        _renderAppearance() {
+            const mode = app.getThemeMode(), pal = app.getPalette();
+            document.querySelectorAll('#theme-mode button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            const grid = document.getElementById('palette-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            Object.entries(app.PALETTES).forEach(([id, def]) => {
+                const b = document.createElement('button');
+                b.className = 'palette-btn' + (id === pal ? ' active' : '');
+                b.setAttribute('aria-pressed', String(id === pal));
+                b.onclick = () => app.setPalette(id);
+                b.innerHTML = `<span class="sw" style="background:linear-gradient(135deg, ${def.c[0]} 50%, ${def.c[1]} 50%)"></span>${def.name}`;
+                grid.appendChild(b);
+            });
+        },
         updateSettingsUI() {
             const theme    = document.documentElement.getAttribute('data-theme');
             const isDark   = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             const s        = app.settings;
+            this._renderAppearance();
             [
-                ['settings-theme-btn',     isDark],
                 ['settings-sound-btn',     SoundFX.enabled],
                 ['settings-vibration-btn', s.vibration],
                 ['settings-confetti-btn',  s.confetti],
@@ -4161,7 +4200,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _loadThemePref() {
             try {
                 const theme = localStorage.getItem(Storage.THEME_KEY);
-                if (theme) { document.documentElement.setAttribute('data-theme', theme); this.updateThemeIcon(); }
+                const pal = localStorage.getItem(Storage.PALETTE_KEY);
+                this.applyAppearance(theme === 'light' || theme === 'dark' ? theme : 'auto', pal);
+                // En mode Auto : suivre les changements du système
+                if (!this._schemeBound && window.matchMedia) {
+                    this._schemeBound = true;
+                    matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => this.applyAppearance(this.getThemeMode(), this.getPalette()));
+                }
             } catch(e) {}
         },
         _loadSoundPref() {
@@ -4232,20 +4277,51 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         // -----------------------------------------------------------------------
         // THÈME, SON & PARAMÈTRES
         // -----------------------------------------------------------------------
-        toggleTheme() {
+        PALETTES: {
+            ocean:    { name: 'Océan',      c: ['#007AFF', '#5856D6'] },
+            forest:   { name: 'Forêt',      c: ['#1F8A4C', '#2E7D6B'] },
+            dusk:     { name: 'Crépuscule', c: ['#8E4DE0', '#E0489A'] },
+            midnight: { name: 'Minuit',     c: ['#E8B64C', '#111111'] },
+            felt:     { name: 'Tapis vert', c: ['#1B6B3A', '#B8860B'] }
+        },
+        getThemeMode() {
+            const t = document.documentElement.getAttribute('data-theme');
+            return t === 'light' || t === 'dark' ? t : 'auto';
+        },
+        getPalette() {
+            const p = document.documentElement.getAttribute('data-palette');
+            return p && this.PALETTES[p] ? p : 'ocean';
+        },
+        _store(key, val) {
+            try { if (Storage.storageAvailable) { if (val === null) localStorage.removeItem(key); else localStorage.setItem(key, val); } }
+            catch (e) { console.warn('Impossible de sauvegarder le thème:', e); }
+        },
+        /** Applique mode + palette sur <html> et met à jour la couleur de la barre du navigateur. */
+        applyAppearance(mode, palette) {
             const root = document.documentElement;
-            const currentTheme = root.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', newTheme);
-            try {
-                if (Storage.storageAvailable) {
-                    localStorage.setItem(Storage.THEME_KEY, newTheme);
-                }
-            } catch(e) {
-                console.warn('Impossible de sauvegarder le thème:', e);
-            }
-            this.updateThemeIcon();
-            vibrate(30);
+            if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode); else root.removeAttribute('data-theme');
+            if (palette && palette !== 'ocean' && this.PALETTES[palette]) root.setAttribute('data-palette', palette); else root.removeAttribute('data-palette');
+            const dark = mode === 'dark' || (mode !== 'light' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+            root.setAttribute('data-scheme', dark ? 'dark' : 'light');
+            const meta = document.getElementById('theme-color-meta');
+            if (meta) { const c = getComputedStyle(root).getPropertyValue('--primary').trim(); if (c) meta.setAttribute('content', c); }
+            UI.updateSettingsUI();
+        },
+        setThemeMode(mode) {
+            if (!['auto', 'light', 'dark'].includes(mode)) return;
+            this._store(Storage.THEME_KEY, mode === 'auto' ? null : mode);
+            this.applyAppearance(mode, this.getPalette());
+            vibrate(20);
+        },
+        setPalette(id) {
+            if (!this.PALETTES[id]) return;
+            this._store(Storage.PALETTE_KEY, id === 'ocean' ? null : id);
+            this.applyAppearance(this.getThemeMode(), id);
+            vibrate(20);
+        },
+        toggleTheme() {
+            const dark = document.documentElement.getAttribute('data-scheme') === 'dark';
+            this.setThemeMode(dark ? 'light' : 'dark');
         },
         updateThemeIcon() {
             // Met à jour le toggle dans le modal paramètres si ouvert
@@ -4382,7 +4458,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 presetStats:   this._readJsonKey(Storage.PRESET_STATS_KEY, {}),
                 playerStats:   this._readJsonKey(Storage.PLAYER_STATS_KEY, {}),
                 sound:         SoundFX.enabled,
-                theme:         localStorage.getItem(Storage.THEME_KEY)
+                theme:         localStorage.getItem(Storage.THEME_KEY),
+                palette:       localStorage.getItem(Storage.PALETTE_KEY)
             };
         },
 
@@ -4484,7 +4561,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _applyImportedTheme(theme) {
             if (theme !== 'light' && theme !== 'dark') return;
             localStorage.setItem(Storage.THEME_KEY, theme);
-            document.documentElement.setAttribute('data-theme', theme);
+            app.applyAppearance(theme, app.getPalette());
+        },
+
+        /** Applique et persiste la palette importée (sauvegarde fichier ou cloud). */
+        _applyImportedPalette(pal) {
+            if (typeof pal !== 'string' || !app.PALETTES[pal]) return;
+            if (pal === 'ocean') localStorage.removeItem(Storage.PALETTE_KEY); else localStorage.setItem(Storage.PALETTE_KEY, pal);
+            app.applyAppearance(app.getThemeMode(), pal);
         },
 
         /** Applique et persiste l'état du son importé. */
@@ -4513,6 +4597,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this._applyImportedExtras(data);
             if (data.sound !== undefined) this._applyImportedSound(data.sound);
             if (data.theme) this._applyImportedTheme(data.theme);
+            if (data.palette !== undefined) this._applyImportedPalette(data.palette || 'ocean');
         },
 
         /**
@@ -6914,7 +6999,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '32', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '33', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
