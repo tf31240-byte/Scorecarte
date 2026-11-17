@@ -1389,9 +1389,16 @@ body.is-editing .edit-tab { display: flex; }
 /* ===== Guide de première connexion ===== */
 #onboarding { position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); opacity:0; transition:opacity .25s; }
 #onboarding.show { opacity:1; }
-.ob-card { position:relative; width:100%; max-width:420px; max-height:calc(100dvh - 32px); overflow-y:auto; background:var(--card); color:var(--text); border-radius:28px; padding:26px 22px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 24px 80px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:14px; }
+.ob-card { position:relative; width:100%; max-width:420px; max-height:calc(100dvh - 32px); overflow:hidden; background:var(--card); color:var(--text); border-radius:28px; padding:26px 22px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 24px 80px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:14px; }
 .ob-skip { align-self:flex-end; background:none; border:none; color:var(--text-sec); font-weight:800; font-size:13px; cursor:pointer; padding:6px 4px; margin:-8px -4px 0 0; }
-.ob-body { text-align:center; min-height:250px; }
+.ob-body { text-align:center; min-height:0; flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.ob-skip, .ob-dots, .ob-actions { flex-shrink:0; }
+.ob-perks { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.ob-perks span { background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:5px 10px; font-size:12px; font-weight:800; }
+#onboarding .ob-ol li { padding:8px 12px; font-size:13px; }
+#onboarding .inst-note { font-size:12px; padding:9px 11px; }
+#onboarding .ob-ic { font-size:44px; margin-bottom:6px; }
+#onboarding .ob-title { font-size:20px; margin-bottom:8px; }
 .ob-ic { font-size:56px; line-height:1; margin-bottom:10px; }
 .ob-title { font-size:22px; font-weight:900; margin:0 0 10px; letter-spacing:-.3px; }
 .ob-text { text-align:left; font-size:14px; line-height:1.5; color:var(--text); }
@@ -1432,7 +1439,7 @@ body.is-editing .edit-tab { display: flex; }
 .inst-note.warn { border-color:#ff9f0a; background:color-mix(in srgb, #ff9f0a 12%, var(--card)); }
 .inst-note.ok { border-color:var(--success); background:color-mix(in srgb, var(--success) 10%, var(--card)); }
 #install-body .ob-list { margin-top:4px; }
-#install-body .ob-inline, #onboarding .ob-text .ob-inline { width:100%; }
+#install-body .ob-inline, #onboarding .ob-text .ob-inline { width:100%; margin-bottom:8px; }
 
 /* ===== Statistiques ===== */
 .stats-filters { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
@@ -7454,7 +7461,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '39', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '40', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8140,7 +8147,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _k(t) { return `<span class="ob-k">${t}</span>`; },
 
         /** Contenu (HTML) pour une plateforme. `d` = détection de l'appareil réel. */
-        body(os, d) {
+        body(os, d, compact) {
             d = d || this.detect();
             const real = os === d.os;                 // on affiche les étapes de l'appareil utilisé ?
             const br = real ? d.browser : (os === 'ios' ? 'safari' : os === 'android' ? 'chrome' : 'chrome');
@@ -8169,8 +8176,11 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     `Touche <b>Ajouter</b> en haut à droite`,
                     `Ouvre ScoreMaster depuis son <b>icône</b> : plein écran, hors-ligne`
                 ]);
-                h += note(`⚠️ <b>Sur iPhone, l'appli installée démarre vide</b> : ses données sont séparées de Safari.${this._hasData() ? ' Tu as déjà des parties : sauvegarde-les d\'abord avec ton profil ☁️.' : ''}<br>Dans l'appli installée, choisis ensuite <b>« J'ai déjà un profil »</b> pour tout retrouver.`, 'warn');
-                h += btn(Cloud.load().consent ? '🔄 Synchroniser maintenant' : '☁️ Créer mon profil avant d\'installer', Cloud.load().consent ? 'Cloud.backup(true)' : 'Install.toCloud()', 'ob-secondary ob-inline');
+                if (compact) h += note(`⚠️ L'appli installée démarre <b>vide</b> (données séparées de Safari). Crée ton profil ☁️ à la dernière étape <b>avant</b>, puis choisis « J'ai déjà un profil » dedans.`, 'warn');
+                else {
+                    h += note(`⚠️ <b>Sur iPhone, l'appli installée démarre vide</b> : ses données sont séparées de Safari.${this._hasData() ? ' Tu as déjà des parties : sauvegarde-les d\'abord avec ton profil ☁️.' : ''}<br>Dans l'appli installée, choisis ensuite <b>« J'ai déjà un profil »</b> pour tout retrouver.`, 'warn');
+                    h += btn(Cloud.load().consent ? '🔄 Synchroniser maintenant' : '☁️ Créer mon profil avant d\'installer', Cloud.load().consent ? 'Cloud.backup(true)' : 'Install.toCloud()', 'ob-secondary ob-inline');
+                }
                 return h;
             }
 
@@ -8257,6 +8267,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         _build() {
             const S = [];
+            if (!this._standalone()) {
+                S.push({ ic: '📲', t: "Installe l'appli", html: `
+                    <p><b>Facultatif</b>, mais plus pratique :</p>
+                    <div class="ob-perks"><span>⚡ Icône d'accueil</span><span>🖥️ Plein écran</span><span>📵 Hors-ligne</span></div>
+                    ${Install.body(Install.detect().os, null, true)}
+                    <button class="ob-link" onclick="Install.open()">Autre appareil ?</button>` });
+            }
             S.push({ ic: '🎴', t: 'Bienvenue sur ScoreMaster', html: `
                 <p>Le carnet de scores de vos soirées jeux : Belote, Uno, Skyjo, Tarot, Rami…</p>
                 <ul class="ob-list">
@@ -8302,10 +8319,6 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <button data-mode="auto">🌓 Auto</button><button data-mode="light">☀️ Clair</button><button data-mode="dark">🌙 Sombre</button>
                 </div>
                 <div class="ob-pal" id="ob-pal"></div>`, onShow: () => this._renderLook() });
-            if (!this._standalone()) {
-                S.push({ ic: '📲', t: "Installe l'appli", html: `<p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>${Install.body(Install.detect().os)}
-                    <button class="ob-link" onclick="Install.open()">Voir les étapes pour un autre appareil</button>` });
-            }
             S.push({ ic: '☁️', t: 'Sauvegarde ton profil', cloud: true, html: `
                 <p><b>Facultatif.</b> Un pseudo et une couleur suffisent, sans mot de passe ni e-mail.</p>
                 <ul class="ob-list">

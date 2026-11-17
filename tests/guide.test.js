@@ -10,14 +10,17 @@ ok('pas d\'ouverture auto sous test automatisé',!(await p.$('#onboarding')));
 // 2. forcé par ?guide=1
 await p.goto(URL+'?guide=1');await p.waitForTimeout(1500);
 ok('?guide=1 ouvre le guide',await p.isVisible('#onboarding'));
+ok('l\'installation est la 1re étape (facultatif + avantages)',(await p.textContent('.ob-title')).includes('Installe')&&(await p.textContent('.ob-text')).includes('Facultatif')&&(await p.textContent('.ob-text')).includes('hors-ligne'));
+{const g=await p.evaluate(()=>{const c=document.querySelector('.ob-card').getBoundingClientRect(),a=document.getElementById('ob-actions').getBoundingClientRect(),d=document.getElementById('ob-dots').getBoundingClientRect(),b=document.getElementById('ob-body').getBoundingClientRect();return{a:a.bottom<=c.bottom+1,ad:d.bottom<=a.top+1,bd:b.bottom<=d.top+1}});
+ok('boutons et pastilles sous le contenu (pas de chevauchement)',g.a&&g.ad&&g.bd);}
 const titles=[];
 for(let i=0;i<12;i++){titles.push(await p.textContent('.ob-title'));if(await p.isVisible('.ob-actions .ob-link'))break;await p.click('.ob-actions .ob-primary');await p.waitForTimeout(120);}
 console.log(titles.join(' › '));
-ok('slides dans l\'ordre (8 avec installation iOS)',titles.length===8&&titles[0].includes('Bienvenue')&&titles[titles.length-1].includes('profil'));
+ok('slides dans l\'ordre (8 avec installation iOS)',titles.length===8&&titles[0].includes('Installe')&&titles[titles.length-1].includes('profil'));
 ok('étape iOS : Partager / Sur l\'écran d\'accueil',titles.some(t=>t.includes('Installe')));
 await p.screenshot({path:'/tmp/ob_cloud.png'}).catch(()=>{});
 // 3. navigation retour + clavier
-await p.keyboard.press('ArrowLeft');await p.waitForTimeout(100);ok('flèche gauche = retour',(await p.textContent('.ob-title')).includes('Installe'));
+await p.keyboard.press('ArrowLeft');await p.waitForTimeout(100);ok('flèche gauche = retour',(await p.textContent('.ob-title')).includes('image'));
 await p.keyboard.press('ArrowRight');await p.waitForTimeout(100);
 // 4. thème depuis le guide
 await p.keyboard.press('Escape');await p.waitForTimeout(400);
@@ -30,14 +33,14 @@ await p.click('text=Guide de démarrage');await p.waitForTimeout(500);
 ok('Paramètres → Guide',await p.isVisible('#onboarding'));
 ok('fenêtre Paramètres fermée',!(await p.evaluate(()=>document.getElementById('settings-modal').classList.contains('active'))));
 // slide thème
-for(let i=0;i<5;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
+for(let i=0;i<6;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
 ok('slide Apparence',(await p.textContent('.ob-title')).includes('image'));
 await p.click('#ob-pal .palette-btn:has-text("Forêt")');await p.click('#ob-mode button[data-mode="dark"]');
 ok('thème appliqué depuis le guide',await p.evaluate(()=>document.documentElement.dataset.palette==='forest'&&document.documentElement.dataset.theme==='dark'));
 ok('sélection mise à jour',await p.evaluate(()=>document.querySelector('#ob-pal .palette-btn.active').textContent.includes('Forêt')));
 await p.evaluate(()=>{app.setPalette('ocean');app.setThemeMode('auto')});
 // 6. étape cloud : « Plus tard » snooze
-for(let i=0;i<2;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
+for(let i=0;i<1;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
 ok('étape cloud : 3 actions',(await p.$$('.ob-actions button')).length===3);
 await p.click('.ob-link');await p.waitForTimeout(500);
 ok('Plus tard : guide fermé',!(await p.$('#onboarding')));
