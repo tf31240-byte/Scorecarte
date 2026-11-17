@@ -9,6 +9,7 @@
     (function(){try{var d=document.documentElement,t=localStorage.getItem('sm_theme'),p=localStorage.getItem('sm_palette');
     if(t==='light'||t==='dark')d.setAttribute('data-theme',t);
     if(p&&/^[a-z]+$/.test(p)&&p!=='ocean')d.setAttribute('data-palette',p);
+    if(p==='custom'){var c=JSON.parse(localStorage.getItem('sm_custom')||'null');if(c&&/^#[0-9a-fA-F]{6}$/.test(c.p)){d.style.setProperty('--primary',c.p);if(/^#[0-9a-fA-F]{6}$/.test(c.a))d.style.setProperty('--accent',c.a);}}
     var dark=t==='dark'||(t!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
     d.setAttribute('data-scheme',dark?'dark':'light');}catch(e){}})();
     </script>
@@ -116,6 +117,11 @@
 .palette-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .palette-btn { border:2px solid var(--border); background:var(--card); border-radius:14px; padding:10px 6px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--text); font-size:12px; font-weight:800; }
 .palette-btn.active { border-color:var(--primary); box-shadow:0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent); }
+.custom-editor { margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--card); display:flex; flex-direction:column; gap:10px; }
+.custom-editor label { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; font-weight:800; color:var(--text); }
+.custom-editor input[type=color] { width:56px; height:36px; border:1px solid var(--border); border-radius:10px; background:none; padding:2px; cursor:pointer; }
+.custom-editor input[type=checkbox] { width:22px; height:22px; accent-color:var(--primary); }
+.custom-editor .hint { font-size:11px; font-weight:600; color:var(--text-sec); margin:0; }
 .palette-btn .sw { width:44px; height:44px; border-radius:50%; border:1px solid rgba(0,0,0,0.12); }
 
 
@@ -1727,6 +1733,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <button data-mode="dark" onclick="app.setThemeMode('dark')">🌙 Sombre</button>
                 </div>
                 <div class="palette-grid" id="palette-grid" role="group" aria-label="Palette"></div>
+                <div id="custom-editor" class="custom-editor hidden">
+                    <label>Couleur principale <input type="color" id="cp-primary" aria-label="Couleur principale"></label>
+                    <label>Couleur secondaire <input type="color" id="cp-accent" aria-label="Couleur secondaire"></label>
+                    <label>Teinter le fond <input type="checkbox" id="cp-tint"></label>
+                    <p class="hint">Les couleurs trop claires ou trop sombres sont ajustées automatiquement pour rester lisibles.</p>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -2534,6 +2546,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         LEGACY_CURRENT_KEY:'sm_v11_current',
         THEME_KEY:         'sm_theme',
         PALETTE_KEY:       'sm_palette',
+        CUSTOM_KEY:        'sm_custom',
         SOUND_KEY:         'sm_sound',
         SETTINGS_KEY:      'sm_settings',
         SAVED_PLAYERS_KEY: 'sm_saved_players',
@@ -3370,6 +3383,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _renderAppearance() {
             const mode = app.getThemeMode(), pal = app.getPalette();
             document.querySelectorAll('#theme-mode button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            const ed = document.getElementById('custom-editor');
+            if (ed) {
+                ed.classList.toggle('hidden', pal !== 'custom');
+                const c = app.getCustom();
+                const set = (id, v) => { const el = document.getElementById(id); if (el && el !== document.activeElement) el.value = v; };
+                set('cp-primary', c.p); set('cp-accent', c.a);
+                const t = document.getElementById('cp-tint'); if (t) t.checked = c.tint;
+                const bind = (id, key) => { const el = document.getElementById(id); if (el) { el.oninput = el.onchange = () => app.setCustom({ [key]: el.type === 'checkbox' ? el.checked : el.value }); } };
+                bind('cp-primary', 'p'); bind('cp-accent', 'a'); bind('cp-tint', 'tint');
+            }
             const grid = document.getElementById('palette-grid');
             if (!grid) return;
             grid.innerHTML = '';
@@ -3378,7 +3401,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 b.className = 'palette-btn' + (id === pal ? ' active' : '');
                 b.setAttribute('aria-pressed', String(id === pal));
                 b.onclick = () => app.setPalette(id);
-                b.innerHTML = `<span class="sw" style="background:linear-gradient(135deg, ${def.c[0]} 50%, ${def.c[1]} 50%)"></span>${def.name}`;
+                const cc = id === 'custom' ? [app.getCustom().p, app.getCustom().a] : def.c;
+                b.innerHTML = `<span class="sw" style="background:linear-gradient(135deg, ${cc[0]} 50%, ${cc[1]} 50%)"></span>${id === 'custom' ? '🎨 ' : ''}${def.name}`;
                 grid.appendChild(b);
             });
         },
@@ -4282,7 +4306,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             forest:   { name: 'Forêt',      c: ['#1F8A4C', '#2E7D6B'] },
             dusk:     { name: 'Crépuscule', c: ['#8E4DE0', '#E0489A'] },
             midnight: { name: 'Minuit',     c: ['#E8B64C', '#111111'] },
-            felt:     { name: 'Tapis vert', c: ['#1B6B3A', '#B8860B'] }
+            felt:     { name: 'Tapis vert', c: ['#1B6B3A', '#B8860B'] },
+            custom:   { name: 'Perso',      c: ['#FF2D55', '#FF9500'] }
         },
         getThemeMode() {
             const t = document.documentElement.getAttribute('data-theme');
@@ -4297,15 +4322,67 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             catch (e) { console.warn('Impossible de sauvegarder le thème:', e); }
         },
         /** Applique mode + palette sur <html> et met à jour la couleur de la barre du navigateur. */
-        applyAppearance(mode, palette) {
+        _HEX: /^#[0-9a-fA-F]{6}$/,
+        getCustom() {
+            try {
+                const c = JSON.parse(localStorage.getItem(Storage.CUSTOM_KEY));
+                if (c && this._HEX.test(c.p) && this._HEX.test(c.a)) return { p: c.p, a: c.a, tint: !!c.tint };
+            } catch (e) {}
+            return { p: '#FF2D55', a: '#FF9500', tint: true };
+        },
+        _rgb(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); },
+        _hex(rgb) { return '#' + rgb.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); },
+        _mix(a, b, t) { const A = this._rgb(a), B = this._rgb(b); return this._hex(A.map((v, i) => v * (1 - t) + B[i] * t)); },
+        _lum(h) { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; const [r, g, b] = this._rgb(h); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); },
+        /** Ajuste une couleur pour que le texte blanc reste lisible dessus (et qu'elle reste visible en sombre). */
+        _fit(hex, dark) {
+            let c = hex, n = 0;
+            while (this._lum(c) > 0.3 && n++ < 20) c = this._mix(c, '#000000', 0.1);
+            n = 0;
+            if (dark) while (this._lum(c) < 0.06 && n++ < 20) c = this._mix(c, '#ffffff', 0.1);
+            return c;
+        },
+        _CUSTOM_VARS: ['--primary', '--accent', '--bg', '--card', '--border', '--bg-gradient', '--glass-bg'],
+        _applyCustomVars(on, dark) {
+            const st = document.documentElement.style;
+            this._CUSTOM_VARS.forEach(v => st.removeProperty(v));
+            if (!on) return;
+            const c = this.getCustom(), p = this._fit(c.p, dark), a = this._fit(c.a, dark);
+            st.setProperty('--primary', p); st.setProperty('--accent', a);
+            if (!c.tint) return;
+            if (dark) {
+                const bg = this._mix('#000000', p, 0.10), card = this._mix('#000000', p, 0.17);
+                st.setProperty('--bg', bg); st.setProperty('--card', card);
+                st.setProperty('--border', this._mix('#000000', p, 0.30));
+                st.setProperty('--bg-gradient', `radial-gradient(circle at 50% 0%, ${this._mix('#000000', p, 0.24)}, ${bg})`);
+                const [r, g, b] = this._rgb(card); st.setProperty('--glass-bg', `rgba(${r},${g},${b},0.65)`);
+            } else {
+                const bg = this._mix('#ffffff', p, 0.07);
+                st.setProperty('--bg', bg); st.setProperty('--card', '#FFFFFF');
+                st.setProperty('--border', this._mix('#ffffff', p, 0.18));
+                st.setProperty('--bg-gradient', `radial-gradient(circle at 50% 0%, #ffffff, ${bg})`);
+                st.setProperty('--glass-bg', 'rgba(255,255,255,0.65)');
+            }
+        },
+        setCustom(part) {
+            const c = Object.assign(this.getCustom(), part);
+            if (!this._HEX.test(c.p) || !this._HEX.test(c.a)) return;
+            this._store(Storage.CUSTOM_KEY, JSON.stringify({ p: c.p, a: c.a, tint: !!c.tint }));
+            this._store(Storage.PALETTE_KEY, 'custom');
+            this.applyAppearance(this.getThemeMode(), 'custom', true);
+            const sw = document.querySelector('.palette-btn.active .sw');
+            if (sw) sw.style.background = `linear-gradient(135deg, ${c.p} 50%, ${c.a} 50%)`;
+        },
+        applyAppearance(mode, palette, skipUI) {
             const root = document.documentElement;
             if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode); else root.removeAttribute('data-theme');
             if (palette && palette !== 'ocean' && this.PALETTES[palette]) root.setAttribute('data-palette', palette); else root.removeAttribute('data-palette');
             const dark = mode === 'dark' || (mode !== 'light' && !!window.matchMedia?.('(prefers-color-scheme: dark)').matches);
             root.setAttribute('data-scheme', dark ? 'dark' : 'light');
+            this._applyCustomVars(palette === 'custom', dark);
             const meta = document.getElementById('theme-color-meta');
             if (meta) { const c = getComputedStyle(root).getPropertyValue('--primary').trim(); if (c) meta.setAttribute('content', c); }
-            UI.updateSettingsUI();
+            if (!skipUI) UI.updateSettingsUI();
         },
         setThemeMode(mode) {
             if (!['auto', 'light', 'dark'].includes(mode)) return;
@@ -4459,7 +4536,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 playerStats:   this._readJsonKey(Storage.PLAYER_STATS_KEY, {}),
                 sound:         SoundFX.enabled,
                 theme:         localStorage.getItem(Storage.THEME_KEY),
-                palette:       localStorage.getItem(Storage.PALETTE_KEY)
+                palette:       localStorage.getItem(Storage.PALETTE_KEY),
+                customPalette: localStorage.getItem(Storage.CUSTOM_KEY)
             };
         },
 
@@ -4597,6 +4675,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             this._applyImportedExtras(data);
             if (data.sound !== undefined) this._applyImportedSound(data.sound);
             if (data.theme) this._applyImportedTheme(data.theme);
+            if (typeof data.customPalette === 'string') { try { const c = JSON.parse(data.customPalette); if (app._HEX.test(c.p) && app._HEX.test(c.a)) localStorage.setItem(Storage.CUSTOM_KEY, JSON.stringify({ p: c.p, a: c.a, tint: !!c.tint })); } catch (e) {} }
             if (data.palette !== undefined) this._applyImportedPalette(data.palette || 'ocean');
         },
 
@@ -6999,7 +7078,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '33', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '34', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
