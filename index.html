@@ -1408,6 +1408,7 @@ body.is-editing .edit-tab { display: flex; }
 .dots { display:inline-flex; gap:4px; margin-top:5px; }
 .dot { font-style:normal; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
 .dot.w { background:var(--success); color:#fff; }
+.dot.d { background:color-mix(in srgb, var(--primary) 25%, transparent); color:var(--primary); }
 .dot.l { background:color-mix(in srgb, var(--text-sec) 22%, transparent); color:var(--text-sec); }
 .d-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; }
 .d-rows { display:grid; gap:10px; }
@@ -3162,10 +3163,15 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return out;
         },
 
+        /** Identité d'un joueur : insensible à la casse, aux accents et aux espaces. */
+        _nk(s) { return String(s || '?').trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); },
+
         analyze(opts = {}) {
             const now = Date.now();
+            // Règle app : une partie sans aucune manche n'a pas de vainqueur → ignorée
             const all = Storage.loadGames().filter(g => g && g.finished && g.state
-                && Array.isArray(g.state.players) && g.state.players.length && Array.isArray(g.state.history));
+                && Array.isArray(g.state.players) && g.state.players.length
+                && Array.isArray(g.state.history) && g.state.history.length > 0);
             const time = g => { const t = Date.parse(g.date); return isNaN(t) ? 0 : t; };
             const nameKey = g => String(g.name || 'Partie').trim().toLowerCase();
 
@@ -3183,47 +3189,64 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             else if (opts.period === 'year') games = games.filter(g => new Date(time(g)).getFullYear() === new Date(now).getFullYear());
             games = games.slice().sort((a, b) => time(a) - time(b));
 
-            const P = {};           // joueurs
-            const pair = {};        // face-à-face
-            const anec = { tight: null, wide: null, long: null, big: null, comeback: null };
-            const gameResults = []; // scores finaux (pour le top)
+            // Belote = équipes (NOUS / EUX) : pas des joueurs. On ne les classe comme tels
+            // que si le filtre ne contient que des parties de Belote.
+            const teamOnly = games.length > 0 && games.every(g => g.mode === 'belote');
+
+            const P = {}, pair = {};
+            const A = { tight: null, wide: null, long: null, comeback: null, bigBy: {} };
+            const byGameRes = {};
             let rounds = 0, last = null;
+            const rel = (a, b) => Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1); // écart relatif (jeux de barèmes différents)
 
             games.forEach(g => {
                 const st = g.state, isLowest = st.victoryCondition === VC_LOWEST;
-                const players = st.players.map(p => ({ id: p.id, key: String(p.name || '?').trim().toUpperCase(), total: Number(p.total) || 0 }));
+                const isTeam = g.mode === 'belote';
+                const players = st.players.map(p => ({ id: p.id, key: this._nk(p.name), label: String(p.name || '?').trim().toUpperCase(), total: Number(p.total) || 0 }));
                 const places = this._placesOf(players, isLowest);
                 const n = players.length, t = time(g), gname = String(g.name || 'Partie').trim();
                 const sorted = [...players].sort((a, b) => isLowest ? a.total - b.total : b.total - a.total);
-                const winners = players.filter(p => places[p.id] === 1);
+                // Règle app (_gameWinnerId) : égalité en tête = pas de vainqueur
+                const tops = players.filter(p => places[p.id] === 1);
+                const draw = tops.length > 1;
                 rounds += st.history.length;
-                last = { name: gname, t, winners: winners.map(w => w.key) };
+                last = { name: gname, t, draw, winners: draw ? [] : tops.map(w => w.label) };
 
-                players.forEach(p => {
-                    const s = P[p.key] || (P[p.key] = { name: p.key, played: 0, wins: 0, results: [], roundScores: [], totalRounds: 0,
-                        bestRound: null, worstRound: null, currentStreak: 0, bestStreak: 0, byGame: {}, gameScores: [] });
-                    const win = places[p.id] === 1;
-                    s.played++; if (win) s.wins++;
-                    s.results.push({ win, place: places[p.id], n, total: p.total, game: gname, t, isLowest });
-                    s.gameScores.push(p.total);
-                    const bg = s.byGame[gname] || (s.byGame[gname] = { played: 0, wins: 0 });
+                const seen = new Set();
+                const stats = players.filter(p => { if (seen.has(p.key)) return false; seen.add(p.key); return !(isTeam && !teamOnly); });
+
+                stats.forEach(p => {
+                    const s = P[p.key] || (P[p.key] = { name: p.label, played: 0, wins: 0, draws: 0, results: [], roundScores: [], totalRounds: 0,
+                        bestRound: null, worstRound: null, currentStreak: 0, bestStreak: 0, byGame: {} });
+                    const win = places[p.id] === 1 && !draw, isDraw = places[p.id] === 1 && draw;
+                    s.played++; if (win) s.wins++; if (isDraw) s.draws++;
+                    s.results.push({ win, draw: isDraw, place: places[p.id], n, total: p.total, game: gname, t, isLowest });
+                    const bg = s.byGame[gname] || (s.byGame[gname] = { played: 0, wins: 0, rounds: 0, sum: 0, isLowest });
                     bg.played++; if (win) bg.wins++;
                     s.currentStreak = win ? s.currentStreak + 1 : 0;
                     s.bestStreak = Math.max(s.bestStreak, s.currentStreak);
-                    st.history.forEach((r, ri) => {
+                    st.history.forEach(r => {
                         const rs = Number(r[p.id]) || 0, good = isLowest ? -rs : rs;
-                        s.roundScores.push(rs); s.totalRounds++;
+                        s.roundScores.push(rs); s.totalRounds++; bg.rounds++; bg.sum += rs;
                         if (!s.bestRound || good > s.bestRound.good) s.bestRound = { good, value: rs, game: gname, t, isLowest };
                         if (!s.worstRound || good < s.worstRound.good) s.worstRound = { good, value: rs, game: gname, t, isLowest };
-                        if (!anec.big || rs > anec.big.value) anec.big = { value: rs, name: p.key, round: ri + 1, game: gname, t, isLowest };
                     });
-                    gameResults.push({ name: p.key, total: p.total, game: gname, t, isLowest });
                 });
 
-                // Face-à-face
-                for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
-                    const a = players[i], b = players[j];
-                    if (a.key === b.key) continue;
+                // Records : toujours comparés à l'intérieur d'un même jeu (barèmes différents)
+                const gk = gname.toLowerCase();
+                const BR = A.bigBy[gk] || (A.bigBy[gk] = { game: gname, isLowest, count: 0, big: null, res: [] });
+                BR.count++;
+                players.forEach(p => {
+                    BR.res.push({ name: p.label, total: p.total, t });
+                    st.history.forEach((r, ri) => {
+                        const rs = Number(r[p.id]) || 0;
+                        if (!BR.big || rs > BR.big.value) BR.big = { value: rs, name: p.label, round: ri + 1, t };
+                    });
+                });
+
+                if (!isTeam || teamOnly) for (let i = 0; i < stats.length; i++) for (let j = i + 1; j < stats.length; j++) {
+                    const a = stats[i], b = stats[j];
                     const [x, y] = a.key < b.key ? [a, b] : [b, a];
                     const id = x.key + '|' + y.key;
                     const e = pair[id] || (pair[id] = { a: x.key, b: y.key, aw: 0, bw: 0, ties: 0, games: [] });
@@ -3232,34 +3255,32 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     e.games.push({ t, game: gname, at: x.total, bt: y.total, res: pa < pb ? 'a' : pb < pa ? 'b' : 't' });
                 }
 
-                // Anecdotes de partie
                 if (n >= 2) {
-                    const gap = Math.abs(sorted[0].total - sorted[1].total);
-                    const info = { gap, a: sorted[0], b: sorted[1], game: gname, t };
-                    if (!anec.tight || gap < anec.tight.gap) anec.tight = info;
-                    if (!anec.wide || gap > anec.wide.gap) anec.wide = info;
-                    // Remontée : rang après chaque manche (sans le rang « initial » artificiel)
+                    const gap = Math.abs(sorted[0].total - sorted[1].total), r = rel(sorted[0].total, sorted[1].total);
+                    const info = { gap, rel: r, a: sorted[0], b: sorted[1], game: gname, t };
+                    if (!A.tight || r < A.tight.rel) A.tight = info;
+                    if (!A.wide || r > A.wide.rel) A.wide = info;
                     if (st.history.length >= 2) {
                         const prog = this._computeRankProgression(st, isLowest);
                         Object.values(prog).forEach(pr => {
-                            if (pr.improvement > 0 && (!anec.comeback || pr.improvement > anec.comeback.improvement))
-                                anec.comeback = { improvement: pr.improvement, name: String(pr.player.name).trim().toUpperCase(), from: pr.maxRank, to: pr.finalRank, game: gname, t };
+                            if (pr.improvement > 0 && (!A.comeback || pr.improvement > A.comeback.improvement))
+                                A.comeback = { improvement: pr.improvement, name: String(pr.player.name).trim().toUpperCase(), from: pr.maxRank, to: pr.finalRank, game: gname, t };
                         });
                     }
                 }
-                if (!anec.long || st.history.length > anec.long.rounds) anec.long = { rounds: st.history.length, game: gname, t };
+                if (!A.long || st.history.length > A.long.rounds) A.long = { rounds: st.history.length, game: gname, t };
             });
 
-            // Finalisation joueurs
             const players = Object.values(P).map(s => {
-                const sum = s.roundScores.reduce((a, b) => a + b, 0);
-                const avg = s.totalRounds ? sum / s.totalRounds : 0;
+                const avg = s.totalRounds ? s.roundScores.reduce((a, b) => a + b, 0) / s.totalRounds : 0;
                 const std = s.totalRounds ? Math.sqrt(s.roundScores.reduce((a, v) => a + (v - avg) ** 2, 0) / s.totalRounds) : 0;
                 const last5 = s.results.slice(-5);
+                Object.values(s.byGame).forEach(b => { b.avg = b.rounds ? Math.round(b.sum / b.rounds) : 0; });
                 return Object.assign(s, {
                     winRate: s.played ? Math.round((s.wins / s.played) * 100) : 0,
                     reliable: s.played >= this.MIN_RELIABLE,
                     avgPerRound: Math.round(avg), std: Math.round(std),
+                    mixed: Object.keys(s.byGame).length > 1,      // barèmes mélangés : moyenne/écart/extrêmes non comparables
                     last5, last5Wins: last5.filter(r => r.win).length
                 });
             }).sort((a, b) => {
@@ -3268,22 +3289,20 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 return b.wins - a.wins || b.played - a.played || a.name.localeCompare(b.name);
             });
 
-            // Top des scores (sens dominant du filtre)
-            const lowCount = games.filter(g => g.state.victoryCondition === VC_LOWEST).length;
-            const topLow = lowCount > games.length / 2;
-            const top = gameResults.filter(r => r.isLowest === topLow)
-                .sort((a, b) => topLow ? a.total - b.total : b.total - a.total).slice(0, 5);
+            // Records par jeu (les plus joués d'abord)
+            const perGame = Object.values(A.bigBy).sort((a, b) => b.count - a.count).slice(0, 3).map(b => ({
+                game: b.game, isLowest: b.isLowest, big: b.big,
+                top: b.res.sort((x, y) => b.isLowest ? x.total - y.total : y.total - x.total).slice(0, 3)
+            }));
 
-            // Résumé
             const reliable = players.filter(p => p.reliable);
             const hot = reliable.filter(p => p.last5Wins > 0)
                 .sort((a, b) => b.last5Wins / b.last5.length - a.last5Wins / a.last5.length || b.winRate - a.winRate)[0] || null;
 
             return {
-                gameNames, games: games.length, rounds, players,
+                gameNames, games: games.length, rounds, players, teamOnly,
                 summary: { games: games.length, rounds, people: players.length, last, hot },
-                pair, anecdotes: anec, top: { isLowest: topLow, list: top },
-                reliableCount: reliable.length, hasLowest: lowCount > 0
+                pair, anecdotes: A, perGame, reliableCount: reliable.length
             };
         },
 
@@ -3644,7 +3663,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _ord(n) { return n === 1 ? '1er' : `${n}e`; },
         _dots(results, max = 5) {
             return `<span class="dots">${results.slice(-max).map(r =>
-                `<i class="dot ${r.win ? 'w' : 'l'}" title="${escapeHtml(r.game)} · ${this._sd(r.t)} · ${this._ord(r.place)}/${r.n}">${r.win ? 'V' : r.place}</i>`).join('')}</span>`;
+                `<i class="dot ${r.win ? 'w' : r.draw ? 'd' : 'l'}" title="${escapeHtml(r.game)} · ${this._sd(r.t)} · ${r.draw ? 'égalité' : this._ord(r.place) + '/' + r.n}">${r.win ? 'V' : r.draw ? '=' : r.place}</i>`).join('')}</span>`;
         },
         _analysis() { return (this._an = StatsEngine.analyze(this.statsFilter)); },
 
@@ -3700,7 +3719,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const tile = (v, l) => `<div class="s-tile"><div class="s-val">${v}</div><div class="s-lab">${l}</div></div>`;
             let extra = '';
             if (s.hot) extra += `<div class="s-line">🔥 <b>En forme :</b> ${escapeHtml(s.hot.name)} — ${s.hot.last5Wins} victoire${s.hot.last5Wins > 1 ? 's' : ''} sur ses ${s.hot.last5.length} dernières parties</div>`;
-            if (s.last) extra += `<div class="s-line">🕒 <b>Dernière partie :</b> ${escapeHtml(s.last.name)} — ${s.last.winners.length > 1 ? 'égalité' : 'gagnée par'} ${escapeHtml(s.last.winners.join(' & '))} <span class="muted">· ${this._sd(s.last.t)}</span></div>`;
+            if (s.last) extra += `<div class="s-line">🕒 <b>Dernière partie :</b> ${escapeHtml(s.last.name)} — ${s.last.draw ? 'égalité' : 'gagnée par ' + escapeHtml(s.last.winners.join(' & '))} <span class="muted">· ${this._sd(s.last.t)}</span></div>`;
             el.innerHTML = `<div class="s-tiles">${tile(s.games, 'parties')}${tile(s.rounds, 'manches')}${tile(s.people, 'joueurs')}</div>${extra}`;
         },
 
@@ -3712,7 +3731,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div class="rank-num">${p.reliable ? rankNo : '–'}</div>
                 <div class="rank-info">
                     <div class="rank-name">${escapeHtml(p.name)} ${streak}${p.currentStreak > 0 ? p.currentStreak : ''}</div>
-                    <div class="rank-sub">${p.played} partie${p.played > 1 ? 's' : ''} · ${p.wins} victoire${p.wins > 1 ? 's' : ''}${p.totalRounds ? ` · moy. ${p.avgPerRound}/manche` : ''}</div>
+                    <div class="rank-sub">${p.played} partie${p.played > 1 ? 's' : ''} · ${p.wins} victoire${p.wins > 1 ? 's' : ''}${p.totalRounds && !p.mixed ? ` · moy. ${p.avgPerRound}/manche` : ''}</div>
                     ${this._dots(p.results)}
                 </div>
                 ${p.reliable
@@ -3766,13 +3785,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const row = (l, v) => `<div class="d-row"><span>${l}</span><span>${v}</span></div>`;
             const card = (t, rows) => `<div class="d-card"><h3 class="card-title">${t}</h3><div class="d-rows">${rows}</div></div>`;
             const streakColor = p.currentStreak >= 3 ? 'var(--danger)' : p.currentStreak > 0 ? 'var(--primary)' : 'var(--text)';
+            const mixedTxt = '<span class="muted">voir « Par jeu »</span>';
             const l5 = p.last5;
             const form = l5.length ? `${p.last5Wins} victoire${p.last5Wins > 1 ? 's' : ''} sur ${l5.length}` : '—';
 
             // Par jeu
             const games = Object.entries(p.byGame).sort((a, b) => b[1].played - a[1].played);
             const byGame = games.length > 1 ? card('🎲 Par jeu', games.map(([g, v]) =>
-                row(escapeHtml(g), `${v.played} partie${v.played > 1 ? 's' : ''} · ${v.wins} V <span class="muted">(${Math.round(v.wins / v.played * 100)}%)</span>`)).join('')) : '';
+                row(escapeHtml(g), `${v.played} partie${v.played > 1 ? 's' : ''} · ${v.wins} V <span class="muted">(${Math.round(v.wins / v.played * 100)}%)${v.rounds ? ` · moy. ${v.avg}/manche` : ''}</span>`)).join('')) : '';
 
             // Rivaux
             const riv = an.players.filter(o => o.name !== p.name).map(o => ({ o, h: StatsEngine.headToHead(an, p.name, o.name) }))
@@ -3798,13 +3818,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     ${this._spark(p.results)}</div>
                 ${card('📊 Statistiques',
                     row('Forme récente', form) +
-                    row('Score moyen / manche', p.totalRounds ? `${p.avgPerRound} pts` : '—') +
-                    row('Régularité', p.totalRounds >= 5 ? `±${p.std} pts / manche` : '—') +
-                    row('Meilleure manche', this._roundTxt(p.bestRound)) +
-                    row('Manche la plus faible', this._roundTxt(p.worstRound)) +
+                    row('Score moyen / manche', p.mixed ? mixedTxt : p.totalRounds ? `${p.avgPerRound} pts` : '—') +
+                    row('Régularité', p.mixed ? mixedTxt : p.totalRounds >= 5 ? `±${p.std} pts / manche` : '—') +
+                    row('Meilleure manche', p.mixed ? mixedTxt : this._roundTxt(p.bestRound)) +
+                    row('Manche la plus faible', p.mixed ? mixedTxt : this._roundTxt(p.worstRound)) +
                     row('Meilleure série', `🏅 ${p.bestStreak} victoire${p.bestStreak > 1 ? 's' : ''}`))}
                 ${card('🎮 Historique',
                     row('Victoires', `<span style="color:var(--success)">${p.wins} 🏆</span>`) +
+                    (p.draws ? row('Égalités', p.draws) : '') +
                     row('Parties jouées', p.played) +
                     row('Manches jouées', p.totalRounds))}
                 ${byGame}${rivals}`;
@@ -3856,17 +3877,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (A.comeback) cards.push(card('⚡', 'Plus grosse remontée', `${escapeHtml(A.comeback.name)} : ${this._ord(A.comeback.from)} → ${this._ord(A.comeback.to)}`, where(A.comeback)));
             if (A.tight) cards.push(card('🤏', 'Partie la plus serrée', A.tight.gap === 0 ? `Égalité ${escapeHtml(A.tight.a.key)} / ${escapeHtml(A.tight.b.key)} (${A.tight.a.total})` : `${escapeHtml(A.tight.a.key)} ${A.tight.a.total} – ${A.tight.b.total} ${escapeHtml(A.tight.b.key)}`, `${A.tight.gap === 0 ? 'Égalité parfaite' : A.tight.gap + ' pt' + (A.tight.gap > 1 ? 's' : '') + ' d\'écart'} · ${where(A.tight)}`));
             if (A.wide && A.wide.gap > 0 && A.wide !== A.tight) cards.push(card('💥', 'Plus large victoire', `${escapeHtml(A.wide.a.key)} ${A.wide.a.total} – ${A.wide.b.total} ${escapeHtml(A.wide.b.key)}`, `${A.wide.gap} pts d'écart · ${where(A.wide)}`));
-            if (A.big && A.big.value > 0) cards.push(card('🔥', 'Plus grosse manche', `${escapeHtml(A.big.name)} : ${A.big.value} pts (M${A.big.round})`, where(A.big) + (A.big.isLowest ? ' · jeu où le plus bas gagne' : '')));
+            an.perGame.forEach(g => { if (g.big && g.big.value > 0) cards.push(card('🔥', `Plus grosse manche · ${escapeHtml(g.game)}`, `${escapeHtml(g.big.name)} : ${g.big.value} pts (M${g.big.round})`, `${this._sd(g.big.t)}${g.isLowest ? ' · jeu où le plus bas gagne' : ''}`)); });
             if (A.long) cards.push(card('🏃', 'Partie la plus longue', `${A.long.rounds} manche${A.long.rounds > 1 ? 's' : ''}`, where(A.long)));
             const P = an.players;
             const bestStreak = [...P].sort((a, b) => b.bestStreak - a.bestStreak)[0];
             if (bestStreak && bestStreak.bestStreak >= 2) cards.push(card('🏅', 'Meilleure série', `${escapeHtml(bestStreak.name)} : ${bestStreak.bestStreak} victoires d'affilée`));
             const reg = P.filter(p => p.reliable && p.totalRounds >= 10).sort((a, b) => a.std - b.std)[0];
             if (reg) cards.push(card('🎯', 'Plus régulier', escapeHtml(reg.name), `±${reg.std} pts / manche`));
-            const top = an.top;
             list.innerHTML = `<div class="rec-grid">${cards.join('')}</div>`
-                + (top.list.length ? `<h3 class="card-title" style="margin-top:18px">🎯 ${top.isLowest ? 'Meilleurs scores (le plus bas)' : 'Meilleurs scores (partie)'}</h3>`
-                    + top.list.map((r, i) => `<div class="rank-item" style="cursor:default"><div class="rank-num">${i + 1}</div><div class="rank-info"><div class="rank-name">${escapeHtml(r.name)}</div><div class="rank-sub">${escapeHtml(r.game)} · ${this._sd(r.t)}</div></div><div class="rank-val">${r.total}</div></div>`).join('') : '');
+                + an.perGame.map(g => `<h3 class="card-title" style="margin-top:18px">🎯 Meilleurs scores · ${escapeHtml(g.game)}${g.isLowest ? ' <span class="muted">(le plus bas)</span>' : ''}</h3>`
+                    + g.top.map((r, i) => `<div class="rank-item" style="cursor:default"><div class="rank-num">${i + 1}</div><div class="rank-info"><div class="rank-name">${escapeHtml(r.name)}</div><div class="rank-sub">${this._sd(r.t)}</div></div><div class="rank-val">${r.total}</div></div>`).join('')).join('');
         },
 
         // ---------- Partage ----------
@@ -3883,7 +3903,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 const A = an.anecdotes, L = [head];
                 if (A.comeback) L.push(`⚡ Remontée : ${A.comeback.name} (${this._ord(A.comeback.from)} → ${this._ord(A.comeback.to)})`);
                 if (A.tight) L.push(`🤏 Plus serrée : ${A.tight.a.key} ${A.tight.a.total} – ${A.tight.b.total} ${A.tight.b.key}`);
-                if (A.big && A.big.value > 0) L.push(`🔥 Plus grosse manche : ${A.big.name} (${A.big.value} pts)`);
+                an.perGame.forEach(g => { if (g.big && g.big.value > 0) L.push(`🔥 Plus grosse manche (${g.game}) : ${g.big.name} (${g.big.value} pts)`); });
                 return L.join('\n');
             }
             const medals = ['🥇', '🥈', '🥉'];
@@ -7139,7 +7159,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          */
         _evalScoreEnd(state, endCond, victCond) {
             if (victCond === VC_HIGHEST) {
-                const winner = state.players.find(p => p.total >= endCond.value) || null;
+                // Plusieurs joueurs peuvent atteindre la cible dans la même manche : le plus haut score gagne
+                const reached = state.players.filter(p => p.total >= endCond.value).sort((a, b) => b.total - a.total);
+                const winner = reached[0] || null;
                 return { gameEnded: !!winner, winner };
             }
             const overLimit = state.players.filter(p => p.total >= endCond.value);
@@ -7355,7 +7377,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '36', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '37', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
