@@ -2091,6 +2091,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer;">✓ TERMINER</button>
             </div>
         </div>
+        <div id="history-last"></div>
         <div id="history"></div>
     </div>
 
@@ -3698,11 +3699,19 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if (h) h.classList.toggle('collapsed', collapsed);
             if (t) t.setAttribute('aria-expanded', String(!collapsed));
             if (c) c.textContent = n ? `(${n})` : '';
+            if (!collapsed) { const l = document.getElementById('history-last'); if (l) l.innerHTML = ''; }
         },
         renderHistory(state, editIdx) {
             const hist = document.getElementById('history');
             hist.innerHTML = '';
             this._applyHistoryState(state.history.length);
+            // Replié : on garde visible la dernière manche (cliquable pour la modifier)
+            const last = document.getElementById('history-last');
+            if (last) {
+                last.innerHTML = '';
+                const n = state.history.length;
+                if (n && this._histCollapsed()) last.appendChild(this._buildHistoryRow(state.history[n - 1], n - 1, n - 1 === editIdx, state));
+            }
             state.history.slice().reverse().forEach((r, i) => {
                 const idx = state.history.length - 1 - i;
                 const isEditing = idx === editIdx;
@@ -6418,7 +6427,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         toggleHistory() {
             const collapsed = !app.currentGame ? true : UI._histCollapsed();
             try { localStorage.setItem('sm_hist_collapsed', collapsed ? '0' : '1'); } catch (e) {}
-            UI._applyHistoryState(this.currentGame ? this.currentGame.state.history.length : 0);
+            if (this.currentGame) UI.renderHistory(this.currentGame.state, this.editIdx);
             SoundFX.click();
         },
         nextInSheet() {
@@ -6875,7 +6884,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '29', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '30', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
