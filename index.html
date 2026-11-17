@@ -1488,7 +1488,7 @@ body.is-editing .edit-tab { display: flex; }
     width: 100%;
     height: 100vh;
     height: 100dvh;
-    padding: max(20px, env(safe-area-inset-top)) 15px calc(100px + env(safe-area-inset-bottom)) 15px;
+    padding: calc(max(20px, env(safe-area-inset-top)) + 28px) 15px calc(100px + env(safe-area-inset-bottom)) 15px;
     margin: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1518,13 +1518,6 @@ body.is-editing .edit-tab { display: flex; }
     transition: none !important;
 }
 
-/* Mini-historique de manche (Zen uniquement) */
-.p-zen-hist { display:none; }
-.focus-mode .p-zen-hist { display:block; margin-top:10px; text-align:center; line-height:1.3; }
-.p-zen-hist i { font-style:normal; font-size:10px; font-weight:800; letter-spacing:.5px; opacity:.55; margin-right:2px; }
-.p-zen-hist .zl { font-size:18px; font-weight:900; color:var(--text-sec); }
-.p-zen-hist .zl.pos { color:var(--success); } .p-zen-hist .zl.neg { color:var(--danger); }
-.p-zen-hist .zp { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; font-size:12px; font-weight:700; color:var(--text-sec); opacity:.7; margin-top:2px; }
 #zen-round { display:none; }
 .focus-mode #zen-round { display:block; position:fixed; top:max(18px, env(safe-area-inset-top)); left:0; right:0; text-align:center; z-index:150; font-size:11px; font-weight:900; letter-spacing:1.5px; color:var(--text-sec); opacity:.7; pointer-events:none; }
 
@@ -3594,25 +3587,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
                 <div class="p-score ${tempScore !== 0 ? 'score-bump' : ''}" onclick="app.openSheet(${p.id})">${totalScore}</div>
                 ${tempDisplay}
-                ${this._zenHistoryHtml(p, state)}
                 ${dealerIcon}
             `;
         },
-
-        /** Mini-historique affiché uniquement en mode Zen : dernière manche + précédentes. */
-        _zenHistoryHtml(p, state) {
-            const h = state.history || [];
-            if (!h.length) return '';
-            const fmt = v => { v = Number(v || 0); return v > 0 ? '+' + v : String(v); };
-            const cls = v => (Number(v || 0) > 0 ? 'pos' : Number(v || 0) < 0 ? 'neg' : '');
-            const n = h.length, lastV = h[n - 1][p.id];
-            const prev = h.slice(Math.max(0, n - 4), n - 1).map((r, i, a) => {
-                const idx = n - 1 - a.length + i;
-                return `<span><i>M${idx + 1}</i> ${fmt(r[p.id])}</span>`;
-            }).join('');
-            return `<div class="p-zen-hist"><div class="zl ${cls(lastV)}"><i>M${n}</i> ${fmt(lastV)}</div>${prev ? `<div class="zp">${prev}</div>` : ''}</div>`;
-        },
-
 
         /**
          * Prépare les données et l'élément DOM d'une carte de score.
@@ -6937,7 +6914,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '31', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '32', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
