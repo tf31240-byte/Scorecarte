@@ -1385,6 +1385,44 @@ body.is-editing .edit-tab { display: flex; }
 .rank-val  { font-weight: 800; font-size: 18px; }
 
 
+
+/* ===== Guide de première connexion ===== */
+#onboarding { position:fixed; inset:0; z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); opacity:0; transition:opacity .25s; }
+#onboarding.show { opacity:1; }
+.ob-card { position:relative; width:100%; max-width:420px; max-height:calc(100dvh - 32px); overflow-y:auto; background:var(--card); color:var(--text); border-radius:28px; padding:26px 22px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 24px 80px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:14px; }
+.ob-skip { align-self:flex-end; background:none; border:none; color:var(--text-sec); font-weight:800; font-size:13px; cursor:pointer; padding:6px 4px; margin:-8px -4px 0 0; }
+.ob-body { text-align:center; min-height:250px; }
+.ob-ic { font-size:56px; line-height:1; margin-bottom:10px; }
+.ob-title { font-size:22px; font-weight:900; margin:0 0 10px; letter-spacing:-.3px; }
+.ob-text { text-align:left; font-size:14px; line-height:1.5; color:var(--text); }
+.ob-text p { margin:0 0 10px; color:var(--text-sec); font-weight:600; }
+.ob-list { list-style:none; margin:0; padding:0; display:grid; gap:9px; }
+.ob-list li { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-weight:600; }
+.ob-ol { counter-reset:ob; } .ob-ol li { counter-increment:ob; } .ob-ol li::before { content:counter(ob) ". "; font-weight:900; color:var(--primary); }
+.ob-k { display:inline-block; padding:0 6px; border:1px solid var(--border); border-radius:6px; background:var(--card); }
+.ob-mock { display:flex; gap:8px; margin:0 0 12px; }
+.ob-chip { flex:1; border:2px solid var(--border); border-radius:14px; padding:8px 4px; text-align:center; background:var(--bg); }
+.ob-chip.on { border-color:var(--primary); background:var(--card); }
+.ob-chip small { display:block; font-size:10px; font-weight:800; color:var(--text-sec); }
+.ob-chip b { display:block; font-size:20px; font-weight:900; }
+.ob-chip i { display:block; font-style:normal; font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; }
+.ob-chip.on small, .ob-chip.on i { color:var(--primary); }
+.ob-pal { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+#onboarding .seg { margin-bottom:10px; }
+.ob-dots { display:flex; justify-content:center; gap:6px; }
+.ob-dots i { width:7px; height:7px; border-radius:50%; background:var(--border); transition:all .2s; }
+.ob-dots i.on { width:20px; border-radius:4px; background:var(--primary); }
+.ob-actions { display:flex; flex-direction:column; gap:8px; }
+.ob-row { display:flex; gap:10px; align-items:center; justify-content:space-between; }
+.ob-row .ob-primary { flex:1; margin:0; }
+.ob-primary { background:var(--primary); color:#fff; }
+.ob-secondary { background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:14px; padding:14px 16px; font-weight:800; font-size:14px; cursor:pointer; }
+.ob-actions > .ob-secondary { width:100%; }
+.ob-link { background:none; border:none; color:var(--text-sec); font-weight:800; font-size:13px; cursor:pointer; padding:8px; }
+.ob-inline { margin-top:12px; }
+#onboarding button:focus:not(:focus-visible) { outline:none; }
+@media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
+
 /* ===== Statistiques ===== */
 .stats-filters { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
 .chip-row { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
@@ -1863,6 +1901,15 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
             </div>
 
+            <div class="settings-section">
+                <div class="settings-row" style="cursor:pointer;" onclick="Onboarding.open()">
+                    <div class="settings-label">
+                        <div class="settings-name">📖 Guide de démarrage</div>
+                        <div class="settings-desc">Revoir comment fonctionne ScoreMaster</div>
+                    </div>
+                    <div class="icon-primary">→</div>
+                </div>
+            </div>
             <details class="settings-section settings-advanced">
                 <summary class="settings-section-title" style="cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
                     <span>🔧 Paramètres avancés</span><span aria-hidden="true">▾</span>
@@ -7377,7 +7424,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '37', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '38', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8021,6 +8068,195 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 act.innerHTML = b('Créer mon profil', '👤', 'Cloud.open(\'create\')', 'Pseudo + couleur préférée')
                     + b('J\'ai déjà un profil', '🔎', 'Cloud.open(\'enter\')', 'Retrouver mes données');
             }
+        }
+    };
+
+    // =========================================================================
+    // GUIDE DE PREMIÈRE CONNEXION (facultatif, repassable depuis les Paramètres)
+    // =========================================================================
+    const Onboarding = {
+        KEY: 'sm_onboarded',
+        _i: 0, _slides: [], _el: null, _touchX: null, _prevFocus: null,
+
+        _isDone() { try { return localStorage.getItem(this.KEY) === '1'; } catch (e) { return true; } },
+        _markDone() { try { localStorage.setItem(this.KEY, '1'); } catch (e) {} },
+
+        /** Affiché seulement aux nouveaux venus (aucune partie, jamais vu). ?guide=1 force l'affichage. */
+        maybeShow() {
+            const force = /[?&]guide=1\b/.test(location.search);
+            if (!force) {
+                if (navigator.webdriver || this._isDone()) return;
+                const hasData = Storage.loadGames().length > 0 || !!localStorage.getItem(Storage.CURRENT_KEY);
+                if (hasData) return;
+            }
+            setTimeout(() => {
+                if (document.querySelector('.modal-overlay.active, .victory-overlay.active')) return;
+                this.open();
+            }, 700);
+        },
+
+        _standalone() { return !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true); },
+        _ios() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
+
+        _build() {
+            const S = [];
+            S.push({ ic: '🎴', t: 'Bienvenue sur ScoreMaster', html: `
+                <p>Le carnet de scores de vos soirées jeux : Belote, Uno, Skyjo, Tarot, Rami…</p>
+                <ul class="ob-list">
+                    <li>📵 Fonctionne <b>sans internet</b></li>
+                    <li>🔒 Tes parties restent <b>sur ton appareil</b></li>
+                    <li>⏱️ Ce guide dure <b>1 minute</b> : tu peux le passer, et le retrouver dans les Paramètres</li>
+                </ul>` });
+            S.push({ ic: '👥', t: 'Lance une partie', html: `
+                <p>Choisis un jeu <b>prédéfini</b> (règles et fin de partie déjà réglées) ou une partie <b>libre</b>, puis ajoute les joueurs.</p>
+                <ul class="ob-list">
+                    <li>🧠 Les derniers joueurs sont <b>proposés</b> pour aller plus vite</li>
+                    <li>🃏 La <b>Belote</b> a son mode : équipes NOUS / EUX, capot, belote…</li>
+                    <li>🎯 Le plus haut ou le plus bas gagne, selon le jeu</li>
+                </ul>` });
+            S.push({ ic: '✍️', t: 'Saisis les scores', html: `
+                <div class="ob-mock" aria-hidden="true">
+                    <div class="ob-chip on"><small>ALICE</small><b>12</b><i>→ 42 ↑</i></div>
+                    <div class="ob-chip"><small>BOB</small><b>–</b><i>&nbsp;</i></div>
+                    <div class="ob-chip"><small>CHLOÉ</small><b>–</b><i>&nbsp;</i></div>
+                </div>
+                <ul class="ob-list">
+                    <li>👆 Touche un joueur : le <b>pavé</b> s'ouvre</li>
+                    <li>➡️ <b>Suivant</b> passe au joueur sans score ; le total et le classement se mettent à jour en direct</li>
+                    <li>✅ Tout est rempli ? <b>OK</b> ferme le pavé, puis appuie sur le bouton vert <b>ENREGISTRER</b></li>
+                </ul>` });
+            S.push({ ic: '✏️', t: 'Corrige sans stress', html: `
+                <ul class="ob-list">
+                    <li>📝 Touche une manche dans l'<b>historique</b> pour la modifier (cadre orange)</li>
+                    <li>🗑️ Supprimée par erreur ? <b>Rétablir</b> apparaît quelques secondes</li>
+                    <li>🔁 En fin de partie : <b>Revanche</b> avec les mêmes joueurs, le compteur de série continue</li>
+                    <li>🧘 Le <b>mode Zen</b> affiche les scores en grand, écran allumé</li>
+                </ul>` });
+            S.push({ ic: '📊', t: 'Stats, duels et partage', html: `
+                <ul class="ob-list">
+                    <li>🏆 <b>Classement</b> par jeu et par période, fiche détaillée de chaque joueur</li>
+                    <li>⚔️ <b>Duels</b> : qui gagne le plus souvent contre qui</li>
+                    <li>🔥 <b>Records</b> et anecdotes : remontées, parties serrées…</li>
+                    <li>📤 Partage la victoire en <b>image</b>, <b>GIF</b> ou <b>texte</b></li>
+                </ul>` });
+            S.push({ ic: '🎨', t: 'Fais-le à ton image', html: `
+                <p>Choisis maintenant, tu pourras changer dans <b>Paramètres → Apparence</b> (avec une palette <b>Perso</b>).</p>
+                <div class="seg" id="ob-mode" role="group" aria-label="Mode">
+                    <button data-mode="auto">🌓 Auto</button><button data-mode="light">☀️ Clair</button><button data-mode="dark">🌙 Sombre</button>
+                </div>
+                <div class="ob-pal" id="ob-pal"></div>`, onShow: () => this._renderLook() });
+            if (!this._standalone()) {
+                const ios = this._ios();
+                S.push({ ic: '📲', t: "Installe l'appli", html: ios ? `
+                    <p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>
+                    <ol class="ob-list ob-ol"><li>Touche <b>Partager</b> <span class="ob-k">⬆︎</span> dans Safari</li><li>Choisis <b>Sur l'écran d'accueil</b></li><li>Valide avec <b>Ajouter</b></li></ol>`
+                    : `<p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>
+                    <ol class="ob-list ob-ol"><li>Ouvre le menu <b>⋮</b> du navigateur</li><li>Choisis <b>Installer l'application</b> (ou « Ajouter à l'écran d'accueil »)</li></ol>
+                    ${PWA.deferredPrompt ? '<button class="btn-main ob-inline" onclick="PWA.installApp()">📲 Installer maintenant</button>' : ''}` });
+            }
+            S.push({ ic: '☁️', t: 'Sauvegarde ton profil', cloud: true, html: `
+                <p><b>Facultatif.</b> Un pseudo et une couleur suffisent, sans mot de passe ni e-mail.</p>
+                <ul class="ob-list">
+                    <li>📱 Tu changes de téléphone ? <b>Retrouve tes parties</b> avec ton profil</li>
+                    <li>🔄 Plusieurs appareils : tes parties se <b>synchronisent</b></li>
+                    <li>🛡️ Sauvegarde <b>automatique</b> ; tu vois ce qui est partagé avant de valider</li>
+                </ul>` });
+            return S;
+        },
+
+        _renderLook() {
+            const mode = app.getThemeMode(), pal = app.getPalette();
+            document.querySelectorAll('#ob-mode button').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+                b.onclick = () => { app.setThemeMode(b.dataset.mode); this._renderLook(); };
+            });
+            const box = document.getElementById('ob-pal');
+            if (!box) return;
+            box.innerHTML = '';
+            Object.entries(app.PALETTES).filter(([id]) => id !== 'custom').forEach(([id, d]) => {
+                const b = document.createElement('button');
+                b.className = 'palette-btn' + (id === pal ? ' active' : '');
+                b.setAttribute('aria-pressed', String(id === pal));
+                b.innerHTML = `<span class="sw" style="background:linear-gradient(135deg, ${d.c[0]} 50%, ${d.c[1]} 50%)"></span>${d.name}`;
+                b.onclick = () => { app.setPalette(id); this._renderLook(); };
+                box.appendChild(b);
+            });
+        },
+
+        open() {
+            if (this._el) return;
+            UI._close('settings-modal');
+            this._slides = this._build(); this._i = 0;
+            this._prevFocus = document.activeElement;
+            const el = document.createElement('div');
+            el.id = 'onboarding'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Guide de démarrage');
+            el.innerHTML = `
+                <div class="ob-card">
+                    <button class="ob-skip" onclick="Onboarding.skip()" aria-label="Passer le guide">Passer ✕</button>
+                    <div class="ob-body" id="ob-body" aria-live="polite"></div>
+                    <div class="ob-dots" id="ob-dots" aria-hidden="true"></div>
+                    <div class="ob-actions" id="ob-actions"></div>
+                </div>`;
+            document.body.appendChild(el);
+            this._el = el;
+            el.addEventListener('touchstart', e => { this._touchX = e.touches[0].clientX; }, { passive: true });
+            el.addEventListener('touchend', e => {
+                if (this._touchX === null) return;
+                const dx = e.changedTouches[0].clientX - this._touchX; this._touchX = null;
+                if (Math.abs(dx) > 60) this.go(dx < 0 ? 1 : -1);
+            }, { passive: true });
+            this._keys = e => {
+                if (e.key === 'Escape') this.skip();
+                else if (e.key === 'ArrowRight') this.go(1);
+                else if (e.key === 'ArrowLeft') this.go(-1);
+            };
+            document.addEventListener('keydown', this._keys);
+            requestAnimationFrame(() => el.classList.add('show'));
+            this._render();
+        },
+
+        _render() {
+            const s = this._slides[this._i], last = this._i === this._slides.length - 1;
+            document.getElementById('ob-body').innerHTML = `<div class="ob-ic" aria-hidden="true">${s.ic}</div><h2 class="ob-title">${s.t}</h2><div class="ob-text">${s.html}</div>`;
+            document.getElementById('ob-dots').innerHTML = this._slides.map((_, k) => `<i class="${k === this._i ? 'on' : ''}"></i>`).join('');
+            const A = document.getElementById('ob-actions');
+            if (s.cloud) {
+                A.innerHTML = `<button class="btn-main ob-primary" onclick="Onboarding.cloud('create')">☁️ Créer mon profil</button>
+                    <button class="ob-secondary" onclick="Onboarding.cloud('enter')">J'ai déjà un profil</button>
+                    <button class="ob-link" onclick="Onboarding.finish(true)">Plus tard — commencer</button>`;
+            } else {
+                A.innerHTML = `<div class="ob-row">${this._i > 0 ? '<button class="ob-secondary" onclick="Onboarding.go(-1)">← Retour</button>' : '<span></span>'}
+                    <button class="btn-main ob-primary" onclick="Onboarding.go(1)">${last ? 'C\'est parti !' : 'Suivant →'}</button></div>`;
+            }
+            if (s.onShow) s.onShow();
+            A.querySelector('.ob-primary')?.focus({ preventScroll: true });
+        },
+
+        go(d) {
+            const n = this._i + d;
+            if (n < 0) return;
+            if (n >= this._slides.length) return this.finish(false);
+            this._i = n; SoundFX.click(); this._render();
+        },
+
+        _close() {
+            if (!this._el) return;
+            document.removeEventListener('keydown', this._keys);
+            const el = this._el; this._el = null;
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 250);
+            this._markDone();
+            try { this._prevFocus?.focus?.({ preventScroll: true }); } catch (e) {}
+        },
+        skip() { this._close(); },
+        /** « Plus tard » sur l'étape cloud : on ne relance pas l'invitation juste après la 1re partie. */
+        finish(snoozeCloud) {
+            if (snoozeCloud && Cloud.enabled) { const s = Cloud.load(); if (!s.consent) { s.snoozeUntil = Date.now() + Cloud.SNOOZE_MS; Cloud.save(); } }
+            this._close();
+        },
+        cloud(mode) {
+            this._close();
+            setTimeout(() => Cloud.open(mode), 280);
         }
     };
 
@@ -9050,12 +9286,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             PWA.init();
             Community.init();
             Cloud.init();
+            Onboarding.maybeShow();
         });
     } else {
         app.init();
         PWA.init();
         Community.init();
         Cloud.init();
+        Onboarding.maybeShow();
     }
 </script>
     <!-- Cloudflare Web Analytics -->
