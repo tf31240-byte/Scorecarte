@@ -676,6 +676,7 @@ body.is-editing .edit-tab { display: flex; }
 #ok-btn { flex:1; background:var(--card); color:var(--text); border:2px solid var(--primary); }
 #next-btn { flex:2; background:var(--primary); color:white; }
 #sheet.belote #next-btn { display:none; }
+.sheet-actions.done #ok-btn { display:none; }
 #sheet.belote #ok-btn { background:var(--primary); color:white; border:none; }
 .sel-box .sel-total { font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; margin-top:2px; }
 .sel-box .sel-up { color:#22c55e; } .sel-box .sel-down { color:#ef4444; }
@@ -6409,6 +6410,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 const more = this.editIdx !== null ? ai < ps.length - 1
                     : ps.some(p => p.id !== this.activePlayerId && state.temp[p.id] === undefined);
                 nb.textContent = more ? 'Suivant →' : '✓ OK';
+                const bar = nb.parentElement; if (bar) bar.classList.toggle('done', !more && !isBelote);
             }
             const act = cont.querySelector('.sel-box.active');
             if (act && act.scrollIntoView) act.scrollIntoView({ inline: 'center', block: 'nearest' });
@@ -6873,7 +6875,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '28', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '29', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
