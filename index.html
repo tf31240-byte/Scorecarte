@@ -1423,6 +1423,17 @@ body.is-editing .edit-tab { display: flex; }
 #onboarding button:focus:not(:focus-visible) { outline:none; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
+/* ===== Installation ===== */
+.inst-device { font-size:13px; font-weight:800; color:var(--text-sec); margin:0 0 10px; }
+.inst-you { color:var(--primary); }
+.inst-lead { font-size:14px; font-weight:700; margin:0 0 8px; }
+.inst-or { font-size:12px; font-weight:700; color:var(--text-sec); margin:10px 0 6px; text-align:center; }
+.inst-note { margin-top:12px; padding:11px 13px; border-radius:12px; font-size:13px; font-weight:600; line-height:1.45; background:var(--bg); border:1px solid var(--border); }
+.inst-note.warn { border-color:#ff9f0a; background:color-mix(in srgb, #ff9f0a 12%, var(--card)); }
+.inst-note.ok { border-color:var(--success); background:color-mix(in srgb, var(--success) 10%, var(--card)); }
+#install-body .ob-list { margin-top:4px; }
+#install-body .ob-inline, #onboarding .ob-text .ob-inline { width:100%; }
+
 /* ===== Statistiques ===== */
 .stats-filters { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
 .chip-row { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
@@ -1902,6 +1913,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             </div>
 
             <div class="settings-section">
+                <div class="settings-row" id="install-row" style="cursor:pointer;" onclick="UI._close('settings-modal'); Install.open()">
+                    <div class="settings-label">
+                        <div class="settings-name">📲 Installer l'application</div>
+                        <div class="settings-desc">Sur l'écran d'accueil de ton téléphone, en plein écran et hors-ligne</div>
+                    </div>
+                    <div class="icon-primary">→</div>
+                </div>
                 <div class="settings-row" style="cursor:pointer;" onclick="Onboarding.open()">
                     <div class="settings-label">
                         <div class="settings-name">📖 Guide de démarrage</div>
@@ -1941,6 +1959,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             </details>
 
             <p style="font-size:12px; color:var(--text-sec); margin:16px 4px 0; line-height:1.4;">📊 Vos parties restent sur cet appareil. La fréquentation de l'app (visites, pays, appareil) est comptée de façon anonyme, sans cookie (Cloudflare Web Analytics). Rien d'autre n'est envoyé, sauf si vous créez un profil (facultatif, ci-dessus).</p>
+        </div>
+    </div>
+
+    <!-- Installation sur l'écran d'accueil -->
+    <div id="install-modal" class="modal-overlay" onclick="if(event.target===this) Install.close()">
+        <div class="modal-box large" style="max-height:85vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2 style="margin:0">📲 Installer l'application</h2>
+                <button onclick="Install.close()" class="btn-icon" aria-label="Fermer">✕</button>
+            </div>
+            <div id="install-body"></div>
         </div>
     </div>
 
@@ -3684,6 +3713,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const isDark   = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             const s        = app.settings;
             this._renderAppearance();
+            { const ir = document.getElementById('install-row'); if (ir) ir.style.display = (window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true) ? 'none' : ''; }
             [
                 ['settings-sound-btn',     SoundFX.enabled],
                 ['settings-vibration-btn', s.vibration],
@@ -7424,7 +7454,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '38', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '39', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8072,6 +8102,133 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     };
 
     // =========================================================================
+    // INSTALLATION SUR L'ÉCRAN D'ACCUEIL — étapes adaptées à l'appareil détecté
+    // =========================================================================
+    const Install = {
+        _view: null,   // plateforme affichée : 'ios' | 'android' | 'desktop'
+
+        /** Détecte système, navigateur et état d'installation. */
+        detect() {
+            const ua = navigator.userAgent || '';
+            const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const android = /Android/.test(ua);
+            const os = ios ? 'ios' : android ? 'android' : 'desktop';
+            let browser = 'other';
+            if (ios) {
+                if (!/Safari\//.test(ua) || /FBAN|FBAV|Instagram|Line\/|Snapchat|TikTok|MicroMessenger|GSA\//.test(ua)) browser = 'inapp';
+                else if (/CriOS/.test(ua)) browser = 'chrome';
+                else if (/FxiOS/.test(ua)) browser = 'firefox';
+                else if (/EdgiOS/.test(ua)) browser = 'edge';
+                else browser = 'safari';
+            } else if (android) {
+                if (/FBAN|FBAV|Instagram|Line\/|Snapchat|TikTok|MicroMessenger/.test(ua) || /; wv\)/.test(ua)) browser = 'inapp';
+                else if (/SamsungBrowser/.test(ua)) browser = 'samsung';
+                else if (/Firefox/.test(ua)) browser = 'firefox';
+                else if (/EdgA/.test(ua)) browser = 'edge';
+                else if (/Chrome\//.test(ua)) browser = 'chrome';
+            } else {
+                if (/Edg\//.test(ua)) browser = 'edge';
+                else if (/Firefox\//.test(ua)) browser = 'firefox';
+                else if (/Chrome\//.test(ua)) browser = 'chrome';
+                else if (/Safari\//.test(ua)) browser = 'safari';
+            }
+            const standalone = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true);
+            return { os, browser, standalone, canPrompt: !!PWA.deferredPrompt };
+        },
+
+        _hasData() { try { return Storage.loadGames().length > 0; } catch (e) { return false; } },
+        _k(t) { return `<span class="ob-k">${t}</span>`; },
+
+        /** Contenu (HTML) pour une plateforme. `d` = détection de l'appareil réel. */
+        body(os, d) {
+            d = d || this.detect();
+            const real = os === d.os;                 // on affiche les étapes de l'appareil utilisé ?
+            const br = real ? d.browser : (os === 'ios' ? 'safari' : os === 'android' ? 'chrome' : 'chrome');
+            const ol = steps => `<ol class="ob-list ob-ol">${steps.map(s => `<li>${s}</li>`).join('')}</ol>`;
+            const note = (t, cls = '') => `<div class="inst-note ${cls}">${t}</div>`;
+            const btn = (label, fn, cls = 'btn-main ob-inline') => `<button class="${cls}" onclick="${fn}">${label}</button>`;
+            let h = '';
+
+            if (real && d.standalone) return note('✅ <b>ScoreMaster est déjà installée</b> sur cet appareil : tu l\'utilises en plein écran.', 'ok');
+
+            if (br === 'inapp') {
+                h += note(`⚠️ Tu es dans le navigateur intégré d'une autre appli (réseaux sociaux, messagerie…). L'installation n'y est pas possible.`, 'warn');
+                h += ol([`Touche le menu ${this._k('⋯')} ou ${this._k('⋮')} de cette page`, `Choisis <b>Ouvrir dans ${os === 'ios' ? 'Safari' : 'Chrome'}</b> (ou « Ouvrir dans le navigateur »)`, `Puis reviens ici : les étapes d'installation s'afficheront`]);
+                h += btn('📋 Copier le lien', 'Install.copyLink()', 'ob-secondary ob-inline');
+                return h;
+            }
+
+            if (os === 'ios') {
+                if (real && br !== 'safari') {
+                    h += note(`💡 Sur iPhone, l'installation est la plus fiable depuis <b>Safari</b>. Copie le lien et ouvre-le dans Safari.`, 'warn');
+                    h += btn('📋 Copier le lien', 'Install.copyLink()', 'ob-secondary ob-inline');
+                }
+                h += ol([
+                    `Touche <b>Partager</b> ${this._k('⬆︎')} (en bas de Safari ; sur iPad, en haut) — ou ${this._k('⋯')} puis <b>Partager</b>`,
+                    `Fais défiler et touche <b>Sur l'écran d'accueil</b> ${this._k('＋')}`,
+                    `Touche <b>Ajouter</b> en haut à droite`,
+                    `Ouvre ScoreMaster depuis son <b>icône</b> : plein écran, hors-ligne`
+                ]);
+                h += note(`⚠️ <b>Sur iPhone, l'appli installée démarre vide</b> : ses données sont séparées de Safari.${this._hasData() ? ' Tu as déjà des parties : sauvegarde-les d\'abord avec ton profil ☁️.' : ''}<br>Dans l'appli installée, choisis ensuite <b>« J'ai déjà un profil »</b> pour tout retrouver.`, 'warn');
+                h += btn(Cloud.load().consent ? '🔄 Synchroniser maintenant' : '☁️ Créer mon profil avant d\'installer', Cloud.load().consent ? 'Cloud.backup(true)' : 'Install.toCloud()', 'ob-secondary ob-inline');
+                return h;
+            }
+
+            if (os === 'android') {
+                if (real && d.canPrompt) {
+                    h += `<p class="inst-lead">Un seul bouton suffit :</p>` + btn('📲 Installer ScoreMaster', 'Install.now()');
+                    h += `<p class="inst-or">ou à la main :</p>`;
+                }
+                if (br === 'samsung') h += ol([`Touche le menu ${this._k('☰')}`, `Choisis <b>Ajouter la page à</b> puis <b>Écran d'accueil</b>`, `Valide avec <b>Ajouter</b>`]);
+                else if (br === 'firefox') h += ol([`Touche le menu ${this._k('⋮')}`, `Choisis <b>Installer</b>`, `Valide avec <b>Ajouter</b>`]);
+                else h += ol([`Touche le menu ${this._k('⋮')} en haut à droite`, `Choisis <b>Installer l'application</b> (ou « Ajouter à l'écran d'accueil »)`, `Valide avec <b>Installer</b>`]);
+                h += note('Sur Android, l\'appli installée garde tes parties actuelles.', 'ok');
+                return h;
+            }
+
+            // Ordinateur
+            if (real && d.canPrompt) h += btn('📲 Installer ScoreMaster', 'Install.now()');
+            if (br === 'safari') h += ol([`Dans la barre de menus : <b>Fichier</b>`, `Choisis <b>Ajouter au Dock…</b>`]);
+            else if (br === 'firefox') h += note('Firefox ne sait pas installer les applis web sur ordinateur : utilise Chrome ou Edge.', 'warn');
+            else h += ol([`Clique sur l'icône d'installation ${this._k('⊕')} à droite de la barre d'adresse`, `Choisis <b>Installer</b>`]);
+            return h;
+        },
+
+        _label(os, d) {
+            const m = { safari: 'Safari', chrome: 'Chrome', firefox: 'Firefox', edge: 'Edge', samsung: 'Samsung Internet', inapp: 'navigateur intégré', other: '' };
+            const dev = { ios: '📱 iPhone / iPad', android: '📱 Android', desktop: '💻 Ordinateur' }[os];
+            return os === d.os && m[d.browser] ? `${dev} · ${m[d.browser]}` : dev;
+        },
+
+        /** Fenêtre « Installer l'application » */
+        open(os) {
+            const d = this.detect();
+            this._view = os || (this._view && !os ? this._view : d.os);
+            const el = document.getElementById('install-body');
+            if (!el) return;
+            const tab = (k, l) => `<button class="${this._view === k ? 'active' : ''}" onclick="Install.open('${k}')">${l}</button>`;
+            el.innerHTML = `
+                <div class="seg" role="group" aria-label="Appareil">${tab('ios', '🍎 iPhone')}${tab('android', '🤖 Android')}${tab('desktop', '💻 PC / Mac')}</div>
+                <div class="inst-device">${this._label(this._view, d)}${this._view === d.os ? ' <span class="inst-you">· cet appareil</span>' : ''}</div>
+                ${this.body(this._view, d)}`;
+            UI._open('install-modal');
+        },
+        close() { UI._close('install-modal'); },
+        refresh() { if (document.getElementById('install-modal')?.classList.contains('active')) this.open(this._view); },
+
+        async now() {
+            await PWA.installApp();
+            this.close();
+        },
+        async copyLink() {
+            const url = location.href.split('#')[0].replace(/[?&]guide=1\b/, '');
+            try { await navigator.clipboard.writeText(url); UI.showToast('📋 Lien copié — colle-le dans le navigateur', 'success'); }
+            catch (e) { UI.showToast('Copie impossible : ' + url, 'warning'); }
+        },
+        toCloud() { this.close(); Onboarding._close(); setTimeout(() => Cloud.open('create'), 280); }
+    };
+
+    // =========================================================================
     // GUIDE DE PREMIÈRE CONNEXION (facultatif, repassable depuis les Paramètres)
     // =========================================================================
     const Onboarding = {
@@ -8146,13 +8303,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 </div>
                 <div class="ob-pal" id="ob-pal"></div>`, onShow: () => this._renderLook() });
             if (!this._standalone()) {
-                const ios = this._ios();
-                S.push({ ic: '📲', t: "Installe l'appli", html: ios ? `
-                    <p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>
-                    <ol class="ob-list ob-ol"><li>Touche <b>Partager</b> <span class="ob-k">⬆︎</span> dans Safari</li><li>Choisis <b>Sur l'écran d'accueil</b></li><li>Valide avec <b>Ajouter</b></li></ol>`
-                    : `<p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>
-                    <ol class="ob-list ob-ol"><li>Ouvre le menu <b>⋮</b> du navigateur</li><li>Choisis <b>Installer l'application</b> (ou « Ajouter à l'écran d'accueil »)</li></ol>
-                    ${PWA.deferredPrompt ? '<button class="btn-main ob-inline" onclick="PWA.installApp()">📲 Installer maintenant</button>' : ''}` });
+                S.push({ ic: '📲', t: "Installe l'appli", html: `<p>Pour l'avoir comme une vraie appli, plein écran et hors-ligne :</p>${Install.body(Install.detect().os)}
+                    <button class="ob-link" onclick="Install.open()">Voir les étapes pour un autre appareil</button>` });
             }
             S.push({ ic: '☁️', t: 'Sauvegarde ton profil', cloud: true, html: `
                 <p><b>Facultatif.</b> Un pseudo et une couleur suffisent, sans mot de passe ni e-mail.</p>
@@ -8360,6 +8512,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 e.preventDefault();
                 this.deferredPrompt = e;
                 console.log('[PWA] Installation disponible');
+                try { Install.refresh(); } catch (err) {}
                 this.showInstallButton();
             });
             
