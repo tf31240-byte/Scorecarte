@@ -13,6 +13,7 @@ ok('?guide=1 ouvre le guide',await p.isVisible('#onboarding'));
 ok('l\'installation est la 1re étape (facultatif + avantages)',(await p.textContent('.ob-title')).includes('Installe')&&(await p.textContent('.ob-text')).includes('Facultatif')&&(await p.textContent('.ob-text')).includes('hors-ligne'));
 {const g=await p.evaluate(()=>{const c=document.querySelector('.ob-card').getBoundingClientRect(),a=document.getElementById('ob-actions').getBoundingClientRect(),d=document.getElementById('ob-dots').getBoundingClientRect(),b=document.getElementById('ob-body').getBoundingClientRect();return{a:a.bottom<=c.bottom+1,ad:d.bottom<=a.top+1,bd:b.bottom<=d.top+1}});
 ok('boutons et pastilles sous le contenu (pas de chevauchement)',g.a&&g.ad&&g.bd);}
+ok('bouton 1re étape = « Pas maintenant »',(await p.textContent('.ob-actions .ob-primary')).includes('Pas maintenant'));
 const titles=[];
 for(let i=0;i<12;i++){titles.push(await p.textContent('.ob-title'));if(await p.isVisible('.ob-actions .ob-link'))break;await p.click('.ob-actions .ob-primary');await p.waitForTimeout(120);}
 console.log(titles.join(' › '));
