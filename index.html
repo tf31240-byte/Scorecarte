@@ -671,6 +671,16 @@ body.is-editing .edit-tab { display: flex; }
     z-index: 2;
 }
 
+.sheet-actions { display:flex; gap:10px; margin-top:15px; }
+.sheet-actions .btn-main { margin:0; }
+#ok-btn { flex:1; background:var(--card); color:var(--text); border:2px solid var(--primary); }
+#next-btn { flex:2; background:var(--primary); color:white; }
+#sheet.belote #next-btn { display:none; }
+#sheet.belote #ok-btn { background:var(--primary); color:white; border:none; }
+.sel-box .sel-total { font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; margin-top:2px; }
+.sel-box .sel-up { color:#22c55e; } .sel-box .sel-down { color:#ef4444; }
+.sel-box .sel-val.untouched { color:var(--text-sec); opacity:.6; }
+
 /* Pavé numérique */
 .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .btn-nb {
@@ -2135,7 +2145,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <button class="btn-nb" onclick="app.backspace()">⌫</button>
             </div>
 
-            <button class="btn-main" style="margin-top:15px; background:var(--primary); color:white" onclick="app.closeSheet()">OK</button>
+            <div class="sheet-actions">
+                <button id="ok-btn" class="btn-main" onclick="app.closeSheet()">OK</button>
+                <button id="next-btn" class="btn-main" onclick="app.nextInSheet()">Suivant →</button>
+            </div>
         </div>
     </div>
 
@@ -4172,6 +4185,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         init() {
             Storage.checkStorageAvailability();
+            if (!this._keyBound) { this._keyBound = true; document.addEventListener('keydown', e => this._sheetKey(e)); }
             Storage.migrateData();
             
             // Initialiser le moteur sonore
@@ -5337,6 +5351,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             document.getElementById('btn-82').classList.toggle('hidden', !isBelote);
             document.getElementById('btn-50').classList.toggle('hidden', isBelote);
             document.getElementById('smart-btn').textContent = isBelote ? 'CAPOT' : '+/-';
+            document.getElementById('sheet').classList.toggle('belote', isBelote);
         },
 
         showGame() {
@@ -6333,17 +6348,77 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const cont = document.getElementById('input-switcher');
             if (!cont) return;
             cont.innerHTML = '';
-            this.currentGame.state.players.forEach(p => {
+            const state = this.currentGame.state;
+            const isBelote = this.currentGame.mode === 'belote';
+            const isLowest = state.victoryCondition === VC_LOWEST;
+            // Rang (compétition) d'une valeur parmi une liste de totaux
+            const rankOf = (v, arr) => 1 + arr.filter(o => isLowest ? o < v : o > v).length;
+            const before = state.players.map(p => p.total);
+            const after = state.players.map(p => UI._displayScore(p, state, this.editIdx));
+            state.players.forEach((p, i) => {
                 const isActive = p.id === this.activePlayerId;
+                const touched = state.temp[p.id] !== undefined;
                 // Number() normalise -0 → 0 pour éviter un affichage trompeur
-                const tempScore = Number(this.currentGame.state.temp[p.id] || 0);
+                const tempScore = Number(state.temp[p.id] || 0);
                 const div = document.createElement('div');
                 div.className = `sel-box ${isActive ? 'active' : ''}`;
+                div.dataset.pid = p.id;
                 if(isActive) div.style.setProperty('--p-color', p.color);
                 div.onclick = () => { this.activePlayerId = p.id; this.renderSwitcher(); SoundFX.click(); };
-                div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${isActive ? p.color : 'var(--text-sec)'}">${escapeHtml(p.name)}</div><div style="font-size:20px; font-weight:900">${tempScore}</div>`;
+                let valHtml = String(tempScore), extra = '';
+                if (!isBelote) {
+                    if (!touched) valHtml = '–';
+                    else {
+                        const r0 = rankOf(before[i], before), r1 = rankOf(after[i], after);
+                        const arrow = r1 < r0 ? '<span class="sel-up">↑</span>' : r1 > r0 ? '<span class="sel-down">↓</span>' : '';
+                        extra = `→ ${after[i]} ${arrow}`;
+                    }
+                }
+                div.innerHTML = `<div style="font-size:10px; font-weight:800; color:${isActive ? p.color : 'var(--text-sec)'}">${escapeHtml(p.name)}</div><div class="sel-val${(!isBelote && !touched) ? ' untouched' : ''}" style="font-size:20px; font-weight:900">${valHtml}</div>` + (isBelote ? '' : `<div class="sel-total">${extra || '&nbsp;'}</div>`);
                 cont.appendChild(div);
             });
+            // Bouton « Suivant » / « Enregistrer »
+            const nb = document.getElementById('next-btn');
+            if (nb) {
+                const last = state.players[state.players.length - 1];
+                nb.textContent = last && this.activePlayerId === last.id
+                    ? (this.editIdx !== null ? '✓ MODIFIER' : '✓ ENREGISTRER') : 'Suivant →';
+            }
+            const act = cont.querySelector('.sel-box.active');
+            if (act && act.scrollIntoView) act.scrollIntoView({ inline: 'center', block: 'nearest' });
+        },
+        nextInSheet() {
+            const players = this.currentGame.state.players;
+            const idx = players.findIndex(p => p.id === this.activePlayerId);
+            if (idx < players.length - 1) {
+                this.activePlayerId = players[idx + 1].id;
+                SoundFX.click();
+                this.renderSwitcher();
+            } else {
+                UI._close('sheet');
+                this.validateRound();
+            }
+        },
+        _sheetKey(e) {
+            const sheet = document.getElementById('sheet');
+            if (!sheet || !sheet.classList.contains('active') || !this.currentGame) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target && e.target.tagName;
+            if (t === 'INPUT' || t === 'TEXTAREA') return;
+            const players = this.currentGame.state.players;
+            const idx = players.findIndex(p => p.id === this.activePlayerId);
+            const go = d => { const n = players[(idx + d + players.length) % players.length]; if (n) { this.activePlayerId = n.id; this.renderSwitcher(); } };
+            if (/^[0-9]$/.test(e.key)) { this.typeNum(Number(e.key)); }
+            else if (e.key === 'Backspace') { this.backspace(); }
+            else if (e.key === 'Enter') {
+                if (this.currentGame.mode === 'belote') this.closeSheet(); else this.nextInSheet();
+            }
+            else if (e.key === 'Escape') { this.closeSheet(); }
+            else if (e.key === 'ArrowRight') { go(1); }
+            else if (e.key === 'ArrowLeft') { go(-1); }
+            else if (e.key === 'Tab') { go(e.shiftKey ? -1 : 1); }
+            else return;
+            e.preventDefault();
         },
         typeNum(n) {
             // Number() convertit -0 en 0, évitant que (-0).toString() = "0" fasse perdre le signe
@@ -6760,7 +6835,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '26', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '27', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
