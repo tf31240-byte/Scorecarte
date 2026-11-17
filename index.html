@@ -1465,6 +1465,7 @@ body.is-editing .edit-tab { display: flex; }
 /* Masquer les éléments non essentiels */
 .focus-mode .chart-box,
 .focus-mode #history,
+.focus-mode #history-last,
 .focus-mode #history-header {
     opacity: 0;
     pointer-events: none;
@@ -1516,6 +1517,16 @@ body.is-editing .edit-tab { display: flex; }
     animation: none !important;
     transition: none !important;
 }
+
+/* Mini-historique de manche (Zen uniquement) */
+.p-zen-hist { display:none; }
+.focus-mode .p-zen-hist { display:block; margin-top:10px; text-align:center; line-height:1.3; }
+.p-zen-hist i { font-style:normal; font-size:10px; font-weight:800; letter-spacing:.5px; opacity:.55; margin-right:2px; }
+.p-zen-hist .zl { font-size:18px; font-weight:900; color:var(--text-sec); }
+.p-zen-hist .zl.pos { color:var(--success); } .p-zen-hist .zl.neg { color:var(--danger); }
+.p-zen-hist .zp { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; font-size:12px; font-weight:700; color:var(--text-sec); opacity:.7; margin-top:2px; }
+#zen-round { display:none; }
+.focus-mode #zen-round { display:block; position:fixed; top:max(18px, env(safe-area-inset-top)); left:0; right:0; text-align:center; z-index:150; font-size:11px; font-weight:900; letter-spacing:1.5px; color:var(--text-sec); opacity:.7; pointer-events:none; }
 
 /* Animation d'entrée uniquement à l'ouverture du mode Zen */
 .focus-mode .players-grid .p-card { animation: zenCardFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
@@ -2099,6 +2110,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
          DOCK — Bouton principal
          =================================================================== -->
     <div class="edit-tab" role="status"><span id="edit-tab-text">✏️ MANCHE 1</span><button onclick="app.cancelEdit()" aria-label="Abandonner la modification" title="Abandonner la modification">✕</button></div>
+    <div id="zen-round" aria-hidden="true"></div>
     <div id="dock" class="dock hidden">
         <button id="save-btn" class="btn-main" onclick="app.validateRound()">ENREGISTRER MANCHE 1</button>
     </div>
@@ -3582,8 +3594,23 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
                 <div class="p-score ${tempScore !== 0 ? 'score-bump' : ''}" onclick="app.openSheet(${p.id})">${totalScore}</div>
                 ${tempDisplay}
+                ${this._zenHistoryHtml(p, state)}
                 ${dealerIcon}
             `;
+        },
+
+        /** Mini-historique affiché uniquement en mode Zen : dernière manche + précédentes. */
+        _zenHistoryHtml(p, state) {
+            const h = state.history || [];
+            if (!h.length) return '';
+            const fmt = v => { v = Number(v || 0); return v > 0 ? '+' + v : String(v); };
+            const cls = v => (Number(v || 0) > 0 ? 'pos' : Number(v || 0) < 0 ? 'neg' : '');
+            const n = h.length, lastV = h[n - 1][p.id];
+            const prev = h.slice(Math.max(0, n - 4), n - 1).map((r, i, a) => {
+                const idx = n - 1 - a.length + i;
+                return `<span><i>M${idx + 1}</i> ${fmt(r[p.id])}</span>`;
+            }).join('');
+            return `<div class="p-zen-hist"><div class="zl ${cls(lastV)}"><i>M${n}</i> ${fmt(lastV)}</div>${prev ? `<div class="zp">${prev}</div>` : ''}</div>`;
         },
 
 
@@ -4606,6 +4633,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             UI.closeVictory();
             this.focusMode = false;
             document.body.classList.remove('focus-mode');
+            this._wakeLock(false);
             UI._hide('dock');
             
             this._saveCurrentIfActive();
@@ -5405,10 +5433,34 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if(this.focusMode) { 
                 root.classList.add('focus-mode');
                 vibrate(20);
+                this._updateZenLabel();
+                this._wakeLock(true);
             }
             else { 
                 root.classList.remove('focus-mode');
+                this._wakeLock(false);
             }
+        },
+        _updateZenLabel() {
+            const el = document.getElementById('zen-round');
+            if (!el || !this.currentGame) return;
+            const n = this.currentGame.state.history.length;
+            el.textContent = `${this.currentGame.name || ''} · MANCHE ${this.editIdx !== null ? this.editIdx + 1 : n + 1}`.toUpperCase();
+        },
+        /** Garde l'écran allumé en mode Zen (si le navigateur le permet). */
+        async _wakeLock(on) {
+            try {
+                if (!on) { if (this._wl) { await this._wl.release(); this._wl = null; } return; }
+                if (!('wakeLock' in navigator) || this._wl) return;
+                this._wl = await navigator.wakeLock.request('screen');
+                this._wl.addEventListener('release', () => { this._wl = null; });
+                if (!this._wlBound) {
+                    this._wlBound = true;
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible' && this.focusMode) this._wakeLock(true);
+                    });
+                }
+            } catch (e) { /* refusé ou non supporté : sans conséquence */ }
         },
         showStats() { UI.showStats(); },
         // Chart avec debounce pour optimiser les performances
@@ -5426,6 +5478,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             if(!this.currentGame) return;
             UI.renderScoreCards(this.currentGame.state, this.editIdx);
             UI.renderHistory(this.currentGame.state, this.editIdx);
+            if (this.focusMode) this._updateZenLabel();
             // Utiliser le chart avec debounce pour éviter les re-rendus excessifs
             this._debouncedRenderChart(this.currentGame.state, this.editIdx);
             
@@ -6884,7 +6937,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '30', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '31', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
