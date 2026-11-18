@@ -1437,6 +1437,13 @@ body.is-editing .edit-tab { display: flex; }
 #onboarding button:focus:not(:focus-visible) { outline:none; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
+/* ===== Conseils contextuels ===== */
+.hint { position:fixed; left:50%; top:max(112px, calc(env(safe-area-inset-top) + 92px)); transform:translate(-50%,-14px); width:calc(100% - 32px); max-width:420px; z-index:6500; display:flex; align-items:center; gap:10px; padding:12px 12px 12px 14px; border-radius:18px; background:var(--card); color:var(--text); border:1px solid var(--primary); box-shadow:0 10px 36px rgba(0,0,0,.28); font-size:13px; font-weight:600; line-height:1.4; opacity:0; transition:opacity .25s, transform .25s; }
+.hint.show { opacity:1; transform:translate(-50%,0); }
+.hint-ic { font-size:22px; flex-shrink:0; } .hint-t { flex:1; }
+.hint button { background:var(--bg); border:1px solid var(--border); border-radius:50%; width:28px; height:28px; flex-shrink:0; color:var(--text-sec); font-weight:800; cursor:pointer; }
+@media (prefers-reduced-motion: reduce) { .hint { transition:none; } }
+
 /* ===== Installation ===== */
 .ios-mock { position:relative; height:172px; margin:0 0 12px; border-radius:14px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
 .ios-fr { position:absolute; inset:0; padding:10px 14px; opacity:0; animation:iosFr 10s infinite; }
@@ -1941,6 +1948,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                         <div class="settings-desc">Sur l'écran d'accueil de ton téléphone, en plein écran et hors-ligne</div>
                     </div>
                     <div class="icon-primary">→</div>
+                </div>
+                <div class="settings-row" style="cursor:pointer;" onclick="Hints.reset()">
+                    <div class="settings-label">
+                        <div class="settings-name">💡 Réafficher les conseils</div>
+                        <div class="settings-desc">Les petites astuces affichées une seule fois</div>
+                    </div>
+                    <div class="icon-primary">↺</div>
                 </div>
                 <div class="settings-row" style="cursor:pointer;" onclick="Onboarding.open()">
                     <div class="settings-label">
@@ -3639,6 +3653,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             SoundFX.click();
             this._open('stats-modal');
             this._applyStatsTab('rank');
+            Hints.show('stats', 900);
         },
         closeStats() { this._close('stats-modal'); },
         showSettings() {
@@ -4408,6 +4423,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         showVictory(winner, score, state) {
             SoundFX.success();
+            Hints.show('victory', 2500);
             Community.syncSoon();
             Cloud.backupSoon();
             const overlay = document.getElementById('victory');
@@ -7349,6 +7365,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const roundNumber = state.history.length + 1;
             GameState.addRound(state, state.temp);
             UI.showToast(`✅ Manche ${roundNumber} enregistrée`, 'success');
+            if (roundNumber === 2) Hints.show('round', 3000);
             return roundNumber;
         },
 
@@ -7476,7 +7493,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '43', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '44', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8269,6 +8286,51 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             catch (e) { UI.showToast('Copie impossible : ' + url, 'warning'); }
         },
         toCloud() { this.close(); Onboarding._close(); setTimeout(() => Cloud.open('create'), 280); }
+    };
+
+    // =========================================================================
+    // CONSEILS CONTEXTUELS — une petite bulle, une seule fois, au bon moment
+    // =========================================================================
+    const Hints = {
+        KEY: 'sm_hints',
+        TEXTS: {
+            round:   { ic: '📋', t: 'Une erreur de saisie ? Touche une manche dans l\'<b>historique</b> pour la corriger.' },
+            stats:   { ic: '👆', t: 'Touche un joueur pour sa <b>fiche détaillée</b> ; l\'onglet <b>⚔️ Duels</b> compare deux joueurs.' },
+            victory: { ic: '📤', t: 'Partage la victoire en <b>image</b>, <b>GIF</b> ou <b>texte</b> avec les boutons de partage.' },
+        },
+        _seen() { try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; } catch (e) { return {}; } },
+        _mark(id) { try { const o = this._seen(); o[id] = 1; localStorage.setItem(this.KEY, JSON.stringify(o)); } catch (e) {} },
+        /** Désactivé sous test automatisé (sauf ?hints=1) et pendant le guide. */
+        _allowed() {
+            if (document.getElementById('onboarding')) return false;
+            if (navigator.webdriver && !/[?&]hints=1/.test(location.search)) return false;
+            return true;
+        },
+        /** Affiche le conseil `id` après `delay` ms, s'il n'a jamais été vu. */
+        show(id, delay = 0) {
+            const h = this.TEXTS[id];
+            if (!h || this._seen()[id]) return;
+            setTimeout(() => {
+                if (this._seen()[id] || !this._allowed()) return;
+                this._mark(id);
+                this.hide();
+                const el = document.createElement('div');
+                el.id = 'hint'; el.className = 'hint'; el.setAttribute('role', 'status');
+                el.innerHTML = `<span class="hint-ic" aria-hidden="true">${h.ic}</span><span class="hint-t">${h.t}</span><button aria-label="Fermer le conseil" onclick="Hints.hide()">✕</button>`;
+                document.body.appendChild(el);
+                requestAnimationFrame(() => el.classList.add('show'));
+                this._timer = setTimeout(() => this.hide(), 9000);
+            }, delay);
+        },
+        hide() {
+            clearTimeout(this._timer);
+            const el = document.getElementById('hint'); if (!el) return;
+            el.classList.remove('show'); setTimeout(() => el.remove(), 250);
+        },
+        reset() {
+            try { localStorage.removeItem(this.KEY); } catch (e) {}
+            UI.showToast('💡 Les conseils réapparaîtront au fil de l\'utilisation', 'success');
+        }
     };
 
     // =========================================================================
