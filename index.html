@@ -1447,6 +1447,9 @@ input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range])
 .chart-box { overflow: hidden; } #chart { max-width: 100%; }
 button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 
+.h-del { position:relative; flex-shrink:0; width:28px; height:28px; margin:0 2px 0 4px; padding:0; border:none; background:none; color:var(--danger); font-size:20px; line-height:1; cursor:pointer; }
+.h-del::after { content:""; position:absolute; inset:-8px 0 -8px -8px; } /* zone tactile élargie sans épaissir la ligne ni déborder */
+
 /* ===== Conseils contextuels ===== */
 .hint { position:fixed; left:50%; top:max(112px, calc(env(safe-area-inset-top) + 92px)); transform:translate(-50%,-14px); width:calc(100% - 32px); max-width:420px; z-index:6500; display:flex; align-items:center; gap:10px; padding:12px 12px 12px 14px; border-radius:18px; background:var(--card); color:var(--text); border:1px solid var(--primary); box-shadow:0 10px 36px rgba(0,0,0,.28); font-size:13px; font-weight:600; line-height:1.4; opacity:0; transition:opacity .25s, transform .25s; }
 .hint.show { opacity:1; transform:translate(-50%,0); }
@@ -4204,7 +4207,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             row.innerHTML = `
                 <div class="h-idx">M${idx + 1}</div>
                 <div class="h-scores" onclick="app.startEdit(${idx})">${scoresHtml}</div>
-                <button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:20px; padding:8px 4px 8px 12px; min-width:40px; min-height:40px; flex-shrink:0;" aria-label="Supprimer la manche">×</button>`;
+                <button class="h-del" onclick="app.delRound(${idx})" aria-label="Supprimer la manche">×</button>`;
             return row;
         },
 
@@ -7558,7 +7561,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '47', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '48', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
