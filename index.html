@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta id="theme-color-meta" name="theme-color" content="#007AFF">
     <script>
     // Applique mode + palette avant le premier rendu (évite le flash de thème)
@@ -1437,6 +1437,16 @@ body.is-editing .edit-tab { display: flex; }
 #onboarding button:focus:not(:focus-visible) { outline:none; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
+/* ===== Accessibilité (audit) ===== */
+html, body { touch-action: manipulation; }
+input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea { font-size: max(16px, 1em) !important; } /* évite le zoom auto d'iOS au focus */
+.btn-icon { min-width: 44px; min-height: 44px; }
+.seg button { min-height: 40px; }
+.preset-close, .preset-edit-btn { min-width: 40px; min-height: 40px; }
+#history-toggle { padding: 13px 0; }
+.chart-box { overflow: hidden; } #chart { max-width: 100%; }
+button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
 /* ===== Conseils contextuels ===== */
 .hint { position:fixed; left:50%; top:max(112px, calc(env(safe-area-inset-top) + 92px)); transform:translate(-50%,-14px); width:calc(100% - 32px); max-width:420px; z-index:6500; display:flex; align-items:center; gap:10px; padding:12px 12px 12px 14px; border-radius:18px; background:var(--card); color:var(--text); border:1px solid var(--primary); box-shadow:0 10px 36px rgba(0,0,0,.28); font-size:13px; font-weight:600; line-height:1.4; opacity:0; transition:opacity .25s, transform .25s; }
 .hint.show { opacity:1; transform:translate(-50%,0); }
@@ -2295,7 +2305,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         <div id="history-header" style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
             <button id="history-toggle" aria-expanded="false" onclick="app.toggleHistory()"><span class="chev">▸</span>HISTORIQUE DES MANCHES <span id="history-count"></span></button>
             <div style="display:flex; gap:12px;">
-                <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer;">✓ TERMINER</button>
+                <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer; padding:11px 6px;">✓ TERMINER</button>
             </div>
         </div>
         <div id="history-last"></div>
@@ -2810,7 +2820,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 return {
                     id:           p.id || (i + 1),
                     name:         cleanName,
-                    color:        p.color || PLAYER_COLORS[i % PLAYER_COLORS.length],
+                    color:        (typeof p.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(p.color)) ? p.color : PLAYER_COLORS[i % PLAYER_COLORS.length],
                     total:        typeof p.total === 'number' ? p.total : 0,
                     previousRank: p.previousRank || null
                 };
@@ -3551,9 +3561,32 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return el;
         },
 
-        _open(id)  { document.getElementById(id)?.classList.add('active'); },
+        _open(id)  {
+            const el = document.getElementById(id); if (!el) return;
+            if (!el.classList.contains('active') && !this._opener) this._opener = document.activeElement;
+            el.classList.add('active');
+            const box = el.querySelector('.modal-box') || el;
+            box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+            const h = box.querySelector('h1,h2,h3'); if (h && !box.hasAttribute('aria-label')) box.setAttribute('aria-label', h.textContent.trim());
+            // Le focus passe dans la fenêtre (sauf si un champ est déjà actif)
+            setTimeout(() => { if (!el.contains(document.activeElement)) { box.setAttribute('tabindex', '-1'); box.focus({ preventScroll: true }); } }, 60);
+        },
         /** Ferme un modal par son ID. */
-        _close(id) { document.getElementById(id)?.classList.remove('active'); },
+        _close(id) {
+            document.getElementById(id)?.classList.remove('active');
+            if (!document.querySelector('.modal-overlay.active')) {
+                const o = this._opener; this._opener = null;
+                try { if (o && document.contains(o) && o.focus) o.focus({ preventScroll: true }); } catch (e) {}
+            }
+        },
+        /** Échap : ferme la fenêtre ouverte la plus haute (via son propre bouton de fermeture si possible). */
+        _escapeTopModal() {
+            const all = [...document.querySelectorAll('.modal-overlay.active')]; if (!all.length) return false;
+            const top = all[all.length - 1];
+            const btn = [...top.querySelectorAll('button')].find(b => /clos|cancel|ferm/i.test(b.getAttribute('onclick') || '') || /Fermer/i.test(b.getAttribute('aria-label') || ''));
+            if (btn) btn.click(); else this._close(top.id);
+            return true;
+        },
         /** Rend visible un élément en retirant la classe 'hidden'. */
         _show(id)  { document.getElementById(id)?.classList.remove('hidden'); },
         /** Masque un élément en ajoutant la classe 'hidden'. */
@@ -3758,7 +3791,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 ['settings-milestones-btn',s.milestones],
                 ['settings-chart-btn',     s.showChart],
                 ['settings-tempScore-btn', s.showTempScore],
-            ].forEach(([id, val]) => document.getElementById(id)?.classList.toggle('active', val));
+            ].forEach(([id, val]) => {
+                const b = document.getElementById(id); if (!b) return;
+                b.classList.toggle('active', val);
+                b.setAttribute('role', 'switch');
+                b.setAttribute('aria-checked', String(!!val));
+                const name = b.closest('.settings-row')?.querySelector('.settings-name')?.textContent.trim();
+                if (name) b.setAttribute('aria-label', name);
+            });
         },
         /** @private Masque tous les panneaux de stats puis affiche l'onglet sélectionné. */
         // =====================================================================
@@ -4058,7 +4098,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 : '';
             return `
                 <div class="rank-badge ${badgeClass} ${rankChanges.has(p.id) ? 'bounce' : ''}">${badgeText}</div>
-                <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${p.name}</div>
+                <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${escapeHtml(p.name)}</div>
                 <div class="p-score ${tempScore !== 0 ? 'score-bump' : ''}" onclick="app.openSheet(${p.id})">${totalScore}</div>
                 ${tempDisplay}
                 ${dealerIcon}
@@ -4156,7 +4196,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     ? state.temp[p.id]
                     : (round[p.id] || 0);
                 return `<div class="h-score-item">
-                    <div style="font-size:7px; color:${p.color}; font-weight:900; opacity:0.7">${p.name.substring(0, 4)}</div>
+                    <div style="font-size:7px; color:${p.color}; font-weight:900; opacity:0.7">${escapeHtml(p.name.substring(0, 4))}</div>
                     <div style="color:${p.color}; font-weight:800; font-size:14px;">${score}</div>
                 </div>`;
             }).join('');
@@ -4164,7 +4204,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             row.innerHTML = `
                 <div class="h-idx">M${idx + 1}</div>
                 <div class="h-scores" onclick="app.startEdit(${idx})">${scoresHtml}</div>
-                <button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:18px; padding-left:10px; flex-shrink:0;">×</button>`;
+                <button onclick="app.delRound(${idx})" style="border:none; background:none; color:var(--danger); font-size:20px; padding:8px 4px 8px 12px; min-width:40px; min-height:40px; flex-shrink:0;" aria-label="Supprimer la manche">×</button>`;
             return row;
         },
 
@@ -4355,9 +4395,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div class="podium-avatar" style="background:${p.color}30; border:3px solid ${p.color};">
                     ${realRank === 1 ? '<div class="podium-crown">👑</div>' : ''}
                     ${isTied ? '<div style="position:absolute;top:-8px;right:-8px;font-size:12px;">🤝</div>' : ''}
-                    <span style="color:${p.color}">${p.name.substring(0, 2)}</span>
+                    <span style="color:${p.color}">${escapeHtml(p.name.substring(0, 2))}</span>
                 </div>
-                <div class="podium-name"  style="color:${p.color}">${p.name}${isTied ? ' 🤝' : ''}</div>
+                <div class="podium-name"  style="color:${p.color}">${escapeHtml(p.name)}${isTied ? ' 🤝' : ''}</div>
                 <div class="podium-score" style="color:${p.color}">${p.total}</div>
                 <div class="podium-bar">${medals[realRank - 1] || realRank}</div>
             `;
@@ -4698,7 +4738,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         init() {
             Storage.checkStorageAvailability();
-            if (!this._keyBound) { this._keyBound = true; document.addEventListener('keydown', e => this._sheetKey(e)); }
+            if (!this._keyBound) {
+                this._keyBound = true;
+                document.addEventListener('keydown', e => this._sheetKey(e));
+                document.addEventListener('keydown', e => {
+                    if (e.key !== 'Escape' || document.getElementById('onboarding') || document.getElementById('sheet')?.classList.contains('active')) return;
+                    if (UI._escapeTopModal()) e.preventDefault();
+                });
+            }
             Storage.migrateData();
             
             // Initialiser le moteur sonore
@@ -5034,12 +5081,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         // --- Import ---
 
+        /** Ne garde que des clés sûres et des valeurs simples (texte borné, nombres, booléens) pour les jeux importés. */
+        _cleanPresets(obj) {
+            if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+            const out = {};
+            Object.entries(obj).slice(0, 100).forEach(([k, v]) => {
+                if (!/^[\w-]{1,60}$/.test(k) || !v || typeof v !== 'object') return;
+                const c = {};
+                Object.entries(v).forEach(([f, x]) => {
+                    if (typeof x === 'string') c[f] = x.slice(0, 80);
+                    else if (typeof x === 'number' || typeof x === 'boolean' || x === null) c[f] = x;
+                    else if (x && typeof x === 'object' && f === 'endCondition') c[f] = { type: String(x.type || '').slice(0, 20), value: typeof x.value === 'number' ? x.value : null };
+                });
+                out[k] = c;
+            });
+            return out;
+        },
+
         _applyImportedExtras(data) {
             const putObj = (key, v, type) => {
                 const ok = type === 'array' ? Array.isArray(v) : (v && typeof v === 'object' && !Array.isArray(v));
                 if (ok) { try { localStorage.setItem(key, JSON.stringify(v)); } catch(e) {} }
             };
-            putObj(Storage.CUSTOM_PRESETS_KEY, data.customPresets, 'object');
+            putObj(Storage.CUSTOM_PRESETS_KEY, this._cleanPresets(data.customPresets), 'object');
             putObj(Storage.HIDDEN_PRESETS_KEY, data.hiddenPresets, 'array');
             putObj(Storage.PRESET_STATS_KEY,   data.presetStats,   'object');
             putObj(Storage.PLAYER_STATS_KEY,   data.playerStats,   'object');
@@ -5383,14 +5447,14 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         /** Construit le HTML du modal des jeux masqués. */
         _buildHiddenPresetsHtml(hidden, allPresets) {
             const rows = hidden
-                .filter(key => allPresets[key])
+                .filter(key => /^[\w-]{1,60}$/.test(key) && allPresets[key])
                 .map(key => {
                     const g = allPresets[key];
                     return `
                         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card); border-radius:12px; margin-bottom:8px;">
                             <div class="flex-ai-gap10">
-                                <span style="font-size:24px;">${g.icon}</span>
-                                <span style="font-weight:700;">${g.name}</span>
+                                <span style="font-size:24px;">${escapeHtml(g.icon)}</span>
+                                <span style="font-weight:700;">${escapeHtml(g.name)}</span>
                             </div>
                             <button onclick="app.restorePreset('${key}')" class="btn-action-success">Restaurer</button>
                         </div>`;
@@ -5464,9 +5528,9 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _buildPresetCardContent(game) {
             const div = document.createElement('div');
             div.innerHTML = `
-                <span class="preset-icon">${game.icon}</span>
-                <span class="preset-name">${game.name}</span>
-                <span class="preset-tag">${game.tag}</span>
+                <span class="preset-icon">${escapeHtml(game.icon)}</span>
+                <span class="preset-name">${escapeHtml(game.name)}</span>
+                <span class="preset-tag">${escapeHtml(game.tag)}</span>
             `;
             return div;
         },
@@ -7493,7 +7557,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '45', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '46', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,

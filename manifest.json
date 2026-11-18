@@ -2,6 +2,7 @@
   "name": "ScoreMaster - Gestionnaire de Scores",
   "short_name": "ScoreMaster",
   "description": "Suivez vos scores de belote, coinche et jeux de cartes avec stats avancées",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
