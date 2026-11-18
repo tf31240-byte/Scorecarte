@@ -1449,6 +1449,23 @@ body.is-editing .edit-tab { display: flex; }
 #onboarding button:focus:not(:focus-visible) { outline:none; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
+/* ===== Vue liste + graphique compact ===== */
+.hdr-actions { display:flex; gap:8px; }
+.chart-box { position:relative; height:92px; padding:8px 10px; margin-bottom:16px; transition:height .35s cubic-bezier(.4,0,.2,1), opacity .5s ease; cursor:pointer; }
+.chart-box.open { height:250px; padding:15px; cursor:default; }
+.chart-expand { position:absolute; top:6px; right:8px; z-index:5; width:34px; height:34px; border:none; border-radius:10px; background:color-mix(in srgb, var(--card) 85%, transparent); color:var(--text-sec); font-size:16px; cursor:pointer; }
+.chart-box:not(.open) #chart { pointer-events:none; }
+.players-grid.list { grid-template-columns:1fr; gap:8px; margin-bottom:18px; }
+body:not(.focus-mode) .players-grid.list .p-card { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 14px; border-radius:18px; }
+body:not(.focus-mode) .players-grid.list .rank-badge { position:static; flex-shrink:0; min-width:38px; text-align:center; }
+body:not(.focus-mode) .players-grid.list .p-name-btn { flex:0 1 auto; max-width:50%; margin:0; text-align:left; }
+body:not(.focus-mode) .players-grid.list .p-score { font-size:30px; letter-spacing:-1px; margin-left:auto; min-width:64px; text-align:right; order:3; }
+body:not(.focus-mode) .players-grid.list .p-score.len4 { font-size:27px; } body:not(.focus-mode) .players-grid.list .p-score.len5 { font-size:23px; }
+body:not(.focus-mode) .players-grid.list .p-temp { order:2; margin:0; min-height:0; min-width:34px; font-size:14px; }
+body:not(.focus-mode) .players-grid.list .p-dealer { position:static; font-size:16px; order:1; }
+.focus-mode .chart-box { height:auto; }
+@media (prefers-reduced-motion: reduce) { .chart-box { transition:none; } }
+
 /* ===== Accessibilité (audit) ===== */
 html, body { touch-action: pan-x pan-y; } /* pas de zoom (pincement / double-tap) */
 input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea { font-size: max(16px, 1em) !important; } /* évite le zoom auto d'iOS au focus */
@@ -1644,7 +1661,8 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 }
 
 /* Masquer tout sauf le focus button et le back button dans le header */
-.focus-mode header > *:not(.btn-focus):not(.btn-back) {
+.focus-mode #view-btn { display: none; }
+.focus-mode header > *:not(.btn-focus):not(.btn-back):not(.hdr-actions) {
     opacity: 0;
     pointer-events: none;
 }
@@ -2311,10 +2329,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <h1 id="mode-title" style="margin:0; font-size:22px; font-weight:900;">SCORE</h1>
                 <div id="game-info" style="font-size:10px; color:var(--text-sec); font-weight:700; margin-top:3px;"></div>
             </div>
-            <button class="btn-focus" onclick="app.toggleFocusMode()" title="Mode Zen">👁️</button>
+            <div class="hdr-actions">
+                <button id="view-btn" class="btn-focus" onclick="UI.toggleView()" title="Changer l'affichage des joueurs" aria-label="Affichage en liste">☰</button>
+                <button class="btn-focus" onclick="app.toggleFocusMode()" title="Mode Zen">👁️</button>
+            </div>
         </header>
 
-        <div class="chart-box"><canvas id="chart"></canvas></div>
+        <div class="chart-box" id="chart-box" onclick="UI.chartTap(event)">
+            <button id="chart-expand" class="chart-expand" onclick="UI.toggleChart(event)" aria-label="Agrandir le graphique" aria-expanded="false">⤢</button>
+            <canvas id="chart"></canvas>
+        </div>
         <div id="grid" class="players-grid"></div>
 
         <div id="history-header" style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
@@ -4198,6 +4222,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const grid = document.getElementById('grid');
             const rankChanges = this._detectRankChanges(state.players, sorted);
             grid.innerHTML = '';
+            this._applyView();
             sorted.forEach(p => grid.appendChild(this._buildScoreCard(p, sorted, state, editIdx, getDisplayScore, rankChanges)));
         },
 
@@ -4300,7 +4325,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return {
                 label: p.name, data,
                 borderColor: p.color, backgroundColor: p.color + '20',
-                tension: 0.4, pointRadius: 3, pointHoverRadius: 6, borderWidth: 2.5, fill: false
+                tension: 0.4, pointRadius: UI._chartOpen() ? 3 : 0, pointHoverRadius: UI._chartOpen() ? 6 : 0, borderWidth: 2.5, fill: false
             };
         },
 
@@ -4336,11 +4361,11 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     }
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: '#86868B' } },
+                    x: { grid: { display: false }, ticks: { display: UI._chartOpen(), font: { size: 10, weight: '700' }, color: '#86868B' } },
                     y: {
                         min: yMin, max: yMax, beginAtZero: !hasNegativeScores,
                         grid: { color: 'rgba(128,128,128,0.08)' },
-                        ticks: { font: { size: 10, weight: '600' }, color: '#86868B' }
+                        ticks: { display: UI._chartOpen(), font: { size: 10, weight: '600' }, color: '#86868B' }
                     }
                 },
                 animation: { duration: 400 }
@@ -4366,6 +4391,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 app.chart.data.datasets = datasets;
                 app.chart.options.scales.y.min = yMin;
                 app.chart.options.scales.y.max = yMax;
+                app.chart.options.scales.x.ticks.display = app.chart.options.scales.y.ticks.display = this._chartOpen();
                 app.chart.update('none');
             } else {
                 app.chart = new Chart(ctx, this._buildChartConfig(labels, datasets, yMin, yMax, hasNegativeScores));
@@ -4375,6 +4401,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         renderChart(state, editIdx) {
             const ctx = document.getElementById('chart');
             const chartBox = ctx?.closest('.chart-box');
+            this._applyChartState(); // taille compacte / agrandie, même si la bibliothèque du graphique n'est pas chargée
             if(!ctx || typeof Chart === 'undefined') return;
             
             // Masquer le graphique si le paramètre est désactivé
@@ -4386,6 +4413,41 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const { datasets, labels, yMin, yMax, hasNegativeScores } = this._buildChartData(state, editIdx);
             
             this._updateOrCreateChart(ctx, labels, datasets, yMin, yMax, hasNegativeScores);
+            this._applyChartState();
+        },
+
+        // --- Graphique compact / agrandi (tap) ---
+        _chartOpen() { try { return localStorage.getItem('sm_chart_open') === '1'; } catch (e) { return false; } },
+        _applyChartState() {
+            const open = this._chartOpen();
+            document.getElementById('chart-box')?.classList.toggle('open', open);
+            const b = document.getElementById('chart-expand');
+            if (b) { b.textContent = open ? '⤡' : '⤢'; b.setAttribute('aria-expanded', String(open)); b.setAttribute('aria-label', open ? 'Réduire le graphique' : 'Agrandir le graphique'); }
+            if (app.chart) {
+                app.chart.options.scales.x.ticks.display = app.chart.options.scales.y.ticks.display = open;
+                app.chart.data.datasets.forEach(d => { d.pointRadius = open ? 3 : 0; d.pointHoverRadius = open ? 6 : 0; });
+                app.chart.update('none');
+                setTimeout(() => { try { app.chart.resize(); } catch (e) {} }, 380);
+            }
+        },
+        toggleChart(e) {
+            e?.stopPropagation();
+            try { localStorage.setItem('sm_chart_open', this._chartOpen() ? '0' : '1'); } catch (err) {}
+            SoundFX.click(); this._applyChartState();
+        },
+        chartTap(e) { if (!this._chartOpen()) this.toggleChart(e); },
+
+        // --- Vue joueurs : cartes / liste ---
+        _viewList() { try { return localStorage.getItem('sm_view') === 'list'; } catch (e) { return false; } },
+        _applyView() {
+            const list = this._viewList();
+            document.getElementById('grid')?.classList.toggle('list', list);
+            const b = document.getElementById('view-btn');
+            if (b) { b.textContent = list ? '⊞' : '☰'; b.setAttribute('aria-label', list ? 'Affichage en cartes' : 'Affichage en liste'); }
+        },
+        toggleView() {
+            try { localStorage.setItem('sm_view', this._viewList() ? 'grid' : 'list'); } catch (e) {}
+            SoundFX.click(); this._applyView();
         },
 
         // --- Écran de Victoire ---
@@ -7574,7 +7636,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '52', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '53', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,

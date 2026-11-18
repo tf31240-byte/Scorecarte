@@ -1,0 +1,27 @@
+const {chromium}=require('playwright');const ok=(n,c)=>console.log((c?'✅':'❌'),n);
+const URL=(process.env.SM_URL||'http://localhost:8769/');
+(async()=>{const b=await chromium.launch();
+const ctx=await b.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'fr-FR'});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.route('**/static.cloudflareinsights.com/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
+const seed=()=>p.evaluate(()=>{const P=[1,2,3,4,5].map(i=>({id:i,name:'J'+i,total:0,color:'#0a84ff'}));const g={id:'9',name:'T',mode:'standard',date:new Date().toISOString(),finished:false,victoryCondition:'highest',endCondition:{type:'free',value:null},preset:null,state:{players:P,history:[{1:5,2:4,3:3,4:2,5:1}],temp:{},dealerId:2,victoryCondition:'highest'}};localStorage.setItem('sm_v12_games',JSON.stringify([g]));localStorage.setItem('sm_v12_current','9');app.init();app.loadGame('9')});
+await p.goto(URL);await p.waitForTimeout(800);await p.evaluate(()=>{localStorage.removeItem('sm_view');localStorage.removeItem('sm_chart_open')});await seed();await p.waitForTimeout(500);
+const h=sel=>p.evaluate(s=>Math.round(document.querySelector(s).getBoundingClientRect().height),sel);
+ok('graphique compact par défaut (≈92 px)',(await h('#chart-box'))<=100);
+await p.click('#chart-box');await p.waitForTimeout(600);
+ok('tap sur le graphique : agrandi (≥ 240 px)',(await h('#chart-box'))>=240&&await p.getAttribute('#chart-expand','aria-expanded')==='true');
+await p.click('#chart-expand');await p.waitForTimeout(600);
+ok('bouton ⤡ : réduit',(await h('#chart-box'))<=100&&await p.getAttribute('#chart-expand','aria-expanded')==='false');
+await p.click('#chart-box');await p.waitForTimeout(500);
+await p.click('#view-btn');await p.waitForTimeout(300);
+ok('vue liste active (1 colonne)',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')&&getComputedStyle(document.getElementById('grid')).gridTemplateColumns.split(' ').length===1));
+const hl=await h('.p-card');ok('carte en liste plus basse (≤ 70 px)',hl<=70);
+ok('bouton annonce « cartes »',(await p.getAttribute('#view-btn','aria-label')).includes('cartes'));
+await p.reload();await p.waitForTimeout(800);await p.evaluate(()=>{app.loadGame('9')});await p.waitForTimeout(500);
+ok('choix mémorisés après rechargement',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')&&document.getElementById('chart-box').classList.contains('open')));
+await p.click('#view-btn');await p.waitForTimeout(300);
+ok('retour aux cartes',await p.evaluate(()=>!document.getElementById('grid').classList.contains('list')));
+// saisie toujours possible depuis la liste
+await p.click('#view-btn');await p.waitForTimeout(200);await p.click('.p-score >> nth=0');await p.waitForTimeout(400);
+ok('liste : toucher un score ouvre le pavé',await p.evaluate(()=>document.getElementById('sheet').classList.contains('active')));
+ok('aucune erreur JS',errs.length===0);if(errs.length)console.log(errs);
+await b.close()})();

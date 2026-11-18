@@ -36,7 +36,7 @@ await mk(3,'standard','highest',null);await p.evaluate(()=>{app.currentGame.stat
 ok('0 manche : pas de ligne ni compteur',await p.evaluate(()=>document.getElementById('history-last').innerHTML===''&&document.getElementById('history-count').textContent===''));
 // 6. Zen puis retour accueil : wake lock/état
 await p.evaluate(()=>{window.__wl=0;Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{request:async()=>{window.__wl++;return{release:async()=>{window.__wl--},addEventListener(){}}}}})});
-await p.click('.btn-focus');await p.waitForTimeout(500);
+await p.click('button[title="Mode Zen"]');await p.waitForTimeout(500);
 await p.evaluate(()=>app.showSetup());await p.waitForTimeout(300);
 ok('quitter la partie en Zen : verrou libéré',await p.evaluate(()=>window.__wl===0&&!document.body.classList.contains('focus-mode')));
 // 7. Mode édition + zen label
