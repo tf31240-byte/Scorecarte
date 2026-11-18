@@ -486,8 +486,8 @@ body::before {
 }
 
 .p-card {
-    background: var(--card);
-    padding: 22px 10px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--pc, var(--primary)) 11%, var(--card)) 0%, var(--card) 75%);
+    padding: 20px 10px 18px;
     border-radius: 26px;
     text-align: center;
     position: relative;
@@ -501,14 +501,15 @@ body::before {
 
 .rank-badge {
     position: absolute;
-    top: -12px;
-    left: 12px;
-    font-size: 13px;
-    padding: 4px 10px;
-    border-radius: 12px;
+    top: 9px;
+    left: 10px;
+    font-size: 12px;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 999px;
     font-weight: 900;
     color: white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 10;
 }
@@ -524,12 +525,23 @@ body::before {
     text-transform: uppercase;
     cursor: pointer;
     display: inline-block;
-    padding: 4px 10px;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 5px 12px;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pc, var(--primary)) 10%, transparent);
     margin-bottom: 8px;
 }
+.p-card.long-name { padding-top: 38px; } /* nom long : passe sous le badge de rang */
+.focus-mode .p-card.long-name { padding-top: 12px; }
+.p-dealer { position:absolute; top:8px; right:10px; font-size:16px; line-height:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+.p-score.len4 { font-size: 38px; letter-spacing: -1.5px; }
+.p-score.len5 { font-size: 31px; letter-spacing: -1px; }
 .p-score {
+    font-variant-numeric: tabular-nums;
     font-size: 44px;
     font-weight: 900;
     cursor: pointer;
@@ -4098,12 +4110,12 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 ? `<div class="p-temp">${tempScore > 0 ? '+' + tempScore : tempScore}</div>`
                 : '';
             const dealerIcon = state.dealerId === p.id
-                ? '<div style="position:absolute; top:8px; right:8px; font-size:12px;">🃏</div>'
+                ? '<div class="p-dealer" title="Distribue" aria-label="Donneur">🃏</div>'
                 : '';
             return `
                 <div class="rank-badge ${badgeClass} ${rankChanges.has(p.id) ? 'bounce' : ''}">${badgeText}</div>
                 <div class="p-name-btn" style="color:${p.color}; border-color:${p.color}40" onclick="app.openModal(${p.id})">${escapeHtml(p.name)}</div>
-                <div class="p-score ${tempScore !== 0 ? 'score-bump' : ''}" onclick="app.openSheet(${p.id})">${totalScore}</div>
+                <div class="p-score ${String(totalScore).length >= 5 ? 'len5' : String(totalScore).length >= 4 ? 'len4' : ''} ${tempScore !== 0 ? 'score-bump' : ''}" onclick="app.openSheet(${p.id})">${totalScore}</div>
                 ${tempDisplay}
                 ${dealerIcon}
             `;
@@ -4122,7 +4134,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const rankIdx = sorted.findIndex(s => s.id === p.id);
             const { cls: badgeClass, txt: badgeText } = this._rankBadge(rankIdx);
             const card = document.createElement('div');
-            card.className = `p-card ${state.dealerId === p.id ? 'is-dealer' : ''}`;
+            card.className = `p-card ${state.dealerId === p.id ? 'is-dealer' : ''} ${p.name.length > 7 ? 'long-name' : ''}`;
+            card.style.setProperty('--pc', /^#[0-9a-fA-F]{3,8}$/.test(p.color) ? p.color : 'var(--primary)');
             if (rankChanges.has(p.id) && !app.focusMode) card.classList.add('rank-change');
             return { totalScore, tempScore, badgeClass, badgeText, card };
         },
@@ -7562,7 +7575,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '49', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '50', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
