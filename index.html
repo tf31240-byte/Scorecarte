@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta id="theme-color-meta" name="theme-color" content="#007AFF">
     <script>
     // Applique mode + palette avant le premier rendu (évite le flash de thème)
@@ -1438,7 +1438,7 @@ body.is-editing .edit-tab { display: flex; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
 /* ===== Accessibilité (audit) ===== */
-html, body { touch-action: manipulation; }
+html, body { touch-action: pan-x pan-y; } /* pas de zoom (pincement / double-tap) */
 input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea { font-size: max(16px, 1em) !important; } /* évite le zoom auto d'iOS au focus */
 .btn-icon { min-width: 44px; min-height: 44px; }
 .seg button { min-height: 40px; }
@@ -4740,6 +4740,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             Storage.checkStorageAvailability();
             if (!this._keyBound) {
                 this._keyBound = true;
+                ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault())); // iOS : bloque le zoom par pincement
                 document.addEventListener('keydown', e => this._sheetKey(e));
                 document.addEventListener('keydown', e => {
                     if (e.key !== 'Escape' || document.getElementById('onboarding') || document.getElementById('sheet')?.classList.contains('active')) return;
@@ -7557,7 +7558,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '46', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '47', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,

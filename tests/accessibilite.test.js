@@ -5,7 +5,7 @@ const ctx=await b.newContext({viewport:{width:320,height:568},isMobile:true,hasT
 await p.route('**/static.cloudflareinsights.com/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
 await p.goto(URL);await p.waitForTimeout(900);
 await p.evaluate(()=>{const g={id:'9',name:'T',mode:'standard',date:new Date().toISOString(),finished:false,victoryCondition:'highest',endCondition:{type:'free',value:null},preset:null,state:{players:[{id:1,name:'A',total:30,color:'#ff3b30'},{id:2,name:'B',total:12,color:'#0a84ff'},{id:3,name:'C',total:5,color:'#30d158'}],history:[{1:10,2:5,3:2},{1:20,2:7,3:3}],temp:{},dealerId:3,victoryCondition:'highest'}};localStorage.setItem('sm_v12_games',JSON.stringify([g]));localStorage.setItem('sm_v12_current','9');app.init();app.loadGame('9')});await p.waitForTimeout(700);
-ok('zoom autorisé (pas de user-scalable=no)',!(await p.getAttribute('meta[name=viewport]','content')).match(/user-scalable=no|maximum-scale/));
+ok('zoom désactivé (voulu : il cassait la mise en page)',/user-scalable=no/.test(await p.getAttribute('meta[name=viewport]','content'))&&await p.evaluate(()=>getComputedStyle(document.body).touchAction==='pan-x pan-y'));
 ok('aucun débordement horizontal à 320 px',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
 ok('champs ≥ 16 px (pas de zoom iOS)',await p.evaluate(()=>[...document.querySelectorAll('input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),select')].every(e=>e.getBoundingClientRect().width===0||parseFloat(getComputedStyle(e).fontSize)>=16)));
 await p.evaluate(()=>UI.showSettings());await p.waitForTimeout(500);
