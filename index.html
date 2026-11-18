@@ -1414,6 +1414,13 @@ body.is-editing .edit-tab { display: flex; }
 .ob-chip b { display:block; font-size:20px; font-weight:900; }
 .ob-chip i { display:block; font-style:normal; font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; }
 .ob-chip.on small, .ob-chip.on i { color:var(--primary); }
+.ob-chip { transition:border-color .25s, background .25s; } .ob-chip.done { border-color:var(--success); }
+.ob-chip.done i { color:var(--success); }
+.ob-cap { text-align:center; font-size:13px; font-weight:800; min-height:20px; margin:-2px 0 8px; color:var(--text); }
+.ob-fakebtn { text-align:center; font-size:12px; font-weight:900; letter-spacing:.4px; padding:11px; border-radius:12px; background:var(--bg); color:var(--text-sec); border:1px solid var(--border); margin-bottom:12px; transition:all .3s; }
+.ob-fakebtn.ready { background:var(--success); border-color:var(--success); color:#fff; animation:obPulse 1s ease-in-out infinite; }
+@keyframes obPulse { 50% { transform:scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .ob-fakebtn.ready { animation:none; } }
 .ob-pal { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 #onboarding .seg { margin-bottom:10px; }
 .ob-dots { display:flex; justify-content:center; gap:6px; }
@@ -1431,6 +1438,23 @@ body.is-editing .edit-tab { display: flex; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
 /* ===== Installation ===== */
+.ios-mock { position:relative; height:158px; margin:0 0 12px; border-radius:14px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
+.ios-fr { position:absolute; inset:0; padding:10px 14px; opacity:0; animation:iosFr 7.5s infinite; }
+.ios-fr.f2 { animation-delay:2.5s; } .ios-fr.f3 { animation-delay:5s; }
+@keyframes iosFr { 0%{opacity:0} 4%,30%{opacity:1} 34%,100%{opacity:0} }
+.ios-cap { font-size:12px; font-weight:900; color:var(--primary); margin-bottom:8px; text-align:center; }
+.ios-bar { display:flex; justify-content:space-around; align-items:center; background:var(--card); border-radius:14px; padding:10px 6px; font-size:18px; color:var(--text-sec); }
+.hot { color:var(--primary) !important; font-weight:900; outline:2px solid var(--primary); border-radius:8px; padding:0 8px; animation:iosHot 1s ease-in-out infinite; }
+@keyframes iosHot { 50% { background:color-mix(in srgb, var(--primary) 20%, transparent); } }
+.ios-sheet { background:var(--card); border-radius:12px; font-size:12px; font-weight:700; }
+.ios-sheet div { padding:6px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; }
+.ios-sheet div:last-child { border:0; } .ios-sheet .hot { outline-offset:-2px; }
+.ios-add { display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:var(--text-sec); padding:0 2px 8px; }
+.ios-add b { color:var(--primary); outline:2px solid var(--primary); border-radius:8px; padding:0 8px; animation:iosHot 1s ease-in-out infinite; }
+.ios-name { background:var(--card); border-radius:12px; padding:12px; font-size:14px; font-weight:800; }
+@media (prefers-reduced-motion: reduce) { .ios-mock { height:auto; display:grid; gap:6px; padding:8px 0; } .ios-fr { position:static; opacity:1; animation:none; padding:6px 12px; } .hot, .ios-add b { animation:none; } }
+
+
 .inst-device { font-size:13px; font-weight:800; color:var(--text-sec); margin:0 0 10px; }
 .inst-you { color:var(--primary); }
 .inst-lead { font-size:14px; font-weight:700; margin:0 0 8px; }
@@ -7461,7 +7485,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '41', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '42', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8166,6 +8190,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             }
 
             if (os === 'ios') {
+                h += this._iosMock();
                 if (real && br !== 'safari') {
                     h += note(`💡 Sur iPhone, l'installation est la plus fiable depuis <b>Safari</b>. Copie le lien et ouvre-le dans Safari.`, 'warn');
                     h += btn('📋 Copier le lien', 'Install.copyLink()', 'ob-secondary ob-inline');
@@ -8202,6 +8227,18 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             else if (br === 'firefox') h += note('Firefox ne sait pas installer les applis web sur ordinateur : utilise Chrome ou Edge.', 'warn');
             else h += ol([`Clique sur l'icône d'installation ${this._k('⊕')} à droite de la barre d'adresse`, `Choisis <b>Installer</b>`]);
             return h;
+        },
+
+        /** Illustration animée des 3 gestes dans Safari (barre → feuille de partage → Ajouter). */
+        _iosMock() {
+            return `<div class="ios-mock" aria-hidden="true">
+                <div class="ios-fr f1"><div class="ios-cap">① Touche Partager</div>
+                    <div class="ios-bar"><span>‹</span><span>›</span><span class="hot">⬆︎</span><span>📖</span><span>⧉</span></div></div>
+                <div class="ios-fr f2"><div class="ios-cap">② « Sur l'écran d'accueil »</div>
+                    <div class="ios-sheet"><div>Copier</div><div>Ajouter à la liste de lecture</div><div class="hot">Sur l'écran d'accueil <b>＋</b></div><div>Imprimer</div></div></div>
+                <div class="ios-fr f3"><div class="ios-cap">③ Touche Ajouter</div>
+                    <div class="ios-add"><span>Annuler</span><b>Ajouter</b></div><div class="ios-name">🎴 ScoreMaster</div></div>
+            </div>`;
         },
 
         _label(os, d) {
@@ -8288,12 +8325,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <li>🃏 La <b>Belote</b> a son mode : équipes NOUS / EUX, capot, belote…</li>
                     <li>🎯 Le plus haut ou le plus bas gagne, selon le jeu</li>
                 </ul>` });
-            S.push({ ic: '✍️', t: 'Saisis les scores', html: `
-                <div class="ob-mock" aria-hidden="true">
-                    <div class="ob-chip on"><small>ALICE</small><b>12</b><i>→ 42 ↑</i></div>
-                    <div class="ob-chip"><small>BOB</small><b>–</b><i>&nbsp;</i></div>
-                    <div class="ob-chip"><small>CHLOÉ</small><b>–</b><i>&nbsp;</i></div>
-                </div>
+            S.push({ ic: '✍️', t: 'Saisis les scores', onShow: () => this._demo(), html: `
+                <div class="ob-demo" id="ob-demo" aria-hidden="true"></div>
                 <ul class="ob-list">
                     <li>👆 Touche un joueur : le <b>pavé</b> s'ouvre</li>
                     <li>➡️ <b>Suivant</b> passe au joueur sans score ; le total et le classement se mettent à jour en direct</li>
@@ -8327,6 +8360,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <li>🛡️ Sauvegarde <b>automatique</b> ; tu vois ce qui est partagé avant de valider</li>
                 </ul>` });
             return S;
+        },
+
+        /** Mini-démo animée de la saisie des scores (boucle ; image fixe si mouvement réduit). */
+        _demo() {
+            const el = document.getElementById('ob-demo'); if (!el) return;
+            const P = [['ALICE', 30, 12], ['BOB', 25, 20], ['CHLOÉ', 18, 5]];
+            const frame = f => {
+                const done = [f >= 2, f >= 3, f >= 4];
+                const active = f === 1 ? 0 : f === 2 ? 1 : f === 3 ? 2 : -1;
+                const tot = P.map((q, i) => q[1] + (done[i] ? q[2] : 0));
+                const lead = done[1] ? 1 : done[0] ? 0 : -1;
+                const chips = P.map((q, i) => {
+                    const v = done[i] ? q[2] : (active === i ? q[2] : '–');
+                    const t = done[i] ? `→ ${tot[i]}${i === lead && f >= 2 ? ' ↑' : ''}` : '&nbsp;';
+                    return `<div class="ob-chip${active === i ? ' on' : ''}${done[i] ? ' done' : ''}"><small>${q[0]}</small><b>${v}</b><i>${t}</i></div>`;
+                }).join('');
+                const cap = ['👆 Touche un joueur', '⌨️ Tape le score, puis <b>Suivant</b>', '➡️ Joueur suivant…', '➡️ Dernier joueur : <b>OK</b>', '✅ Tout est rempli', '💾 Puis <b>ENREGISTRER</b>'][f];
+                el.innerHTML = `<div class="ob-mock">${chips}</div><div class="ob-cap">${cap}</div><div class="ob-fakebtn${f >= 4 ? ' ready' : ''}">ENREGISTRER LA MANCHE</div>`;
+            };
+            clearInterval(this._t);
+            if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return frame(5);
+            let f = 0; frame(0);
+            this._t = setInterval(() => { if (!document.getElementById('ob-demo')) return clearInterval(this._t); f = (f + 1) % 6; frame(f); }, 1300);
         },
 
         _renderLook() {
@@ -8381,6 +8437,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         },
 
         _render() {
+            clearInterval(this._t);
             const s = this._slides[this._i], last = this._i === this._slides.length - 1;
             document.getElementById('ob-body').innerHTML = `<div class="ob-ic" aria-hidden="true">${s.ic}</div><h2 class="ob-title">${s.t}</h2><div class="ob-text">${s.html}</div>`;
             document.getElementById('ob-dots').innerHTML = this._slides.map((_, k) => `<i class="${k === this._i ? 'on' : ''}"></i>`).join('');
@@ -8407,6 +8464,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _close() {
             if (!this._el) return;
             document.removeEventListener('keydown', this._keys);
+            clearInterval(this._t);
             const el = this._el; this._el = null;
             el.classList.remove('show');
             setTimeout(() => el.remove(), 250);
