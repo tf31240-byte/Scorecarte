@@ -6,11 +6,11 @@ await p.route('**/static.cloudflareinsights.com/**',r=>r.fulfill({status:200,con
 const seed=()=>p.evaluate(()=>{const P=[1,2,3,4,5].map(i=>({id:i,name:'J'+i,total:0,color:'#0a84ff'}));const g={id:'9',name:'T',mode:'standard',date:new Date().toISOString(),finished:false,victoryCondition:'highest',endCondition:{type:'free',value:null},preset:null,state:{players:P,history:[{1:5,2:4,3:3,4:2,5:1}],temp:{},dealerId:2,victoryCondition:'highest'}};localStorage.setItem('sm_v12_games',JSON.stringify([g]));localStorage.setItem('sm_v12_current','9');app.init();app.loadGame('9')});
 await p.goto(URL);await p.waitForTimeout(800);await p.evaluate(()=>{localStorage.removeItem('sm_view');localStorage.removeItem('sm_chart_open')});await seed();await p.waitForTimeout(500);
 const h=sel=>p.evaluate(s=>Math.round(document.querySelector(s).getBoundingClientRect().height),sel);
-ok('graphique compact par défaut (≈92 px)',(await h('#chart-box'))<=100);
+ok('graphique compact par défaut (≈140 px)',(await h('#chart-box'))<=150);
 await p.click('#chart-box');await p.waitForTimeout(600);
-ok('tap sur le graphique : agrandi (≥ 240 px)',(await h('#chart-box'))>=240&&await p.getAttribute('#chart-expand','aria-expanded')==='true');
+ok('tap sur le graphique : agrandi (≥ 190 px)',(await h('#chart-box'))>=190&&await p.getAttribute('#chart-expand','aria-expanded')==='true');
 await p.click('#chart-expand');await p.waitForTimeout(600);
-ok('bouton ⤡ : réduit',(await h('#chart-box'))<=100&&await p.getAttribute('#chart-expand','aria-expanded')==='false');
+ok('bouton ⤡ : réduit',(await h('#chart-box'))<=150&&await p.getAttribute('#chart-expand','aria-expanded')==='false');
 await p.click('#chart-box');await p.waitForTimeout(500);
 await p.click('#view-btn');await p.waitForTimeout(300);
 ok('vue liste active (1 colonne)',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')&&getComputedStyle(document.getElementById('grid')).gridTemplateColumns.split(' ').length===1));

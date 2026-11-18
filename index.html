@@ -1451,9 +1451,10 @@ body.is-editing .edit-tab { display: flex; }
 
 /* ===== Vue liste + graphique compact ===== */
 .hdr-actions { display:flex; gap:8px; }
-.chart-box { position:relative; height:92px; padding:8px 10px; margin-bottom:16px; transition:height .35s cubic-bezier(.4,0,.2,1), opacity .5s ease; cursor:pointer; }
-.chart-box.open { height:250px; padding:15px; cursor:default; }
-.chart-expand { position:absolute; top:6px; right:8px; z-index:5; width:34px; height:34px; border:none; border-radius:10px; background:color-mix(in srgb, var(--card) 85%, transparent); color:var(--text-sec); font-size:16px; cursor:pointer; }
+.chart-box { position:relative; height:140px; padding:8px 8px 4px; margin-bottom:16px; transition:height .35s cubic-bezier(.4,0,.2,1), opacity .5s ease; cursor:pointer; }
+.chart-box.open { height:200px; padding:10px 10px 6px; cursor:default; }
+.chart-expand { position:absolute; left:6px; bottom:4px; z-index:5; width:26px; height:26px; padding:0; border:none; border-radius:8px; background:color-mix(in srgb, var(--card) 85%, transparent); color:var(--text-sec); font-size:14px; cursor:pointer; }
+.chart-box.open .chart-expand { left:auto; bottom:auto; top:6px; right:6px; width:30px; height:30px; }
 .chart-box:not(.open) #chart { pointer-events:none; }
 .players-grid.list { grid-template-columns:1fr; gap:8px; margin-bottom:18px; }
 body:not(.focus-mode) .players-grid.list .p-card { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 14px; border-radius:18px; }
@@ -1748,7 +1749,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 
 /* Textes Zen */
 .focus-mode .p-card      { padding: 12px 8px 22px 8px; overflow: visible; }
-.focus-mode .p-name-btn  { max-width: 90%; font-size: 15px; padding: 7px 16px; margin-top: 24px; margin-bottom: 6px; }
+.focus-mode .p-name-btn  { max-width: 90%; flex-shrink: 0; overflow: visible; line-height: 1.25; font-size: 15px; padding: 7px 16px; margin-top: 24px; margin-bottom: 6px; }
 .focus-mode .p-temp      { font-size: 20px; margin-top: 12px; }
 
 /* CTA Zen */
@@ -4290,10 +4291,13 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         _calcYBounds(allValues) {
             const minValue = Math.min(...allValues);
             const maxValue = Math.max(...allValues);
-            const padding  = Math.max(Math.abs(maxValue - minValue) * 0.1, 10);
+            const range = Math.max(maxValue - minValue, 1);
+            // pas « rond » (1, 2, 2.5, 5 × 10ⁿ) pour ~4 graduations : l'échelle colle aux données
+            const raw = range / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+            const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(v => v >= raw) || 10 * mag;
             const hasNegativeScores = minValue < 0;
-            const yMin = hasNegativeScores ? Math.floor((minValue - padding) / 50) * 50 : 0;
-            const yMax = Math.max(Math.ceil((maxValue + padding) / 50) * 50, 50);
+            const yMin = hasNegativeScores ? Math.floor((minValue - range * 0.03) / step) * step : 0;
+            const yMax = Math.max(Math.ceil((maxValue + range * 0.03) / step) * step, step);
             return { yMin, yMax, hasNegativeScores };
         },
 
@@ -4352,6 +4356,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return {
                 responsive: true, maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
+                layout: { padding: { right: 30, top: 6 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -4361,14 +4366,52 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     }
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { display: UI._chartOpen(), font: { size: 10, weight: '700' }, color: '#86868B' } },
+                    x: { grid: { display: false }, ticks: UI._chartTicks('x', UI._chartOpen()) },
                     y: {
                         min: yMin, max: yMax, beginAtZero: !hasNegativeScores,
                         grid: { color: 'rgba(128,128,128,0.08)' },
-                        ticks: { display: UI._chartOpen(), font: { size: 10, weight: '600' }, color: '#86868B' }
+                        ticks: UI._chartTicks('y', UI._chartOpen())
                     }
                 },
                 animation: { duration: 400 }
+            };
+        },
+
+        /** Réglages des graduations : compactes (rares, petites) ou détaillées. */
+        _chartTicks(axis, open) {
+            const base = { display: true, color: '#86868B' };
+            if (axis === 'x') return open
+                ? { ...base, font: { size: 10, weight: '700' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                : { ...base, font: { size: 9, weight: '700' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 };
+            return open
+                ? { ...base, font: { size: 10, weight: '600' }, maxTicksLimit: 5 }
+                : { ...base, font: { size: 9, weight: '600' }, count: 2 }; // compact : seulement 0 et le maximum
+        },
+
+        /** Écrit le score actuel au bout de chaque courbe (couleur du joueur), sans chevauchement. */
+        _endLabelsPlugin() {
+            return {
+                id: 'endLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx, chartArea } = chart; if (!chartArea) return;
+                    const items = [];
+                    chart.data.datasets.forEach((d, i) => {
+                        const meta = chart.getDatasetMeta(i); if (meta.hidden || !meta.data.length) return;
+                        const pt = meta.data[meta.data.length - 1]; if (!pt) return;
+                        const v = d.data[d.data.length - 1];
+                        items.push({ x: pt.x, y: pt.y, label: String(v), color: d.borderColor });
+                    });
+                    items.sort((a, b) => a.y - b.y);
+                    const gap = 10;
+                    ctx.save(); ctx.font = '800 10px -apple-system, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+                    let prev = -1e9;
+                    items.forEach(it => {
+                        let y = it.y; if (y - prev < gap) y = prev + gap; prev = y;
+                        ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(it.x, it.y, 3, 0, 6.3); ctx.fill();
+                        ctx.fillText(it.label, it.x + 6, y);
+                    });
+                    ctx.restore();
+                }
             };
         },
 
@@ -4376,6 +4419,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             return {
                 type: 'line',
                 data: { labels, datasets },
+                plugins: [this._endLabelsPlugin()],
                 options: this._chartOptions(yMin, yMax, hasNegativeScores)
             };
         },
@@ -4391,7 +4435,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 app.chart.data.datasets = datasets;
                 app.chart.options.scales.y.min = yMin;
                 app.chart.options.scales.y.max = yMax;
-                app.chart.options.scales.x.ticks.display = app.chart.options.scales.y.ticks.display = this._chartOpen();
+                app.chart.options.scales.x.ticks = this._chartTicks('x', this._chartOpen());
+                app.chart.options.scales.y.ticks = this._chartTicks('y', this._chartOpen());
                 app.chart.update('none');
             } else {
                 app.chart = new Chart(ctx, this._buildChartConfig(labels, datasets, yMin, yMax, hasNegativeScores));
@@ -4424,7 +4469,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             const b = document.getElementById('chart-expand');
             if (b) { b.textContent = open ? '⤡' : '⤢'; b.setAttribute('aria-expanded', String(open)); b.setAttribute('aria-label', open ? 'Réduire le graphique' : 'Agrandir le graphique'); }
             if (app.chart) {
-                app.chart.options.scales.x.ticks.display = app.chart.options.scales.y.ticks.display = open;
+                app.chart.options.scales.x.ticks = this._chartTicks('x', open);
+                app.chart.options.scales.y.ticks = this._chartTicks('y', open);
                 app.chart.data.datasets.forEach(d => { d.pointRadius = open ? 3 : 0; d.pointHoverRadius = open ? 6 : 0; });
                 app.chart.update('none');
                 setTimeout(() => { try { app.chart.resize(); } catch (e) {} }, 380);
@@ -7636,7 +7682,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '53', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '54', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
