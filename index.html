@@ -1438,32 +1438,23 @@ body.is-editing .edit-tab { display: flex; }
 @media (prefers-reduced-motion: reduce) { #onboarding, .ob-dots i { transition:none; } }
 
 /* ===== Installation ===== */
-.ios-mock { position:relative; height:158px; margin:0 0 12px; border-radius:14px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
-.ios-fr { position:absolute; inset:0; padding:10px 14px; opacity:0; animation:iosFr 7.5s infinite; }
-.ios-fr.f2 { animation-delay:2.5s; } .ios-fr.f3 { animation-delay:5s; }
-@keyframes iosFr { 0%{opacity:0} 4%,30%{opacity:1} 34%,100%{opacity:0} }
+.ios-mock { position:relative; height:172px; margin:0 0 12px; border-radius:14px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
+.ios-fr { position:absolute; inset:0; padding:10px 14px; opacity:0; animation:iosFr 10s infinite; }
+.ios-fr.f2 { animation-delay:2.5s; } .ios-fr.f3 { animation-delay:5s; } .ios-fr.f4 { animation-delay:7.5s; }
+@keyframes iosFr { 0%{opacity:0} 3%,22%{opacity:1} 26%,100%{opacity:0} }
 .ios-cap { font-size:12px; font-weight:900; color:var(--primary); margin-bottom:8px; text-align:center; }
-.ios-bar { display:flex; justify-content:space-around; align-items:center; background:var(--card); border-radius:14px; padding:10px 6px; font-size:18px; color:var(--text-sec); }
+.ios-bar { display:flex; justify-content:space-around; align-items:center; background:var(--card); border-radius:14px; padding:10px 6px; font-size:18px; color:var(--text-sec); margin-bottom:6px; }
+.ios-url { font-size:12px; font-weight:700; background:var(--bg); border-radius:12px; padding:4px 14px; }
+.ios-act { font-size:11px; font-weight:700; text-align:center; align-items:flex-start; padding:12px 6px; } .ios-act small { font-size:10px; }
 .hot { color:var(--primary) !important; font-weight:900; outline:2px solid var(--primary); border-radius:8px; padding:0 8px; animation:iosHot 1s ease-in-out infinite; }
 @keyframes iosHot { 50% { background:color-mix(in srgb, var(--primary) 20%, transparent); } }
 .ios-sheet { background:var(--card); border-radius:12px; font-size:12px; font-weight:700; }
 .ios-sheet div { padding:6px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; }
-.ios-sheet div:last-child { border:0; } .ios-sheet .hot { outline-offset:-2px; }
-.ios-add { display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:var(--text-sec); padding:0 2px 8px; }
-.ios-add b { color:var(--primary); outline:2px solid var(--primary); border-radius:8px; padding:0 8px; animation:iosHot 1s ease-in-out infinite; }
-.ios-name { background:var(--card); border-radius:12px; padding:12px; font-size:14px; font-weight:800; }
+.ios-sheet div:last-child { border:0; } .ios-sheet .hot { outline-offset:-2px; } .ios-mini { width:60%; margin-left:auto; }
+.ios-add { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:800; color:var(--text-sec); padding:0 2px 8px; }
+.ios-add b { color:var(--primary); outline:2px solid var(--primary); border-radius:8px; padding:2px 10px; animation:iosHot 1s ease-in-out infinite; }
+.ios-name { background:var(--card); border-radius:12px; padding:12px; font-size:14px; font-weight:800; } .ios-name small { display:block; margin-top:4px; font-size:11px; color:var(--text-sec); }
 @media (prefers-reduced-motion: reduce) { .ios-mock { height:auto; display:grid; gap:6px; padding:8px 0; } .ios-fr { position:static; opacity:1; animation:none; padding:6px 12px; } .hot, .ios-add b { animation:none; } }
-
-
-.inst-device { font-size:13px; font-weight:800; color:var(--text-sec); margin:0 0 10px; }
-.inst-you { color:var(--primary); }
-.inst-lead { font-size:14px; font-weight:700; margin:0 0 8px; }
-.inst-or { font-size:12px; font-weight:700; color:var(--text-sec); margin:10px 0 6px; text-align:center; }
-.inst-note { margin-top:12px; padding:11px 13px; border-radius:12px; font-size:13px; font-weight:600; line-height:1.45; background:var(--bg); border:1px solid var(--border); }
-.inst-note.warn { border-color:#ff9f0a; background:color-mix(in srgb, #ff9f0a 12%, var(--card)); }
-.inst-note.ok { border-color:var(--success); background:color-mix(in srgb, var(--success) 10%, var(--card)); }
-#install-body .ob-list { margin-top:4px; }
-#install-body .ob-inline, #onboarding .ob-text .ob-inline { width:100%; margin-bottom:8px; }
 
 /* ===== Statistiques ===== */
 .stats-filters { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
@@ -7485,7 +7476,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '42', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '43', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8196,9 +8187,10 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     h += btn('📋 Copier le lien', 'Install.copyLink()', 'ob-secondary ob-inline');
                 }
                 h += ol([
-                    `Touche <b>Partager</b> ${this._k('⬆︎')} (en bas de Safari ; sur iPad, en haut) — ou ${this._k('⋯')} puis <b>Partager</b>`,
-                    `Fais défiler et touche <b>Sur l'écran d'accueil</b> ${this._k('＋')}`,
-                    `Touche <b>Ajouter</b> en haut à droite`,
+                    `Touche le menu ${this._k('≡')} (à gauche de l'adresse) ou ${this._k('⋯')}, puis <b>Partager</b> ${this._k('⬆︎')} <small>(iOS plus ancien : le bouton ⬆︎ en bas)</small>`,
+                    `Dans la feuille de partage, touche <b>En voir plus</b> ${this._k('⌄')}`,
+                    `Choisis <b>Sur l'écran d'accueil</b> ${this._k('⊞')} (fais défiler la liste si besoin)`,
+                    `Garde « Ouvrir comme app web » activé, puis touche <b>Ajouter</b> en haut à droite`,
                     `Ouvre ScoreMaster depuis son <b>icône</b> : plein écran, hors-ligne`
                 ]);
                 if (compact) h += note(`⚠️ L'appli installée démarre <b>vide</b> (données séparées de Safari). Crée ton profil ☁️ à la dernière étape <b>avant</b>, puis choisis « J'ai déjà un profil » dedans.`, 'warn');
@@ -8231,13 +8223,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
         /** Illustration animée des 3 gestes dans Safari (barre → feuille de partage → Ajouter). */
         _iosMock() {
+            const row = (t, hot) => `<div${hot ? ' class="hot"' : ''}>${t}</div>`;
             return `<div class="ios-mock" aria-hidden="true">
-                <div class="ios-fr f1"><div class="ios-cap">① Touche Partager</div>
-                    <div class="ios-bar"><span>‹</span><span>›</span><span class="hot">⬆︎</span><span>📖</span><span>⧉</span></div></div>
-                <div class="ios-fr f2"><div class="ios-cap">② « Sur l'écran d'accueil »</div>
-                    <div class="ios-sheet"><div>Copier</div><div>Ajouter à la liste de lecture</div><div class="hot">Sur l'écran d'accueil <b>＋</b></div><div>Imprimer</div></div></div>
-                <div class="ios-fr f3"><div class="ios-cap">③ Touche Ajouter</div>
-                    <div class="ios-add"><span>Annuler</span><b>Ajouter</b></div><div class="ios-name">🎴 ScoreMaster</div></div>
+                <div class="ios-fr f1"><div class="ios-cap">① Menu ≡ → Partager</div>
+                    <div class="ios-bar"><span>‹</span><span class="hot">≡</span><span class="ios-url">adresse ↻</span><span>⧉</span></div>
+                    <div class="ios-sheet ios-mini">${row('Traduire…')}${row('Partager <b>⬆︎</b>', 1)}</div></div>
+                <div class="ios-fr f2"><div class="ios-cap">② « En voir plus » ⌄</div>
+                    <div class="ios-bar ios-act"><span>Copier</span><span>Signets</span><span>Lecture</span><span class="hot">⌄<br><small>En voir plus</small></span></div></div>
+                <div class="ios-fr f3"><div class="ios-cap">③ « Sur l'écran d'accueil »</div>
+                    <div class="ios-sheet">${row('Ajouter un signet à…')}${row('Ajouter aux favoris')}${row('Rechercher dans la page')}${row('Sur l\'écran d\'accueil <b>⊞</b>', 1)}</div></div>
+                <div class="ios-fr f4"><div class="ios-cap">④ Touche Ajouter</div>
+                    <div class="ios-add"><span>✕</span><b>Ajouter</b></div><div class="ios-name">🎴 ScoreMaster<small>Ouvrir comme app web ●</small></div></div>
             </div>`;
         },
 
