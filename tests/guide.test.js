@@ -17,7 +17,7 @@ ok('bouton 1re étape = « Pas maintenant »',(await p.textContent('.ob-actions 
 const titles=[];
 for(let i=0;i<12;i++){titles.push(await p.textContent('.ob-title'));if(await p.isVisible('.ob-actions .ob-link'))break;await p.click('.ob-actions .ob-primary');await p.waitForTimeout(120);}
 console.log(titles.join(' › '));
-ok('slides dans l\'ordre (6 avec installation iOS)',titles.length===6&&titles[0].includes('Installe')&&titles[titles.length-1].includes('profil'));
+ok('slides dans l\'ordre (7 avec installation iOS)',titles.length===7&&titles[0].includes('Installe')&&titles[titles.length-1].includes('profil'));
 ok('étape iOS : Partager / Sur l\'écran d\'accueil',titles.some(t=>t.includes('Installe')));
 await p.screenshot({path:'/tmp/ob_cloud.png'}).catch(()=>{});
 // 3. navigation retour + clavier
@@ -34,7 +34,7 @@ await p.click('text=Guide de démarrage');await p.waitForTimeout(500);
 ok('Paramètres → Guide',await p.isVisible('#onboarding'));
 ok('fenêtre Paramètres fermée',!(await p.evaluate(()=>document.getElementById('settings-modal').classList.contains('active'))));
 // slide thème
-for(let i=0;i<4;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
+for(let i=0;i<5;i++){await p.click('.ob-actions .ob-primary');await p.waitForTimeout(100);}
 ok('slide Apparence',(await p.textContent('.ob-title')).includes('image'));
 await p.click('#ob-pal .palette-btn:has-text("Forêt")');await p.click('#ob-mode button[data-mode="dark"]');
 ok('thème appliqué depuis le guide',await p.evaluate(()=>document.documentElement.dataset.palette==='forest'&&document.documentElement.dataset.theme==='dark'));
