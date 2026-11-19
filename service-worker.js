@@ -1,13 +1,13 @@
 // ============================================================
-//  ScoreMaster — Service Worker v54
+//  ScoreMaster — Service Worker v55
 //  Stratégie : cache-first pour l'app shell,
 //              stale-while-revalidate pour les CDN.
 //  Résultat  : app 100 % fonctionnelle sans connexion
 //              après la première visite en ligne.
 // ============================================================
 
-const CACHE_APP = 'scoremaster-app-v54';
-const CACHE_CDN = 'scoremaster-cdn-v54';
+const CACHE_APP = 'scoremaster-app-v55';
+const CACHE_CDN = 'scoremaster-cdn-v55';
 
 // ── Ressources à précacher à l'install ──────────────────────
 const APP_SHELL = [
