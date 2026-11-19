@@ -20,6 +20,9 @@
     };
     
 
+    // Journal de debug : silencieux par défaut. Pour l'activer : localStorage.setItem('sm_debug','1') puis recharger.
+    const log = (...args) => { try { if (localStorage.getItem('sm_debug') === '1') console.log(...args); } catch (e) {} };
+
     // ==================== CONSTANTS ====================
 
     /** Nombre minimum de manches pour qualifier une partie de "Marathon" */

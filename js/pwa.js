@@ -44,7 +44,7 @@
             // État au démarrage
             if (!navigator.onLine) {
                 badge.classList.add('visible');
-                console.log('[PWA] Démarrage hors-ligne');
+                log('[PWA] Démarrage hors-ligne');
             }
         },
 
@@ -53,7 +53,7 @@
             // Vérifier si l'app est installée
             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
                 this.isInstalled = true;
-                console.log('[PWA] App installée');
+                log('[PWA] App installée');
             }
         },
         
@@ -66,11 +66,11 @@
             }
             try {
                 const registration = await navigator.serviceWorker.register('./service-worker.js');
-                console.log('[PWA] Service Worker enregistré:', registration.scope);
+                log('[PWA] Service Worker enregistré:', registration.scope);
                 
                 // Vérifier les mises à jour
                 registration.addEventListener('updatefound', () => {
-                    console.log('[PWA] Mise à jour trouvée');
+                    log('[PWA] Mise à jour trouvée');
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -97,13 +97,13 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 this.deferredPrompt = e;
-                console.log('[PWA] Installation disponible');
+                log('[PWA] Installation disponible');
                 try { Install.refresh(); } catch (err) {}
                 this.showInstallButton();
             });
             
             window.addEventListener('appinstalled', () => {
-                console.log('[PWA] App installée avec succès');
+                log('[PWA] App installée avec succès');
                 this.isInstalled = true;
                 this.hideInstallButton();
                 UI.showToast('✅ ScoreMaster installé !', 'success');
@@ -112,18 +112,18 @@
         
         async installApp() {
             if (!this.deferredPrompt) {
-                console.log('[PWA] Pas de prompt disponible');
+                log('[PWA] Pas de prompt disponible');
                 return;
             }
             
             this.deferredPrompt.prompt();
             try {
                 const { outcome } = await this.deferredPrompt.userChoice;
-                console.log('[PWA] Installation:', outcome);
+                log('[PWA] Installation:', outcome);
                 if (outcome === 'accepted') SoundFX.success();
                 this.deferredPrompt = null;
                 this.hideInstallButton();
-            } catch (e) { console.log('[PWA] Install prompt error:', e); }
+            } catch (e) { log('[PWA] Install prompt error:', e); }
         },
         
 

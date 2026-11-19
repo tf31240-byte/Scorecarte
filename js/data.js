@@ -185,7 +185,7 @@
                 const parsed = JSON.parse(v11Data);
                 if (!Array.isArray(parsed) || parsed.length === 0) return;
                 localStorage.setItem(this.GAMES_KEY, v11Data);
-                console.log('SM: Migration v11->v12 OK');
+                log('SM: Migration v11->v12 OK');
                 const v11Current = localStorage.getItem(this.LEGACY_CURRENT_KEY);
                 if (v11Current && parsed.find(g => String(g.id) === String(v11Current)))
                     localStorage.setItem(this.CURRENT_KEY, v11Current);
