@@ -12,7 +12,7 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const { spawn } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/json' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/json', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 
 const server = http.createServer((req, res) => {
     let p = decodeURIComponent(req.url.split('?')[0]);
@@ -27,7 +27,7 @@ const run = (file, url) => new Promise(resolve => {
     let out = '';
     const c = spawn(process.execPath, [path.join(__dirname, file)], { env: { ...process.env, SM_URL: url } });
     c.stdout.on('data', d => out += d); c.stderr.on('data', d => out += d);
-    const timer = setTimeout(() => { c.kill(); out += '\n❌ délai dépassé (120 s)'; }, 120000);
+    const timer = setTimeout(() => { c.kill(); out += '\n❌ délai dépassé (240 s)'; }, 240000);
     c.on('close', code => { clearTimeout(timer); resolve({ file, out, code }); });
 });
 
@@ -36,8 +36,13 @@ server.listen(0, '127.0.0.1', async () => {
     const filter = process.argv[2];
     const files = fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js') && (!filter || f.includes(filter))).sort();
     let pass = 0, fail = 0;
+    const WORKERS = Number(process.env.SM_WORKERS) || 4;   // fichiers de test lancés en parallèle
+    const queue = [...files], results = new Map();
+    await Promise.all(Array.from({ length: WORKERS }, async () => {
+        while (queue.length) { const f = queue.shift(); results.set(f, await run(f, url)); }
+    }));
     for (const f of files) {
-        const r = await run(f, url);
+        const r = results.get(f);
         const ok = (r.out.match(/✅/g) || []).length, ko = (r.out.match(/❌/g) || []).length + (r.code ? 1 : 0);
         pass += ok; fail += ko;
         console.log(`${ko ? '❌' : '✅'} ${f.padEnd(28)} ${ok} ok${ko ? `, ${ko} échec(s)` : ''}`);

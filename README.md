@@ -62,3 +62,12 @@ L'app inclut [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics
 Sur le principe du volontariat, une personne peut rejoindre la communauté depuis l'app (pseudo + consentement explicite) ; l'éditeur voit alors son pseudo, son type d'appareil, son nombre de parties et la date de sa dernière partie. Détails, déploiement et sécurité : [`community-worker/README.md`](community-worker/README.md).
 
 **Profil & sauvegarde cloud (facultatif)** : dans Paramètres, un seul consentement permet de créer un profil (pseudo unique + couleur préférée). L'éditeur voit pseudo, type d'appareil, nombre de parties et date de la dernière partie ; une copie des parties est gardée dans Cloudflare. Sur un appareil vidé, l'app propose de retrouver les données (oui/non) ; sur un nouvel appareil, pseudo + couleur suffisent. La couleur n'est stockée que sous forme d'empreinte salée, et 5 essais ratés bloquent le pseudo 15 minutes.
+
+
+## Structure du code
+- `index.html` : squelette de la page (HTML uniquement)
+- `css/styles.css` : tous les styles
+- `js/` : un fichier par grande partie (core, data, stats, ui, presets, app, community-cloud, onboarding, pwa, recap, boot), chargés dans cet ordre
+- `scripts/release.sh <n°> "message"` : met la version à jour partout, lance les tests, fabrique la version autonome, commit et push
+- `scripts/inline.py` : fabrique un fichier HTML unique (CSS + JS intégrés)
+- `tests/run.js` : toute la suite de tests en une commande (4 fichiers en parallèle)

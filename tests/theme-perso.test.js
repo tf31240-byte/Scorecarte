@@ -12,7 +12,7 @@ ok('éditeur visible',await p.isVisible('#custom-editor'));
 let v=await V();ok('défauts perso appliqués',v.pal==='custom'&&v.p.toLowerCase()==='#ff2d55'||v.pal==='custom');console.log(v);
 await p.fill('#cp-primary','#8800cc');await p.waitForTimeout(200);v=await V();ok('couleur principale appliquée en direct',v.p==='#8800cc'&&v.meta==='#8800cc');
 ok('fond teinté (clair)',v.bg!=='#F5F5F7'&&v.bg!=='');
-await p.fill('#cp-accent','#00aa66');v=await V();ok('secondaire',v.a!==''&&app._lum(v.a)<=0.2);
+await p.fill('#cp-accent','#00aa66');v=await V();ok('secondaire',v.a!==''&&await p.evaluate(a=>app._lum(a)<=0.2,v.a));
 await p.uncheck('#cp-tint');v=await V();ok('sans teinte : fond par défaut',v.bg==='#F5F5F7');
 await p.check('#cp-tint');
 // couleur trop claire : ajustée
