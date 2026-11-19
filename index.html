@@ -33,9 +33,6 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>ScoreMaster</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js" crossorigin="anonymous" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" crossorigin="anonymous" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js" crossorigin="anonymous" defer></script>
 
 <style>
 /* =============================================================================
@@ -6944,7 +6941,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             SoundFX.click();
 
             if (typeof gifshot === 'undefined') {
-                UI.showToast('❌ Bibliothèque GIF non chargée', 'error'); return;
+                UI.showToast('⏳ Bibliothèque GIF en cours de chargement, réessaie dans un instant', 'warning'); return;
             }
 
             const savedGameState = this._snapshotGameState();
@@ -7692,7 +7689,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '56', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '57', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -9749,6 +9746,29 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         }
     };
 
+
+    // ---------- Bibliothèques externes : chargées après l'affichage (ne bloquent plus le démarrage) ----------
+    const Libs = {
+        BASE: 'https://cdn.jsdelivr.net/npm/',
+        load(path, onload) {
+            const el = document.createElement('script');
+            el.src = this.BASE + path; el.crossOrigin = 'anonymous'; el.async = true;
+            if (onload) el.onload = onload;
+            document.head.appendChild(el);
+        },
+        start() {
+            // Le graphique est nécessaire tout de suite : il arrive juste après le premier affichage et se redessine
+            this.load('chart.js@4.6.1/dist/chart.umd.min.js', () => { try { if (app.currentGame) app.render(); } catch (e) {} });
+            // Confettis et GIF ne servent qu'en fin de manche/partie : on attend que l'appli soit au repos
+            const later = () => {
+                this.load('canvas-confetti@1.6.0/dist/confetti.browser.min.js');
+                this.load('gifshot@0.4.5/dist/gifshot.min.js');
+            };
+            const idle = () => (window.requestIdleCallback ? requestIdleCallback(later, { timeout: 4000 }) : setTimeout(later, 2500));
+            if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle, { once: true });
+        }
+    };
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
@@ -9756,6 +9776,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             Community.init();
             Cloud.init();
             Onboarding.maybeShow();
+            Libs.start();
         });
     } else {
         app.init();
@@ -9763,6 +9784,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         Community.init();
         Cloud.init();
         Onboarding.maybeShow();
+        Libs.start();
     }
 </script>
     <!-- Cloudflare Web Analytics -->
