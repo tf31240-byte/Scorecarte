@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta id="theme-color-meta" name="theme-color" content="#007AFF">
+    <meta id="theme-color-meta" name="theme-color" content="#006FE9">
     <script>
     // Applique mode + palette avant le premier rendu (évite le flash de thème)
     (function(){try{var d=document.documentElement,t=localStorage.getItem('sm_theme'),p=localStorage.getItem('sm_palette');
@@ -44,17 +44,21 @@
 
 :root {
     /* Couleurs primaires */
-    --primary:    #007AFF;
+    --primary:    #006FE9;
     --accent:     #5856D6;
     --danger:     #FF3B30;
     --success:    #34C759;
+    --success-text: #217233;   /* vert lisible en texte sur fond clair */
+    --on-primary: #FFFFFF;     /* texte sur fond primaire (adapté au thème) */
+    --on-success: #06280F;
+    --dealer-ui:  #CE7900;
     --dealer:     #FF9500;
 
     /* Surfaces */
     --bg:         #F5F5F7;
     --card:       #FFFFFF;
     --text:       #1D1D1F;
-    --text-sec:   #86868B;
+    --text-sec:   #6C6C70;
     --border:     #E5E5EA;
 
     /* Glassmorphism */
@@ -100,14 +104,18 @@
     }
 }
 
+/* Contrastes (WCAG AA) : texte sur couleur primaire / succès, selon le mode résolu */
+:root[data-scheme="dark"] { --on-primary: #0B0B0F; --success-text: #34C759; --dealer-ui: #FF9500; }
+@media (prefers-color-scheme: dark) { :root:not([data-scheme]):not([data-theme="light"]) { --on-primary: #0B0B0F; --success-text: #34C759; --dealer-ui: #FF9500; } }
+
 /* ===== Palettes de thème (mode clair / sombre résolu via data-scheme) ===== */
-[data-palette="forest"][data-scheme="light"] { --primary:#1F8A4C; --accent:#2E7D6B; --bg:#F1F6F2; --card:#FFFFFF; --text:#14241A; --text-sec:#6B7F73; --border:#D9E6DD; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F1F6F2); }
+[data-palette="forest"][data-scheme="light"] { --primary:#1E864A; --accent:#2E7D6B; --bg:#F1F6F2; --card:#FFFFFF; --text:#14241A; --text-sec:#5F7067; --border:#D9E6DD; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F1F6F2); }
 [data-palette="forest"][data-scheme="dark"] { --primary:#34C77B; --accent:#3FB59A; --bg:#07120B; --card:#12201A; --text:#EAF4EE; --text-sec:#8CA396; --border:#24382C; --glass-bg:rgba(18,32,26,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #14271C, #07120B); }
-[data-palette="dusk"][data-scheme="light"] { --primary:#8E4DE0; --accent:#E0489A; --bg:#F6F2FA; --card:#FFFFFF; --text:#221A2E; --text-sec:#857A94; --border:#E6DDF0; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F6F2FA); }
+[data-palette="dusk"][data-scheme="light"] { --primary:#8E4DE0; --accent:#E0489A; --bg:#F6F2FA; --card:#FFFFFF; --text:#221A2E; --text-sec:#716980; --border:#E6DDF0; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F6F2FA); }
 [data-palette="dusk"][data-scheme="dark"] { --primary:#A56BFF; --accent:#FF5FAE; --bg:#0D0814; --card:#1D1428; --text:#F3EEFA; --text-sec:#A194B3; --border:#3A2C4C; --glass-bg:rgba(29,20,40,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #2a1b3d, #0D0814); }
-[data-palette="midnight"][data-scheme="light"] { --primary:#B8860B; --accent:#8A6A1F; --bg:#F7F3EA; --card:#FFFFFF; --text:#1E1A12; --text-sec:#8B8472; --border:#E8E0CC; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F7F3EA); }
+[data-palette="midnight"][data-scheme="light"] { --primary:#946C0B; --accent:#8A6A1F; --bg:#F7F3EA; --card:#FFFFFF; --text:#1E1A12; --text-sec:#706B5D; --border:#E8E0CC; --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #ffffff, #F7F3EA); }
 [data-palette="midnight"][data-scheme="dark"] { --primary:#E8B64C; --accent:#C99A2E; --bg:#000000; --card:#111111; --text:#F4EFE3; --text-sec:#9A9486; --border:#2B2820; --glass-bg:rgba(17,17,17,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #1a1710, #000000); }
-[data-palette="felt"][data-scheme="light"] { --primary:#1B6B3A; --accent:#B8860B; --bg:#DCEBDD; --card:#FBF8EE; --text:#1B2A1F; --text-sec:#5F7566; --border:#BFD6C4; --glass-bg:rgba(251,248,238,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #E8F3EA, #CFE3D3); }
+[data-palette="felt"][data-scheme="light"] { --primary:#1B6B3A; --accent:#B8860B; --bg:#DCEBDD; --card:#FBF8EE; --text:#1B2A1F; --text-sec:#566B5D; --border:#BFD6C4; --glass-bg:rgba(251,248,238,0.65); --glass-border:rgba(255,255,255,0.5); --bg-gradient:radial-gradient(circle at 50% 0%, #E8F3EA, #CFE3D3); }
 [data-palette="felt"][data-scheme="dark"] { --primary:#3FBF73; --accent:#E2B04A; --bg:#0B2416; --card:#14331F; --text:#F2EBD3; --text-sec:#9DB5A2; --border:#24492F; --glass-bg:rgba(20,51,31,0.65); --glass-border:rgba(255,255,255,0.1); --bg-gradient:radial-gradient(circle at 50% 0%, #1B4A2E, #0B2416); }
 
 /* Sélecteur d'apparence (Paramètres) */
@@ -329,10 +337,10 @@ body::before {
     background: rgba(255,255,255,0.25); border: none; color: inherit; font-weight: 900; font-size: 14px;
     padding: 8px 14px; border-radius: 12px; cursor: pointer; letter-spacing: .02em;
 }
-.toast.success  { background: var(--success); color: white; border: none; }
-.toast.warning  { background: var(--dealer);  color: white; border: none; }
-.toast.error    { background: var(--danger);  color: white; border: none; }
-.toast.info     { background: var(--primary); color: white; border: none; }
+.toast.success  { background: var(--success); color: var(--on-success); border: none; }
+.toast.warning  { background: var(--dealer);  color: #2A1600; border: none; }
+.toast.error    { background: color-mix(in srgb, var(--danger) 82%, #000);  color: white; border: none; }
+.toast.info     { background: var(--primary); color: var(--on-primary); border: none; }
 
 /* Indicateur hors-ligne — icône discrète */
 #offline-badge {
@@ -398,7 +406,7 @@ body::before {
 #confirm-msg                   { font-size: 18px; margin: 0 0 25px 0; color: var(--text); }
 .confirm-actions               { display: flex; gap: 10px; }
 .btn-confirm-no                { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-.btn-confirm-yes               { background: var(--danger); color: white; border: 1px solid var(--danger); }
+.btn-confirm-yes               { background: color-mix(in srgb, var(--danger) 82%, #000); color: white; border: 1px solid color-mix(in srgb, var(--danger) 82%, #000); }
 
 
 /* =============================================================================
@@ -497,7 +505,7 @@ body::before {
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: visible;
 }
-.p-card.is-dealer  { border-color: var(--dealer); }
+.p-card.is-dealer  { border-color: var(--dealer-ui); }
 .p-card.rank-change { animation: rankPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
 .rank-badge {
@@ -718,13 +726,13 @@ body.is-editing .edit-tab { display: flex; }
 .sheet-actions { display:flex; gap:10px; margin-top:15px; }
 .sheet-actions .btn-main { margin:0; }
 #ok-btn { flex:1; background:var(--card); color:var(--text); border:2px solid var(--primary); }
-#next-btn { flex:2; background:var(--primary); color:white; }
+#next-btn { flex:2; background:var(--primary); color:var(--on-primary); }
 #sheet.belote #next-btn { display:none; }
 .sheet-actions.done #ok-btn { display:none; }
-#sheet.belote #ok-btn { background:var(--primary); color:white; border:none; }
+#sheet.belote #ok-btn { background:var(--primary); color:var(--on-primary); border:none; }
 .sel-box .sel-total { font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; margin-top:2px; }
 .sel-box .sel-up { color:#22c55e; } .sel-box .sel-down { color:#ef4444; }
-#save-btn.ready { background:var(--success); color:#fff; animation:readyPulse 1.4s ease-in-out infinite; }
+#save-btn.ready { background:var(--success); color:var(--on-success); animation:readyPulse 1.4s ease-in-out infinite; }
 @keyframes readyPulse { 0%,100% { transform:scale(1); box-shadow:0 5px 15px rgba(0,0,0,0.1); } 50% { transform:scale(1.03); box-shadow:0 8px 24px rgba(52,199,89,0.45); } }
 @media (prefers-reduced-motion: reduce) { #save-btn.ready { animation:none; } }
 #history-toggle { background:none; border:none; padding:0; font:inherit; color:inherit; cursor:pointer; text-align:left; letter-spacing:inherit; }
@@ -800,7 +808,7 @@ body.is-editing .edit-tab { display: flex; }
 }
 .recent-suggestion-item:active {
     background: var(--primary);
-    color: white;
+    color: var(--on-primary);
     border-color: var(--primary);
     transform: scale(0.95);
 }
@@ -836,7 +844,7 @@ body.is-editing .edit-tab { display: flex; }
     }
     .recent-suggestion-item:hover {
         background: var(--primary);
-        color: white;
+        color: var(--on-primary);
         border-color: var(--primary);
         transform: translateX(-4px);
         box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent);
@@ -942,7 +950,7 @@ body.is-editing .edit-tab { display: flex; }
 .preset-card:active::before { opacity: 1; }
 .preset-card:active .preset-icon,
 .preset-card:active .preset-name,
-.preset-card:active .preset-tag { color: white; }
+.preset-card:active .preset-tag { color: var(--on-primary); }
 .preset-card:active .preset-tag { opacity: 0.8; }
 
 /* Délais d'animation pour les cartes preset */
@@ -1135,11 +1143,11 @@ body.is-editing .edit-tab { display: flex; }
     min-width: 52px;
 }
 .history-filter-btn:active { transform: scale(0.95); }
-.history-filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.history-filter-btn.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .history-filter-btn .filter-icon  { font-size: 18px; line-height: 1; }
 .history-filter-btn .filter-label { font-size: 9px; font-weight: 700; margin-top: 3px; color: var(--text); }
 .history-filter-btn.active .filter-icon,
-.history-filter-btn.active .filter-label { color: white; }
+.history-filter-btn.active .filter-label { color: var(--on-primary); }
 
 /* Items historique repliables */
 .game-item-collapsed {
@@ -1303,7 +1311,7 @@ body.is-editing .edit-tab { display: flex; }
     opacity: 0.5;
     transition: 0.2s;
 }
-.victory-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+.victory-tab.active { opacity: 1; background: var(--primary); color: var(--on-primary); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
 /* Highlights */
 .highlight-card {
@@ -1352,7 +1360,7 @@ body.is-editing .edit-tab { display: flex; }
     opacity: 0.5;
     transition: 0.3s;
 }
-.stats-tab.active { opacity: 1; background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.stats-tab.active { opacity: 1; background: var(--primary); color: var(--on-primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .mode-filter {
     display: flex;
@@ -1374,7 +1382,7 @@ body.is-editing .edit-tab { display: flex; }
     color: var(--text);
 }
 .filter-btn.active,
-.filter-btn-records.active { background: var(--primary); color: white; border-color: var(--primary); }
+.filter-btn-records.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 
 /* Classement */
 .rank-item {
@@ -1427,10 +1435,10 @@ body.is-editing .edit-tab { display: flex; }
 .ob-chip i { display:block; font-style:normal; font-size:10px; font-weight:700; color:var(--text-sec); min-height:13px; }
 .ob-chip.on small, .ob-chip.on i { color:var(--primary); }
 .ob-chip { transition:border-color .25s, background .25s; } .ob-chip.done { border-color:var(--success); }
-.ob-chip.done i { color:var(--success); }
+.ob-chip.done i { color:var(--success-text); }
 .ob-cap { text-align:center; font-size:13px; font-weight:800; min-height:20px; margin:-2px 0 8px; color:var(--text); }
 .ob-fakebtn { text-align:center; font-size:12px; font-weight:900; letter-spacing:.4px; padding:11px; border-radius:12px; background:var(--bg); color:var(--text-sec); border:1px solid var(--border); margin-bottom:12px; transition:all .3s; }
-.ob-fakebtn.ready { background:var(--success); border-color:var(--success); color:#fff; animation:obPulse 1s ease-in-out infinite; }
+.ob-fakebtn.ready { background:var(--success); border-color:var(--success); color:var(--on-success); animation:obPulse 1s ease-in-out infinite; }
 @keyframes obPulse { 50% { transform:scale(1.03); } }
 @media (prefers-reduced-motion: reduce) { .ob-fakebtn.ready { animation:none; } }
 .ob-pal { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
@@ -1441,7 +1449,7 @@ body.is-editing .edit-tab { display: flex; }
 .ob-actions { display:flex; flex-direction:column; gap:8px; }
 .ob-row { display:flex; gap:10px; align-items:center; justify-content:space-between; }
 .ob-row .ob-primary { flex:1; margin:0; }
-.ob-primary { background:var(--primary); color:#fff; }
+.ob-primary { background:var(--primary); color:var(--on-primary); }
 .ob-secondary { background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:14px; padding:14px 16px; font-weight:800; font-size:14px; cursor:pointer; }
 .ob-actions > .ob-secondary { width:100%; }
 .ob-link { background:none; border:none; color:var(--text-sec); font-weight:800; font-size:13px; cursor:pointer; padding:8px; }
@@ -1512,7 +1520,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 .chip-row::-webkit-scrollbar { display:none; }
 .chip { flex:none; padding:7px 12px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
 .chip b { opacity:.55; margin-left:3px; }
-.chip.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+.chip.active { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
 .chip.active b { opacity:.85; }
 #stats-period { width:100%; padding:9px 12px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13px; font-weight:700; }
 .muted { color:var(--text-sec); font-weight:600; }
@@ -1528,7 +1536,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 .rank-hint { font-size:10px; font-weight:600; color:var(--text-sec); }
 .dots { display:inline-flex; gap:4px; margin-top:5px; }
 .dot { font-style:normal; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
-.dot.w { background:var(--success); color:#fff; }
+.dot.w { background:var(--success); color:var(--on-success); }
 .dot.d { background:color-mix(in srgb, var(--primary) 25%, transparent); color:var(--primary); }
 .dot.l { background:color-mix(in srgb, var(--text-sec) 22%, transparent); color:var(--text-sec); }
 .d-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:15px; }
@@ -1549,7 +1557,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 .h2h-bar i { display:block; height:100%; }
 .h2h-sub { text-align:center; font-size:13px; font-weight:700; color:var(--text-sec); margin-top:8px; }
 .h2h-row { display:flex; justify-content:space-between; gap:8px; padding:9px 2px; border-bottom:1px solid var(--border); font-size:13px; }
-.h2h-row b.win { color:var(--success); }
+.h2h-row b.win { color:var(--success-text); }
 .rec-grid { display:grid; gap:10px; }
 .rec-card { display:flex; gap:12px; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; }
 .rec-ic { font-size:26px; width:34px; text-align:center; }
@@ -1634,7 +1642,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 .backup-action { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:14px 16px; margin-bottom:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:16px; cursor:pointer; font-family:inherit; }
 .backup-action:active { transform:scale(.98); }
 .backup-action:disabled { opacity:.4; pointer-events:none; }
-.backup-action.primary { background:var(--primary, #007AFF); color:#fff; border-color:transparent; }
+.backup-action.primary { background:var(--primary, #007AFF); color:var(--on-primary, #fff); border-color:transparent; }
 .backup-action.primary small { color:rgba(255,255,255,.85); }
 .backup-action.danger b { color:var(--danger); }
 .ba-icon { font-size:24px; }
@@ -1773,17 +1781,17 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
 /* Boutons de confirmation dans les modaux (flex-1 / flex-2) */
 .btn-modal-cancel  { flex: 1; padding: 14px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-modal-confirm { flex: 2; padding: 14px; background: var(--success); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-modal-confirm { flex: 2; padding: 14px; background: var(--success); color: var(--on-success); border: none; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
 /* Bouton pleine largeur CTA (preset modal) */
-.btn-full-cta      { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-full-cta      { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: var(--on-primary); border: none; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 /* Bouton pleine largeur secondaire (close, annuler) */
 .btn-full-secondary{ width: 100%; margin-top: 15px; padding: 14px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
 
 
 /* Bouton action primaire compact (jeux / liste) */
-.btn-action-primary { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; }
+.btn-action-primary { padding: 8px 16px; background: var(--primary); color: var(--on-primary); border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; }
 /* Bouton action succès compact (restore preset) */
-.btn-action-success { padding: 8px 16px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.btn-action-success { padding: 8px 16px; background: var(--success); color: var(--on-success); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
 
 /* Flexbox utilitaires fréquents */
@@ -2345,7 +2353,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         <div id="history-header" style="display:flex; justify-content:space-between; margin: 30px 0 10px; font-size:11px; font-weight:900; color:var(--text-sec);">
             <button id="history-toggle" aria-expanded="false" onclick="app.toggleHistory()"><span class="chev">▸</span>HISTORIQUE DES MANCHES <span id="history-count"></span></button>
             <div style="display:flex; gap:12px;">
-                <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success); font-weight:900; cursor:pointer; padding:11px 6px;">✓ TERMINER</button>
+                <button onclick="app.finishGame()" style="background:none; border:none; color:var(--success-text); font-weight:900; cursor:pointer; padding:11px 6px;">✓ TERMINER</button>
             </div>
         </div>
         <div id="history-last"></div>
@@ -2375,7 +2383,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     Donneur 🃏
                     <input type="checkbox" id="edit-dealer" style="width:20px; height:20px; accent-color:var(--dealer);">
                 </label>
-                <button class="btn-main" style="margin-top:20px; background:var(--primary); color:white" onclick="app.savePlayer()">VALIDER</button>
+                <button class="btn-main" style="margin-top:20px; background:var(--primary); color:var(--on-primary)" onclick="app.savePlayer()">VALIDER</button>
             </div>
             <div id="recent-players-suggestions" class="recent-suggestions"></div>
         </div>
@@ -2389,7 +2397,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
             <div id="input-switcher" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding: 10px 20px 5px 20px; scroll-snap-type: x mandatory;"></div>
 
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:12px;">
-                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:white; font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
+                <button id="calc-btn" class="btn-nb hidden" style="grid-column:span 4; background:var(--success); color:var(--on-success); font-size:14px; box-shadow:none;" onclick="app.calcRest()">✨ RESTE À 162</button>
                 <button class="btn-nb btn-nb-sm" onclick="app.addVal(10)">+10</button>
                 <button class="btn-nb btn-nb-sm" onclick="app.addVal(20)">+20</button>
                 <button id="btn-82" class="btn-nb btn-nb-sm hidden" onclick="app.addVal(82)">+82</button>
@@ -2445,7 +2453,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                 <div id="victory-highlights"></div>
             </div>
 
-            <button class="btn-main" style="background:var(--primary); color:white; font-size:17px; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔁 REVANCHE <span style="font-weight:700; font-size:12px; opacity:.85;">(mêmes joueurs)</span></button>
+            <button class="btn-main" style="background:var(--primary); color:var(--on-primary); font-size:17px; margin:20px 0 12px;" onclick="app.restartWithSamePlayers()">🔁 REVANCHE <span style="font-weight:700; font-size:12px; opacity:.85;">(mêmes joueurs)</span></button>
             <button class="btn-main" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; margin:0 0 12px;" onclick="app.openShareSheet()">📤 PARTAGER LE RÉSULTAT</button>
             <button class="btn-main" style="background:var(--card); border:1px solid var(--border); color:var(--text);" onclick="app.showSetup()">🏠 RETOUR MENU</button>
         </div>
@@ -4018,7 +4026,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     row('Manche la plus faible', p.mixed ? mixedTxt : this._roundTxt(p.worstRound)) +
                     row('Meilleure série', `🏅 ${p.bestStreak} victoire${p.bestStreak > 1 ? 's' : ''}`))}
                 ${card('🎮 Historique',
-                    row('Victoires', `<span style="color:var(--success)">${p.wins} 🏆</span>`) +
+                    row('Victoires', `<span style="color:var(--success-text)">${p.wins} 🏆</span>`) +
                     (p.draws ? row('Égalités', p.draws) : '') +
                     row('Parties jouées', p.played) +
                     row('Manches jouées', p.totalRounds))}
@@ -4887,8 +4895,8 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         // THÈME, SON & PARAMÈTRES
         // -----------------------------------------------------------------------
         PALETTES: {
-            ocean:    { name: 'Océan',      c: ['#007AFF', '#5856D6'] },
-            forest:   { name: 'Forêt',      c: ['#1F8A4C', '#2E7D6B'] },
+            ocean:    { name: 'Océan',      c: ['#006FE9', '#5856D6'] },
+            forest:   { name: 'Forêt',      c: ['#1E864A', '#2E7D6B'] },
             dusk:     { name: 'Crépuscule', c: ['#8E4DE0', '#E0489A'] },
             midnight: { name: 'Minuit',     c: ['#E8B64C', '#111111'] },
             felt:     { name: 'Tapis vert', c: ['#1B6B3A', '#B8860B'] },
@@ -4922,18 +4930,19 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
         /** Ajuste une couleur pour que le texte blanc reste lisible dessus (et qu'elle reste visible en sombre). */
         _fit(hex, dark) {
             let c = hex, n = 0;
-            while (this._lum(c) > 0.3 && n++ < 20) c = this._mix(c, '#000000', 0.1);
+            if (!dark) while (this._lum(c) > 0.18 && n++ < 25) c = this._mix(c, '#000000', 0.1); // lisible en texte sur fond clair
             n = 0;
-            if (dark) while (this._lum(c) < 0.06 && n++ < 20) c = this._mix(c, '#ffffff', 0.1);
+            if (dark) while (this._lum(c) < 0.25 && n++ < 30) c = this._mix(c, '#ffffff', 0.1); // assez clair pour rester lisible en texte sur fond sombre
             return c;
         },
-        _CUSTOM_VARS: ['--primary', '--accent', '--bg', '--card', '--border', '--bg-gradient', '--glass-bg'],
+        _CUSTOM_VARS: ['--on-primary', '--primary', '--accent', '--bg', '--card', '--border', '--bg-gradient', '--glass-bg'],
         _applyCustomVars(on, dark) {
             const st = document.documentElement.style;
             this._CUSTOM_VARS.forEach(v => st.removeProperty(v));
             if (!on) return;
             const c = this.getCustom(), p = this._fit(c.p, dark), a = this._fit(c.a, dark);
             st.setProperty('--primary', p); st.setProperty('--accent', a);
+            st.setProperty('--on-primary', this._lum(p) > 0.18 ? '#0B0B0F' : '#FFFFFF');
             if (!c.tint) return;
             if (dark) {
                 const bg = this._mix('#000000', p, 0.10), card = this._mix('#000000', p, 0.17);
@@ -5882,7 +5891,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <div class="flex-gap10">
                         <button id="emoji-cancel-btn" style="flex:1; padding:14px; background:var(--card); color:var(--text);
                                 border:1px solid var(--border); border-radius:14px; font-size:14px; font-weight:700; cursor:pointer;">Annuler</button>
-                        <button id="emoji-confirm-btn" style="flex:1; padding:14px; background:var(--primary); color:white;
+                        <button id="emoji-confirm-btn" style="flex:1; padding:14px; background:var(--primary); color:var(--on-primary);
                                 border:none; border-radius:14px; font-size:14px; font-weight:700; cursor:pointer;">✓ OK</button>
                     </div>
                 </div>`;
@@ -7683,7 +7692,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
     const Community = {
         API_URL: 'https://scoremaster-community.tf31240.workers.dev',                       // ex. 'https://scoremaster-community.<compte>.workers.dev'
         KEY: 'sm_community',
-        APP_VERSION: '55', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
+        APP_VERSION: '56', // = numéro de version du cache dans service-worker.js (à incrémenter ensemble à chaque publication)
         SYNC_MIN_INTERVAL: 6 * 3600 * 1000, // au plus une synchro automatique toutes les 6 h
         SNOOZE_MS: 7 * 86400 * 1000,        // « Plus tard » : on ne redemande pas avant 7 jours
         _state: null, _promptedThisSession: false, _syncTimer: null, _busy: false,
@@ -8936,7 +8945,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
                     <div style="font-weight:700; font-size:14px; color:var(--text);">Mise à jour disponible</div>
                     <div style="font-size:12px; color:var(--text-sec);">Rechargez pour la dernière version</div>
                 </div>
-                <button onclick="location.reload()" style="background:var(--primary); color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
+                <button onclick="location.reload()" style="background:var(--primary); color:var(--on-primary); border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
                     RECHARGER
                 </button>`;
         },
