@@ -19,7 +19,7 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   const v0 = await p.evaluate(() => document.querySelector('#view-btn svg path, #view-btn svg rect').outerHTML);
   await p.click('#view-btn'); await p.waitForTimeout(200);
   ok('la vue change l\'icône (liste ↔ cartes)', (await p.evaluate(() => document.querySelector('#view-btn svg path, #view-btn svg rect').outerHTML)) !== v0);
-  ok('transition d\'entrée sur la partie', await p.evaluate(() => { UI._hide('game'); UI._show('game'); return document.getElementById('game').classList.contains('enter-right'); }));
+  ok('fondu d\'entrée sur la partie', await p.evaluate(() => { UI._hide('game'); UI._show('game'); return document.getElementById('game').classList.contains('enter-right'); }));
   await p.waitForTimeout(450);
   ok('classe d\'animation retirée ensuite', await p.evaluate(() => !document.getElementById('game').className.includes('enter-')));
   await p.evaluate(() => app.showSetup()); await p.waitForTimeout(100);

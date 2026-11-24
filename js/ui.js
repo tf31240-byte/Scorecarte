@@ -52,7 +52,8 @@
             const el = document.getElementById(id); if (!el) return;
             const was = el.classList.contains('hidden');
             el.classList.remove('hidden');
-            // léger glissement à l'entrée de l'accueil / de la partie (désactivé si l'utilisateur limite les animations)
+            if (was && (id === 'game' || id === 'setup')) window.scrollTo(0, 0); // le nouvel écran démarre en haut (plus de saut vers le bas)
+            // léger fondu à l'entrée de l'accueil / de la partie (désactivé si l'utilisateur limite les animations)
             if (was && (id === 'game' || id === 'setup') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
                 const cls = id === 'game' ? 'enter-right' : 'enter-left';
                 el.classList.add(cls);

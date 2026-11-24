@@ -176,8 +176,7 @@ body::before {
     margin: 0 auto;
     padding: 20px;
     padding-top: max(20px, env(safe-area-inset-top));
-    animation: slideIn 0.4s ease-out;
-    position: relative;
+    position: relative;   /* pas d'animation ici : c'est elle qui faisait « sauter » l'écran vers le bas */
     z-index: 1;
 }
 
@@ -1839,9 +1838,7 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 /* ===== Chiffres de largeur fixe : les scores ne « dansent » plus et s'alignent en colonnes ===== */
 body { font-variant-numeric: tabular-nums; }
 
-/* ===== Glissement entre accueil et partie ===== */
-@keyframes enterRight { from { opacity:0; transform:translateX(26px); } to { opacity:1; transform:none; } }
-@keyframes enterLeft  { from { opacity:0; transform:translateX(-26px); } to { opacity:1; transform:none; } }
-.enter-right { animation:enterRight .28s cubic-bezier(.2,.8,.2,1) both; }
-.enter-left  { animation:enterLeft  .28s cubic-bezier(.2,.8,.2,1) both; }
+/* ===== Changement d'écran : simple fondu, sans déplacement (rien ne bouge ni ne saute) ===== */
+@keyframes screenFade { from { opacity:0; } to { opacity:1; } }
+.enter-right, .enter-left { animation:screenFade .18s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .enter-right, .enter-left { animation:none; } }
