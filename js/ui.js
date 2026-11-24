@@ -645,6 +645,42 @@
             grid.innerHTML = '';
             this._applyView();
             sorted.forEach(p => grid.appendChild(this._buildScoreCard(p, sorted, state, editIdx, getDisplayScore, rankChanges)));
+            this._fitCards();
+        },
+
+        /**
+         * Réduit la taille du texte quand il ne tient pas dans sa carte (scores à 5-6 chiffres, noms très longs en Zen).
+         * Ne touche à rien quand ça tient : une partie normale garde exactement la taille prévue par le CSS.
+         */
+        _fitText(el, avail, minRatio = 0.4) {
+            if (!el || avail <= 0) return;
+            el.style.removeProperty('font-size');
+            const prev = el.style.width, prevWs = el.style.whiteSpace, prevMax = el.style.maxWidth;
+            el.style.width = 'max-content'; el.style.whiteSpace = 'nowrap'; el.style.maxWidth = 'none';
+            const w = el.getBoundingClientRect().width;
+            el.style.width = prev; el.style.whiteSpace = prevWs; el.style.maxWidth = prevMax;
+            if (w > avail) {
+                const cs = getComputedStyle(el);
+                const fs = parseFloat(cs.fontSize);
+                const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth); // le remplissage ne rétrécit pas avec la police
+                el.style.setProperty('font-size', Math.max(fs * (avail - padX) / (w - padX) * 0.97, fs * minRatio) + 'px', 'important');
+            }
+        },
+        _fitCards() {
+            const grid = document.getElementById('grid');
+            if (!grid || !grid.clientWidth) return; // écran masqué : rien à mesurer
+            const list = grid.classList.contains('list') && !document.body.classList.contains('focus-mode');
+            const zen = document.body.classList.contains('focus-mode');
+            grid.querySelectorAll('.p-card').forEach(card => {
+                const cs = getComputedStyle(card);
+                const inner = card.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                this._fitText(card.querySelector('.p-score'), list ? inner * 0.46 : inner - 4);
+                if (zen) this._fitText(card.querySelector('.p-name-btn'), inner - 4, 0.6);
+            });
+        },
+        _fitSoon() {
+            clearTimeout(this._fitT);
+            this._fitT = setTimeout(() => this._fitCards(), 120);
         },
 
         /** Construit un élément DOM de ligne d'historique de manche. */
@@ -911,6 +947,7 @@
             document.getElementById('grid')?.classList.toggle('list', list);
             const b = document.getElementById('view-btn');
             if (b) { b.textContent = list ? '⊞' : '☰'; b.setAttribute('aria-label', list ? 'Affichage en cartes' : 'Affichage en liste'); }
+            this._fitCards();
         },
         toggleView() {
             try { localStorage.setItem('sm_view', this._viewList() ? 'grid' : 'list'); } catch (e) {}

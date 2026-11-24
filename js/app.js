@@ -1422,6 +1422,7 @@
                 root.classList.remove('focus-mode');
                 this._wakeLock(false);
             }
+            UI._fitCards();
         },
         _updateZenLabel() {
             const el = document.getElementById('zen-round');

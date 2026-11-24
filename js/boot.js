@@ -1,4 +1,6 @@
     // ---------- Bibliothèques externes : chargées après l'affichage (ne bloquent plus le démarrage) ----------
+    window.addEventListener('resize', () => UI._fitSoon());
+    window.addEventListener('orientationchange', () => UI._fitSoon());
     const Libs = {
         BASE: 'https://cdn.jsdelivr.net/npm/',
         load(path, onload) {

@@ -115,8 +115,12 @@ body {
     padding-bottom: calc(140px + env(safe-area-inset-bottom));
     transition: background 0.3s;
     min-height: 100vh;
-    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+    overscroll-behavior-y: none; /* pas de rebond/tirer-pour-rafraîchir qui décale l'écran en cours de partie */
 }
+
+/* Boutons et cartes : pas de sélection de texte ni de menu contextuel au toucher long (les champs de saisie restent sélectionnables) */
+button, .p-card, .h-row, .rank-badge, .dock, .numpad { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
 /* Fond dégradé fixe */
 body::before {
@@ -427,7 +431,7 @@ body::before {
     gap: 15px;
     transition: all 0.2s;
 }
-.mode-btn:hover  { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+@media (hover:hover) { .mode-btn:hover  { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); } }
 .mode-btn:active { transform: translateY(0); }
 
 .guide-container {
@@ -802,16 +806,18 @@ body.is-editing .edit-tab { display: flex; }
         flex-wrap: nowrap;
         justify-content: flex-start;
     }
-    .recent-suggestion-item:hover {
-        background: var(--primary);
-        color: var(--on-primary);
-        border-color: var(--primary);
-        transform: translateX(-4px);
-        box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent);
-    }
-    .recent-suggestion-item:hover .add-icon {
-        background: white;
-        color: var(--primary);
+    @media (hover:hover) {
+        .recent-suggestion-item:hover {
+            background: var(--primary);
+            color: var(--on-primary);
+            border-color: var(--primary);
+            transform: translateX(-4px);
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 30%, transparent);
+        }
+        .recent-suggestion-item:hover .add-icon {
+            background: white;
+            color: var(--primary);
+        }
     }
 }
 
@@ -1034,7 +1040,7 @@ body.is-editing .edit-tab { display: flex; }
     transition: all 0.2s;
     position: relative;
 }
-.current-game-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 12%, transparent); }
+@media (hover:hover) { .current-game-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 12%, transparent); } }
 .current-game-item:active { transform: scale(0.99); }
 
 .current-game-item .current-header     { display: flex; align-items: center; gap: 12px; }
@@ -1070,7 +1076,7 @@ body.is-editing .edit-tab { display: flex; }
     font-weight: 700;
     transition: transform 0.15s;
 }
-.current-game-item .player-chip:hover     { transform: scale(1.05); }
+@media (hover:hover) { .current-game-item .player-chip:hover     { transform: scale(1.05); } }
 .current-game-item .player-chip-dot       { width: 8px; height: 8px; border-radius: 50%; }
 .current-game-item .player-chip-name      { opacity: 0.8; }
 .current-game-item .player-chip-score     { font-weight: 900; }
@@ -1119,7 +1125,7 @@ body.is-editing .edit-tab { display: flex; }
     cursor: pointer;
     transition: all 0.2s;
 }
-.game-item-collapsed:hover { border-color: var(--primary); }
+@media (hover:hover) { .game-item-collapsed:hover { border-color: var(--primary); } }
 .game-item-collapsed .collapsed-header {
     display: flex;
     justify-content: space-between;
@@ -1164,7 +1170,7 @@ body.is-editing .edit-tab { display: flex; }
     align-items: center;
     transition: all 0.2s;
 }
-.game-item:hover { border-color: var(--primary); transform: translateX(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+@media (hover:hover) { .game-item:hover { border-color: var(--primary); transform: translateX(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); } }
 .game-player-score { font-size: 11px; padding: 4px 8px; border-radius: 8px; font-weight: 700; }
 
 /* Message historique vide */
@@ -1234,7 +1240,7 @@ body.is-editing .edit-tab { display: flex; }
     transition: transform 0.3s ease;
 }
 .podium-place.p1 .podium-avatar { animation: podiumGlow 2s ease-in-out infinite; }
-.podium-avatar:hover { transform: scale(1.1); }
+@media (hover:hover) { .podium-avatar:hover { transform: scale(1.1); } }
 
 .podium-crown { position: absolute; top: -15px; font-size: 24px; animation: crownFloat 2s ease-in-out infinite; }
 .podium-name  { font-size: 11px; font-weight: 900; text-align: center; margin-bottom: 6px; }
@@ -1247,7 +1253,7 @@ body.is-editing .edit-tab { display: flex; }
     box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
 }
-.podium-bar:hover  { transform: scaleY(1.05); }
+@media (hover:hover) { .podium-bar:hover  { transform: scaleY(1.05); } }
 .podium-place.p1 .podium-bar { background: linear-gradient(180deg, #FFD700, #FFA500); height: 100px; }
 .podium-place.p2 .podium-bar { background: linear-gradient(180deg, #E8E8E8, #A8A8A8); height: 70px; }
 .podium-place.p3 .podium-bar { background: linear-gradient(180deg, #CD7F32, #8B4513); height: 50px; }
@@ -1353,7 +1359,7 @@ body.is-editing .edit-tab { display: flex; }
     cursor: pointer;
     transition: background 0.2s;
 }
-.rank-item:hover     { background: rgba(0,0,0,0.03); }
+@media (hover:hover) { .rank-item:hover     { background: rgba(0,0,0,0.03); } }
 .rank-item:last-child { border-bottom: none; }
 .rank-num  { font-size: 20px; font-weight: 900; width: 30px; color: var(--text-sec); font-style: italic; }
 .rank-1 .rank-num { color: #FFD700; }
@@ -1424,11 +1430,12 @@ body.is-editing .edit-tab { display: flex; }
 .chart-expand { position:absolute; left:4px; bottom:3px; z-index:5; width:24px; height:24px; padding:0; border:none; border-radius:8px; background:color-mix(in srgb, var(--card) 85%, transparent); color:var(--text-sec); font-size:14px; cursor:pointer; }
 .chart-box.open .chart-expand { left:auto; bottom:auto; top:6px; right:6px; width:30px; height:30px; }
 .chart-box:not(.open) #chart { pointer-events:none; }
-.players-grid.list { grid-template-columns:1fr; gap:8px; margin-bottom:18px; }
+.players-grid.list { grid-template-columns:minmax(0,1fr); gap:8px; margin-bottom:18px; }
 body:not(.focus-mode) .players-grid.list .p-card { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 14px; border-radius:18px; }
 body:not(.focus-mode) .players-grid.list .rank-badge { position:static; flex-shrink:0; min-width:38px; text-align:center; }
 body:not(.focus-mode) .players-grid.list .p-name-btn { flex:0 1 auto; max-width:50%; margin:0; text-align:left; }
-body:not(.focus-mode) .players-grid.list .p-score { font-size:30px; letter-spacing:-1px; margin-left:auto; min-width:64px; text-align:right; order:3; }
+body:not(.focus-mode) .players-grid.list .p-card { min-width:0; }
+body:not(.focus-mode) .players-grid.list .p-score { flex-shrink:0; font-size:30px; letter-spacing:-1px; margin-left:auto; min-width:64px; text-align:right; order:3; }
 body:not(.focus-mode) .players-grid.list .p-score.len4 { font-size:27px; } body:not(.focus-mode) .players-grid.list .p-score.len5 { font-size:23px; }
 body:not(.focus-mode) .players-grid.list .p-temp { order:2; margin:0; min-height:0; min-width:34px; font-size:14px; }
 body:not(.focus-mode) .players-grid.list .p-dealer { position:static; font-size:16px; order:1; }
@@ -1693,7 +1700,7 @@ button:focus-visible, [role=button]:focus-visible, a:focus-visible, summary:focu
 }
 
 #zen-round { display:none; }
-.focus-mode #zen-round { display:block; position:fixed; top:max(18px, env(safe-area-inset-top)); left:0; right:0; text-align:center; z-index:150; font-size:11px; font-weight:900; letter-spacing:1.5px; color:var(--text-sec); opacity:.7; pointer-events:none; }
+.focus-mode #zen-round { display:block; position:fixed; top:0; left:0; right:0; padding:max(18px, env(safe-area-inset-top)) 56px 16px; text-align:center; z-index:150; font-size:11px; font-weight:900; letter-spacing:1.5px; color:var(--text-sec); background:linear-gradient(to bottom, var(--bg) 62%, transparent); pointer-events:none; } /* fond : les cartes qui défilent ne passent plus sous le texte */
 
 /* Animation d'entrée uniquement à l'ouverture du mode Zen */
 .focus-mode .players-grid .p-card { animation: zenCardFadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
