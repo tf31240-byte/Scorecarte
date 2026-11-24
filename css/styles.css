@@ -1797,3 +1797,5 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 
 /* Titre de carte stats (détail joueur, records) */
 .card-title  { font-size: 14px; font-weight: 700; margin: 0 0 12px; color: var(--text); }
+
+.settings-select { min-width:160px; max-width:58%; text-overflow:ellipsis; padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-weight:700; }

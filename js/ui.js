@@ -243,6 +243,17 @@
             const isDark   = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             const s        = app.settings;
             this._renderAppearance();
+            { // Choix du jeu du démarrage rapide (visible seulement si le raccourci est activé)
+                const row = document.getElementById('quick-game-row'), sel = document.getElementById('settings-quickGame');
+                if (row && sel) {
+                    row.style.display = s.quickStart ? '' : 'none';
+                    const opts = [['auto', '⭐ Mon jeu favori'], ['belote', '🃏 Belote / Coinche'],
+                        ...Object.entries(app.getAllPresets()).map(([k, g]) => [k, `${g.icon || '🎮'} ${g.name}`])];
+                    sel.innerHTML = '';
+                    opts.forEach(([v, label]) => { const o = document.createElement('option'); o.value = v; o.textContent = label; sel.appendChild(o); });
+                    sel.value = opts.some(o => o[0] === s.quickGame) ? s.quickGame : 'auto';
+                }
+            }
             { const ir = document.getElementById('install-row'); if (ir) ir.style.display = (window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true) ? 'none' : ''; }
             [
                 ['settings-sound-btn',     SoundFX.enabled],
@@ -251,6 +262,7 @@
                 ['settings-milestones-btn',s.milestones],
                 ['settings-chart-btn',     s.showChart],
                 ['settings-tempScore-btn', s.showTempScore],
+                ['settings-quickStart-btn', s.quickStart],
             ].forEach(([id, val]) => {
                 const b = document.getElementById(id); if (!b) return;
                 b.classList.toggle('active', val);

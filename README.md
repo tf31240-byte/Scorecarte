@@ -71,3 +71,4 @@ Sur le principe du volontariat, une personne peut rejoindre la communauté depui
 - `scripts/release.sh <n°> "message"` : met la version à jour partout, lance les tests, fabrique la version autonome, commit et push
 - `scripts/inline.py` : fabrique un fichier HTML unique (CSS + JS intégrés)
 - `tests/run.js` : toute la suite de tests en une commande (4 fichiers en parallèle)
+- Démarrage rapide : bouton optionnel sur l'accueil (Paramètres → Affichage), lance le jeu favori (le plus joué), Belote / Coinche ou un jeu au choix

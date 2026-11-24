@@ -10,7 +10,9 @@
             confetti: true,
             milestones: true,
             showChart: true,
-            showTempScore: true
+            showTempScore: true,
+            quickStart: false,   // bouton « Démarrage rapide » sur l'accueil (désactivé par défaut)
+            quickGame: 'auto'    // 'auto' = jeu le plus joué, 'belote', ou la clé d'un jeu
         },
         lastRanks: {}, // Pour le suivi des animations de rang
         pendingPreset: null, // Preset en attente lors de la sélection du nombre de joueurs
@@ -27,6 +29,39 @@
         quickStartBelote() {
             SoundFX.click();
             this.createGame('belote', 2);
+        },
+
+        // --- Bouton « Démarrage rapide » (activable dans les paramètres) ---
+        /** Clé du jeu lancé par le raccourci : 'belote', un jeu choisi, ou à défaut le plus joué. */
+        _quickKey() {
+            const g = this.settings.quickGame;
+            if (g === 'belote') return 'belote';
+            if (g && g !== 'auto' && this.getAllPresets()[g]) return g;
+            return this.getSortedPresets()[0]?.[0] || 'belote';
+        },
+        _quickInfo(key) {
+            if (key === 'belote') return { icon: '🃏', name: 'Belote / Coinche', sub: 'Démarrage rapide • 2 équipes' };
+            const p = this.getAllPresets()[key] || {};
+            return { icon: p.icon || '🎮', name: p.name || 'Jeu favori', sub: 'Démarrage rapide' };
+        },
+        _refreshQuickBtn() {
+            const btn = document.getElementById('quick-btn'); if (!btn) return;
+            btn.style.display = this.settings.quickStart ? '' : 'none';
+            if (!this.settings.quickStart) return;
+            const i = this._quickInfo(this._quickKey());
+            document.getElementById('quick-icon').textContent = i.icon;
+            document.getElementById('quick-name').textContent = i.name;
+            document.getElementById('quick-sub').textContent = i.sub;
+        },
+        quickStart() {
+            const key = this._quickKey();
+            if (key === 'belote') return this.quickStartBelote();
+            SoundFX.click();
+            this.applyPreset(key);
+        },
+        setQuickGame(v) {
+            this.settings.quickGame = String(v);
+            this.saveSettings(); this._refreshQuickBtn();
         },
 
 
@@ -627,6 +662,7 @@
             document.body.classList.remove('is-editing');
             UI._show('setup');
             UI._hide('game');
+            this._refreshQuickBtn();
             this.renderGamesList();
         },
         // === GESTION DES PRESETS ===

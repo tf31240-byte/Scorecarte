@@ -195,6 +195,22 @@
                         <span class="toggle-slider"></span>
                     </button>
                 </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <div class="settings-name">⚡ Démarrage rapide</div>
+                        <div class="settings-desc">Un bouton sur l'accueil pour lancer ton jeu favori en un geste</div>
+                    </div>
+                    <button id="settings-quickStart-btn" class="settings-toggle" onclick="app.toggleSetting('quickStart'); UI.updateSettingsUI(); app._refreshQuickBtn();">
+                        <span class="toggle-slider"></span>
+                    </button>
+                </div>
+                <div class="settings-row" id="quick-game-row" style="display:none">
+                    <div class="settings-label">
+                        <div class="settings-name">🎯 Jeu</div>
+                        <div class="settings-desc">« Mon jeu favori » = le plus joué</div>
+                    </div>
+                    <select id="settings-quickGame" class="settings-select" aria-label="Jeu du démarrage rapide" onchange="app.setQuickGame(this.value)"></select>
+                </div>
             </div>
 
             <div class="settings-section">
@@ -484,11 +500,11 @@
             </div>
         </div>
 
-        <div class="mode-btn" onclick="app.quickStartBelote()">
-            <span class="mode-btn-icon">🃏</span>
+        <div class="mode-btn" id="quick-btn" style="display:none" onclick="app.quickStart()">
+            <span class="mode-btn-icon" id="quick-icon">🃏</span>
             <div>
-                <h2 style="margin:0">Belote / Coinche</h2>
-                <p class="mode-btn-sub">Démarrage rapide • 2 équipes</p>
+                <h2 style="margin:0" id="quick-name">Démarrage rapide</h2>
+                <p class="mode-btn-sub" id="quick-sub">Lancer la partie en un geste</p>
             </div>
         </div>
 
