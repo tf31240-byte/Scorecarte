@@ -1569,8 +1569,71 @@
             const playersHtml = sortedPlayers.map(p => this._playerChipHtml(p)).join('');
 
             const item = UI._makeEl('div', 'current-game-item', this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml));
-            item.onclick = () => this.loadGame(safeId);
-            return item;
+            return this._makeSwipeRow(item, safeId, game.name);
+        },
+
+        // --- Glisser vers la gauche (ou appui prolongé) pour supprimer une partie en cours, comme sur iPhone ---
+        _swipeOpen: null, // ligne actuellement ouverte (une seule à la fois)
+        _closeSwipe(wrap) {
+            const w = wrap || this._swipeOpen; if (!w) return;
+            w.classList.remove('open', 'revealing');
+            w.firstElementChild.nextElementSibling.style.transform = '';
+            if (this._swipeOpen === w) this._swipeOpen = null;
+        },
+        _makeSwipeRow(item, id, name) {
+            const wrap = UI._makeEl('div', 'swipe-wrap', '');
+            const del = UI._makeEl('button', 'swipe-del', '<span aria-hidden="true">🗑️</span><span>Supprimer</span>');
+            del.setAttribute('aria-label', 'Supprimer la partie ' + (name || ''));
+            del.onclick = (e) => { e.stopPropagation(); this.deleteGame(id); };
+            wrap.appendChild(del); wrap.appendChild(item);
+
+            const W = 96;                       // largeur du bouton révélé
+            let sx = 0, sy = 0, base = 0, off = 0, raw = 0, drag = false, down = false, timer = null, swallow = false;
+            const setX = (x, anim) => { item.style.transition = anim ? '' : 'none'; item.style.transform = `translateX(${x}px)`; };
+            const open = () => {
+                if (this._swipeOpen && this._swipeOpen !== wrap) this._closeSwipe();
+                wrap.classList.add('open', 'revealing'); setX(-W, true); this._swipeOpen = wrap; off = -W;
+            };
+            const close = () => { setX(0, true); wrap.classList.remove('open'); setTimeout(() => { if (!wrap.classList.contains('open')) wrap.classList.remove('revealing'); }, 260); if (this._swipeOpen === wrap) this._swipeOpen = null; off = 0; };
+
+            item.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                down = true; drag = false; swallow = false; sx = e.clientX; sy = e.clientY; base = wrap.classList.contains('open') ? -W : 0;
+                clearTimeout(timer);
+                timer = setTimeout(() => { if (down && !drag) { swallow = true; vibrate(15); open(); } }, 550); // appui prolongé
+            });
+            item.addEventListener('pointermove', (e) => {
+                if (!down) return;
+                const dx = e.clientX - sx, dy = e.clientY - sy;
+                if (!drag) {
+                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                    clearTimeout(timer);
+                    if (Math.abs(dy) > Math.abs(dx)) { down = false; return; } // défilement vertical : on ne touche à rien
+                    drag = true; swallow = true; wrap.classList.add('revealing');
+                    if (this._swipeOpen && this._swipeOpen !== wrap) this._closeSwipe();
+                    try { item.setPointerCapture(e.pointerId); } catch (err) {}
+                }
+                raw = Math.min(0, base + dx); off = Math.max(-wrap.clientWidth * 0.9, raw);
+                if (off < -W) off = -W + (off + W) * 0.35; // résistance au-delà du bouton
+                setX(off, false);
+            });
+            const end = () => {
+                clearTimeout(timer);
+                if (!down) return; down = false;
+                if (!drag) return;
+                if (raw < -wrap.clientWidth * 0.55) { close(); this.deleteGame(id); }  // grand glissé : demande la suppression
+                else if (off < -W * 0.5) open();
+                else close();
+            };
+            item.addEventListener('pointerup', end);
+            item.addEventListener('pointercancel', () => { clearTimeout(timer); down = false; if (drag) (wrap.classList.contains('open') ? open() : close()); });
+            item.addEventListener('click', (e) => {
+                if (swallow) { swallow = false; e.stopPropagation(); return; }   // le geste vient d'ouvrir/fermer : pas de clic
+                if (wrap.classList.contains('open')) { close(); return; }        // touche sur une ligne ouverte : on la referme
+                this.loadGame(id);
+            });
+            item.addEventListener('contextmenu', (e) => e.preventDefault());
+            return wrap;
         },
 
         /** Template HTML d'un élément de partie terminée (liste historique). */
@@ -1653,6 +1716,7 @@
         _renderCurrentGames(currentGames, currentSection, currentGamesList) {
             if (!currentGames.length) { currentSection.style.display = 'none'; return; }
             currentSection.style.display = 'block';
+            Hints.show('swipe', 1500);
             currentGamesList.innerHTML = '';
             const sorted = [...currentGames].sort((a, b) => {
                 const da = a.lastModified || a.date || 0;

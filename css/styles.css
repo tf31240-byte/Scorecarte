@@ -1799,3 +1799,11 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 .card-title  { font-size: 14px; font-weight: 700; margin: 0 0 12px; color: var(--text); }
 
 .settings-select { min-width:160px; max-width:58%; text-overflow:ellipsis; padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-weight:700; }
+
+/* ===== Glisser pour supprimer (parties en cours) ===== */
+.swipe-wrap { position:relative; margin-bottom:10px; }
+.swipe-wrap .current-game-item { margin-bottom:0; touch-action:pan-y; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .2s; will-change:transform; }
+.swipe-del { position:absolute; top:0; bottom:0; right:0; width:104px; padding:0 0 0 14px; border:none; border-radius:0 18px 18px 0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:color-mix(in srgb, var(--danger) 82%, #000); color:#fff; font-size:12px; font-weight:800; cursor:pointer; }
+.swipe-del span:first-child { font-size:20px; line-height:1; }
+.swipe-wrap.revealing .swipe-del { display:flex; }
+@media (prefers-reduced-motion: reduce) { .swipe-wrap .current-game-item { transition:none; } }

@@ -1,4 +1,5 @@
     // ---------- Bibliothèques externes : chargées après l'affichage (ne bloquent plus le démarrage) ----------
+    document.addEventListener('pointerdown', (e) => { if (app._swipeOpen && !app._swipeOpen.contains(e.target)) app._closeSwipe(); }, true);
     window.addEventListener('resize', () => UI._fitSoon());
     window.addEventListener('orientationchange', () => UI._fitSoon());
     const Libs = {

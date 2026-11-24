@@ -154,6 +154,7 @@
         TEXTS: {
             round:   { ic: '📋', t: 'Une erreur de saisie ? Touche une manche dans l\'<b>historique</b> pour la corriger.' },
             stats:   { ic: '👆', t: 'Touche un joueur pour sa <b>fiche détaillée</b> ; l\'onglet <b>⚔️ Duels</b> compare deux joueurs.' },
+            swipe:   { ic: '👈', t: 'Glisse une <b>partie en cours</b> vers la gauche (ou appuie longuement) pour la <b>supprimer</b>.' },
             victory: { ic: '📤', t: 'Partage la victoire en <b>image</b>, <b>GIF</b> ou <b>texte</b> avec les boutons de partage.' },
         },
         _seen() { try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; } catch (e) { return {}; } },
