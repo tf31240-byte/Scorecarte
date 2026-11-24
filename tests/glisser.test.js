@@ -21,9 +21,11 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   const isOpen = async i => (await rows())[i].evaluate(w => w.classList.contains('open'));
   const tx = async i => (await rows())[i].evaluate(w => new DOMMatrix(getComputedStyle(w.querySelector('.current-game-item')).transform).m41);
 
+  await p.evaluate(() => { app._swipeLongMs = 60000; }); // les glissés lents (machine chargée) ne doivent pas passer pour des appuis longs
   await drag(0, 150, 0);
   ok('glissé gauche : la ligne s\'ouvre', await isOpen(0));
-  ok('décalage de la largeur du bouton', Math.abs(await tx(0) + 96) < 2);
+  await p.waitForFunction(() => Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('.swipe-wrap .current-game-item')).transform).m41 + 94) < 2, null, { timeout: 4000 }).catch(() => {});
+  ok('décalage de la largeur du bouton', Math.abs(await tx(0) + 94) < 2);
   ok('bouton Supprimer visible', await p.evaluate(() => getComputedStyle(document.querySelector('.swipe-wrap.open .swipe-del')).display !== 'none'));
   await drag(1, 150, 0);
   ok('une seule ligne ouverte à la fois', !(await isOpen(0)) && await isOpen(1));
@@ -36,6 +38,7 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   await drag(0, -120, 0);
   ok('glissé vers la droite : rien', !(await isOpen(0)));
 
+  await p.evaluate(() => { app._swipeLongMs = 550; });
   const bx = await box(0); await p.mouse.move(bx.x + 100, bx.y + 40); await p.mouse.down(); await p.waitForTimeout(700); await p.mouse.up(); await p.waitForTimeout(700);
   ok('appui prolongé : la ligne s\'ouvre', await isOpen(0));
   ok('et ne lance pas la partie', await p.evaluate(() => !app.currentGame));
@@ -48,6 +51,7 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   await p.click('#confirm-yes-btn'); await p.waitForTimeout(500);
   ok('confirmer : la partie est supprimée', (await rows()).length === 1 && await p.evaluate(() => Storage.loadGames().length === 1));
 
+  await p.evaluate(() => { app._swipeLongMs = 60000; });
   await drag(0, 330, 0); await p.waitForTimeout(200);
   ok('grand glissé : demande la suppression', await p.evaluate(() => document.getElementById('confirm-modal').classList.contains('active')));
   await p.evaluate(() => UI.closeConfirm()); await p.waitForTimeout(300);

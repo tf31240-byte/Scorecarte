@@ -1574,22 +1574,23 @@
 
         // --- Glisser vers la gauche (ou appui prolongé) pour supprimer une partie en cours, comme sur iPhone ---
         _swipeOpen: null, // ligne actuellement ouverte (une seule à la fois)
+        _swipeLongMs: 550, // durée de l'appui prolongé (modifiable par les tests)
         _closeSwipe(wrap) {
             const w = wrap || this._swipeOpen; if (!w) return;
             w.classList.remove('open', 'revealing');
-            w.firstElementChild.nextElementSibling.style.transform = '';
+            w.firstElementChild.nextElementSibling.style.transform = ''; w.style.setProperty('--p', 0); w.style.setProperty('--p', 0);
             if (this._swipeOpen === w) this._swipeOpen = null;
         },
         _makeSwipeRow(item, id, name) {
             const wrap = UI._makeEl('div', 'swipe-wrap', '');
-            const del = UI._makeEl('button', 'swipe-del', '<span aria-hidden="true">🗑️</span><span>Supprimer</span>');
+            const del = UI._makeEl('button', 'swipe-del', '<svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg><span>Supprimer</span>');
             del.setAttribute('aria-label', 'Supprimer la partie ' + (name || ''));
             del.onclick = (e) => { e.stopPropagation(); this.deleteGame(id); };
             wrap.appendChild(del); wrap.appendChild(item);
 
-            const W = 96;                       // largeur du bouton révélé
+            const W = 94;                       // décalage de la ligne ouverte (bouton 84 px + 10 px d'écart)
             let sx = 0, sy = 0, base = 0, off = 0, raw = 0, drag = false, down = false, timer = null, swallow = false;
-            const setX = (x, anim) => { item.style.transition = anim ? '' : 'none'; item.style.transform = `translateX(${x}px)`; };
+            const setX = (x, anim) => { item.style.transition = anim ? '' : 'none'; item.style.transform = `translateX(${x}px)`; wrap.style.setProperty('--p', Math.max(0, Math.min(1, -x / W)).toFixed(2)); }; // --p : le bouton apparaît progressivement
             const open = () => {
                 if (this._swipeOpen && this._swipeOpen !== wrap) this._closeSwipe();
                 wrap.classList.add('open', 'revealing'); setX(-W, true); this._swipeOpen = wrap; off = -W;
@@ -1600,7 +1601,7 @@
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
                 down = true; drag = false; swallow = false; sx = e.clientX; sy = e.clientY; base = wrap.classList.contains('open') ? -W : 0;
                 clearTimeout(timer);
-                timer = setTimeout(() => { if (down && !drag) { swallow = true; vibrate(15); open(); } }, 550); // appui prolongé
+                timer = setTimeout(() => { if (down && !drag) { swallow = true; vibrate(15); open(); } }, this._swipeLongMs); // appui prolongé
             });
             item.addEventListener('pointermove', (e) => {
                 if (!down) return;
