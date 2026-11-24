@@ -1809,3 +1809,16 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 .swipe-del:active { filter:brightness(.92); }
 .swipe-wrap.revealing .swipe-del { display:flex; }
 @media (prefers-reduced-motion: reduce) { .swipe-wrap .current-game-item, .swipe-del { transition:none; } }
+
+/* ===== Accueil : « Nouvelle partie » = action principale (pleine couleur du thème) ===== */
+.mode-btn-main { background:var(--primary); border-color:var(--primary); color:var(--on-primary); box-shadow:0 8px 22px color-mix(in srgb, var(--primary) 32%, transparent); }
+.mode-btn-main h2 { color:var(--on-primary); }
+.mode-btn-main .mode-btn-sub { color:var(--on-primary); opacity:.9; }
+@media (hover:hover) { .mode-btn-main:hover { box-shadow:0 12px 28px color-mix(in srgb, var(--primary) 40%, transparent); } }
+
+/* ===== Filtres d'historique : pastilles compactes sur une ligne ===== */
+.history-filters { gap:8px; margin-bottom:8px; }
+.history-filter-btn { flex-direction:row; gap:6px; padding:7px 13px; border-radius:999px; min-width:0; min-height:36px; }
+.history-filter-btn .filter-icon  { font-size:15px; }
+.history-filter-btn .filter-label { font-size:13px; margin-top:0; font-weight:700; white-space:nowrap; }
+.history-empty-msg { padding:14px 20px; }

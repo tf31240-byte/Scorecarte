@@ -1689,7 +1689,6 @@
             filtersContainer.innerHTML = '';
             placeholder.innerHTML = '<div class="empty-icon">🎮</div><div>Aucune partie enregistrée<br>Lancez votre première partie !</div>';
             placeholder.style.display = 'block';
-            clearAllBtn.style.display = 'none';
         },
 
         /** Filtre les parties terminées selon le filtre actif et les affiche dans la liste. */
@@ -1732,7 +1731,6 @@
             historyList.innerHTML = '';
             const show = finishedCount > 0 ? 'block' : 'none';
             placeholder.style.display = show;
-            clearAllBtn.style.display = show;
         },
 
 
@@ -1744,7 +1742,6 @@
                 currentSection:   document.getElementById('current-games-section'),
                 filtersContainer: document.getElementById('history-filters'),
                 placeholder:      document.getElementById('history-placeholder'),
-                clearAllBtn:      document.getElementById('clear-all-btn')
             };
         },
 
@@ -1759,7 +1756,6 @@
                 return;
             }
             placeholder.style.display  = 'none';
-            clearAllBtn.style.display  = 'block';
             this._renderFilteredGames(historyList, finishedGames, filter);
         },
 
@@ -1786,7 +1782,10 @@
                 this._renderGamesEmpty(els.historyList, els.currentSection, els.filtersContainer, els.placeholder, els.clearAllBtn);
                 return;
             }
-            const { currentGamesList, historyList, currentSection, filtersContainer, placeholder, clearAllBtn } = els;
+            const { currentGamesList, historyList, currentSection, filtersContainer, placeholder } = els;
+            // Le « Guide Rapide » n'est utile qu'au début : il s'efface dès qu'on a quelques parties (le guide reste dans les Paramètres)
+            const guide = document.getElementById('home-guide');
+            if (guide) guide.style.display = games.length >= 3 ? 'none' : '';
             this._renderAllGamesSections(games, els, filter);
         },
         /**

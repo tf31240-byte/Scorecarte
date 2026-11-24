@@ -256,6 +256,13 @@
                         </div>
                         <div class="icon-primary">→</div>
                     </div>
+                    <div class="settings-row" style="cursor:pointer;" onclick="app.clearAll()">
+                        <div class="settings-label">
+                            <div class="settings-name" style="color:var(--danger)">🗑️ Effacer toutes les parties</div>
+                            <div class="settings-desc">Supprime les parties en cours et l'historique (demande confirmation)</div>
+                        </div>
+                        <div class="icon-primary">→</div>
+                    </div>
                     <div class="settings-row" style="cursor:pointer;" onclick="app.resetStats()">
                         <div class="settings-label">
                             <div class="settings-name">📊 Réinitialiser les stats</div>
@@ -508,7 +515,7 @@
             </div>
         </div>
 
-        <div class="mode-btn" onclick="app.openPresets()">
+        <div class="mode-btn mode-btn-main" onclick="app.openPresets()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();app.openPresets()}">
             <span class="mode-btn-icon">🎮</span>
             <div>
                 <h2 style="margin:0">Nouvelle partie</h2>
@@ -526,19 +533,17 @@
 
         <!-- Historique des parties -->
         <div id="history-section" style="margin-top: 30px;">
-            <div class="row-between" style="margin-bottom:12px;">
+            <div class="row-between" style="margin-bottom:8px;">
                 <h3 class="section-title">📚 Historique</h3>
-                <button id="clear-all-btn" onclick="app.clearAll()" style="background:none; border:none; color:var(--danger); font-weight:900; font-size:11px; cursor:pointer; display:none;">TOUT EFFACER</button>
             </div>
             <div id="history-filters" class="history-filters"></div>
             <div id="games-list"></div>
             <div id="history-placeholder" class="history-empty-msg">
-                <div class="empty-icon">📚</div>
-                <div>Cliquez sur un filtre ci-dessus<br>pour voir vos parties</div>
+                <div>Choisis un filtre pour voir tes parties</div>
             </div>
         </div>
 
-        <div class="guide-container">
+        <div class="guide-container" id="home-guide">
             <b style="display:block; margin-bottom:8px; color:var(--text)">📖 Guide Rapide</b>
             • 📊 Stats : Consultez vos classements et records<br>
             • 👁️ Zen : Affichage épuré plein écran<br>
