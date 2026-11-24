@@ -661,6 +661,7 @@
             this.currentGame = null;
             this.editIdx = null;
             document.body.classList.remove('is-editing');
+            this.lastRanks = {}; // on quitte la partie : le classement mémorisé ne doit pas servir à la suivante
             UI._show('setup');
             UI._hide('game');
             this._refreshQuickBtn();
@@ -1431,6 +1432,7 @@
         },
 
         showGame() {
+            this.lastRanks = {}; // première image d'une partie : aucun « changement de rang » à animer
             UI._hide('setup');
             UI._show('game');
             UI._show('dock');
