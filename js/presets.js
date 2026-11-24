@@ -1,5 +1,15 @@
     // ==================== GAME PRESETS ====================
     const GAME_PRESETS = {
+        belote: {
+            name: "Belote / Coinche",
+            mode: "belote",          // mode spécial : 2 équipes, saisie des annonces, objectif 1000
+            victory: "highest",
+            endType: "score",
+            endValue: 1000,
+            icon: "🃏",
+            tag: "2 équipes • 1000 pts",
+            players: 2
+        },
         tarot: { 
             name: "Tarot", 
             victory: "highest", 

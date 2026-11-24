@@ -30,5 +30,10 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   await p.reload(); await p.waitForTimeout(800); await p.evaluate(() => app.showSetup());
   ok('réglage conservé au rechargement', await vis());
   ok('aucune erreur JS', errs.length === 0);
+  await p.evaluate(() => { app.showSetup(); app.openPresets(); }); await p.waitForTimeout(400);
+  ok('Belote / Coinche dans « Nouvelle partie »', await p.evaluate(() => [...document.querySelectorAll('.preset-card .preset-name')].some(e => e.textContent === 'Belote / Coinche')));
+  await p.evaluate(() => [...document.querySelectorAll('.preset-card')].find(c => c.textContent.includes('Belote / Coinche')).click()); await p.waitForTimeout(600);
+  ok('depuis la liste : partie de Belote à 2 équipes', await p.evaluate(() => app.currentGame && app.currentGame.mode === 'belote' && app.currentGame.state.players.length === 2));
+  ok('sélecteur sans doublon', await p.evaluate(() => { UI.showSettings(); const o = [...document.querySelectorAll('#settings-quickGame option')].map(x => x.value); return o.filter(v => v === 'belote').length === 1; }));
   await b.close(); process.exit(fails ? 1 : 0);
 })();

@@ -28,6 +28,7 @@
         // -----------------------------------------------------------------------
         quickStartBelote() {
             SoundFX.click();
+            this.savePresetUsage('belote'); // compte pour « Mon jeu favori »
             this.createGame('belote', 2);
         },
 
@@ -986,7 +987,8 @@
          * ou l'ouverture du sélecteur de joueurs (nombre libre).
          */
         _routePreset(key, game) {
-            if (game.players) this.createGameWithPreset(key, game);
+            if (game.mode === 'belote') this.createGame('belote', 2);
+            else if (game.players) this.createGameWithPreset(key, game);
             else               this.openPlayerCountWithPreset(key, game);
         },
 
