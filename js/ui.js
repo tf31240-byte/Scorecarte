@@ -703,7 +703,7 @@
         },
         _fitSoon() {
             clearTimeout(this._fitT);
-            this._fitT = setTimeout(() => this._fitCards(), 120);
+            this._fitT = setTimeout(() => { this._fitCards(); try { app._fitChips(); } catch (e) {} }, 120);
         },
 
         /** Construit un élément DOM de ligne d'historique de manche. */

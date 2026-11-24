@@ -1842,3 +1842,21 @@ body { font-variant-numeric: tabular-nums; }
 @keyframes screenFade { from { opacity:0; } to { opacity:1; } }
 .enter-right, .enter-left { animation:screenFade .18s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .enter-right, .enter-left { animation:none; } }
+
+/* ===== Accueil : pastilles de joueurs sur une seule ligne ===== */
+.current-game-item .current-scores { flex-wrap:nowrap; overflow:hidden; }
+.current-game-item .player-chip { min-width:0; flex-shrink:0; white-space:nowrap; }
+.current-game-item .player-chip.solo { flex-shrink:1; } /* sécurité : une seule pastille très longue est tronquée plutôt que de déborder */
+.current-game-item .player-chip-name { overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.current-game-item .player-chip-score, .current-game-item .player-chip-dot { flex-shrink:0; }
+.current-game-item .player-chip-more { flex-shrink:0; background:var(--border); color:var(--text-sec); font-weight:800; }
+
+/* ===== En-tête : titre légèrement réduit pour respirer à côté des boutons (toujours sur la même ligne) ===== */
+.header-controls { gap:14px; }
+.header-controls .welcome-title { font-size:clamp(30px, 9.4vw, 40px); letter-spacing:-1.5px; white-space:nowrap; min-width:0; text-align:left; margin-top:30px; }
+
+@media (max-width:350px) {
+  .header-controls .welcome-title { font-size:26px; letter-spacing:-1px; }
+  .mode-btn-main h2 { font-size:20px; }
+}
+.current-badge { white-space:nowrap; flex-shrink:0; }

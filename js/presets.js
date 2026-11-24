@@ -48,7 +48,7 @@
             victory: "lowest", 
             endType: "score", 
             endValue: 100, 
-            icon: "🟦", 
+            icon: "🔢", 
             tag: "Limite 100" 
         },
         scrabble: { 

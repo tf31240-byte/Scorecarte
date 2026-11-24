@@ -1560,15 +1560,36 @@
             </div>`;
         },
 
-        _buildCurrentGameItem(game) {
+        /** Garde sur une seule ligne les pastilles qui tiennent, et affiche « +N » pour les autres. */
+        _fitChips(root = document) {
+            root.querySelectorAll('.current-scores').forEach(box => {
+                const chips = [...box.querySelectorAll('.player-chip:not(.player-chip-more)')];
+                const more = box.querySelector('.player-chip-more');
+                const W = box.clientWidth; if (!W || !more) return;
+                chips.forEach(c => { c.style.display = ''; c.classList.remove('solo'); }); more.style.display = 'none';
+                const gap = 6;
+                if (chips.reduce((s, c) => s + c.offsetWidth, 0) + gap * (chips.length - 1) <= W) return; // tout tient
+                more.textContent = '+' + chips.length; more.style.display = ''; // largeur maximale du « +N » pour le calcul
+                let used = more.offsetWidth, n = 0;
+                for (const c of chips) { const w = c.offsetWidth + gap; if (used + w > W) break; used += w; n++; }
+                n = Math.max(1, n);
+                chips.forEach((c, i) => { c.style.display = i < n ? '' : 'none'; });
+                if (n === 1) chips[0].classList.add('solo');
+                more.textContent = '+' + (chips.length - n);
+                more.setAttribute('aria-label', (chips.length - n) + ' autres joueurs');
+            });
+        },
+
+        _buildCurrentGameItem(game, suffix = '') {
             const { sortedPlayers, icon, safeId } = this._getGameMeta(game);
-            const safeGameName = escapeHtml(game.name);
+            const safeGameName = escapeHtml(game.name) + suffix;
             const gameDate = new Date(game.lastModified || game.date);
             const dateStr = gameDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
             const timeStr = gameDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             const rounds = game.state.history.length;
 
-            const playersHtml = sortedPlayers.map(p => this._playerChipHtml(p)).join('');
+            // Toutes les pastilles sont créées ; _fitChips en garde autant qu'il en tient sur UNE ligne et résume le reste en « +N »
+            const playersHtml = sortedPlayers.map(p => this._playerChipHtml(p)).join('') + '<div class="player-chip player-chip-more" style="display:none"></div>';
 
             const item = UI._makeEl('div', 'current-game-item', this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml));
             return this._makeSwipeRow(item, safeId, game.name);
@@ -1725,7 +1746,11 @@
                 const db = b.lastModified || b.date || 0;
                 return new Date(db) - new Date(da);
             });
-            sorted.forEach(game => currentGamesList.appendChild(this._buildCurrentGameItem(game)));
+            // Plusieurs parties au même nom : la plus ancienne garde son nom, les suivantes reçoivent « (2) », « (3) »…
+            const rank = new Map(), seen = {};
+            [...currentGames].sort((x, y) => new Date(x.date || 0) - new Date(y.date || 0)).forEach(g => { seen[g.name] = (seen[g.name] || 0) + 1; rank.set(g.id, seen[g.name]); });
+            sorted.forEach(game => currentGamesList.appendChild(this._buildCurrentGameItem(game, rank.get(game.id) > 1 ? ` (${rank.get(game.id)})` : '')));
+            this._fitChips(currentGamesList);
         },
 
         /** Affiche le placeholder d'historique quand aucun filtre n'est actif. */
