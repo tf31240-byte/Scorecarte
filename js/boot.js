@@ -2,6 +2,15 @@
     document.addEventListener('pointerdown', (e) => { if (app._swipeOpen && !app._swipeOpen.contains(e.target)) app._closeSwipe(); }, true);
     window.addEventListener('resize', () => UI._fitSoon());
     window.addEventListener('orientationchange', () => UI._fitSoon());
+    // Sections de paramètres repliables : on retient celles que l'utilisateur ouvre/ferme
+    const initFolds = () => {
+        let saved = {}; try { saved = JSON.parse(localStorage.getItem('sm_fold') || '{}') || {}; } catch (e) {}
+        document.querySelectorAll('details.settings-fold').forEach(d => {
+            const k = d.dataset.fold;
+            if (k in saved) d.open = !!saved[k];
+            d.addEventListener('toggle', () => { saved[k] = d.open; try { localStorage.setItem('sm_fold', JSON.stringify(saved)); } catch (e) {} });
+        });
+    };
     const Libs = {
         BASE: 'https://cdn.jsdelivr.net/npm/',
         load(path, onload) {
@@ -25,6 +34,7 @@
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
+            applyIcons(); initFolds();
             app.init();
             PWA.init();
             Community.init();
@@ -33,6 +43,7 @@
             Libs.start();
         });
     } else {
+        applyIcons(); initFolds();
         app.init();
         PWA.init();
         Community.init();

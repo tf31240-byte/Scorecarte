@@ -1822,3 +1822,26 @@ input[type="radio"].radio-md   { margin-right: 10px; accent-color: var(--primary
 .history-filter-btn .filter-icon  { font-size:15px; }
 .history-filter-btn .filter-label { font-size:13px; margin-top:0; font-weight:700; white-space:nowrap; }
 .history-empty-msg { padding:14px 20px; }
+
+/* ===== Paramètres : sections repliables ===== */
+.settings-fold > summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; margin-bottom:0; min-height:40px; -webkit-user-select:none; user-select:none; }
+.settings-fold > summary::-webkit-details-marker { display:none; }
+.settings-fold[open] > summary { margin-bottom:10px; }
+.settings-fold .fold-chev { transition:transform .2s; font-size:14px; }
+.settings-fold[open] > summary .fold-chev { transform:rotate(180deg); }
+.settings-fold > summary:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:6px; }
+
+/* ===== Icônes dessinées ===== */
+.ico { display:block; flex-shrink:0; }
+.btn-stats .ico, .theme-toggle .ico, .btn-focus .ico { width:22px; height:22px; }
+.chart-expand .ico { width:14px; height:14px; }
+
+/* ===== Chiffres de largeur fixe : les scores ne « dansent » plus et s'alignent en colonnes ===== */
+body { font-variant-numeric: tabular-nums; }
+
+/* ===== Glissement entre accueil et partie ===== */
+@keyframes enterRight { from { opacity:0; transform:translateX(26px); } to { opacity:1; transform:none; } }
+@keyframes enterLeft  { from { opacity:0; transform:translateX(-26px); } to { opacity:1; transform:none; } }
+.enter-right { animation:enterRight .28s cubic-bezier(.2,.8,.2,1) both; }
+.enter-left  { animation:enterLeft  .28s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .enter-right, .enter-left { animation:none; } }

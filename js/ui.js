@@ -48,7 +48,17 @@
             return true;
         },
         /** Rend visible un élément en retirant la classe 'hidden'. */
-        _show(id)  { document.getElementById(id)?.classList.remove('hidden'); },
+        _show(id)  {
+            const el = document.getElementById(id); if (!el) return;
+            const was = el.classList.contains('hidden');
+            el.classList.remove('hidden');
+            // léger glissement à l'entrée de l'accueil / de la partie (désactivé si l'utilisateur limite les animations)
+            if (was && (id === 'game' || id === 'setup') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                const cls = id === 'game' ? 'enter-right' : 'enter-left';
+                el.classList.add(cls);
+                setTimeout(() => el.classList.remove(cls), 320);
+            }
+        },
         /** Masque un élément en ajoutant la classe 'hidden'. */
         _hide(id)  { document.getElementById(id)?.classList.add('hidden'); },
 
@@ -935,7 +945,7 @@
             const open = this._chartOpen();
             document.getElementById('chart-box')?.classList.toggle('open', open);
             const b = document.getElementById('chart-expand');
-            if (b) { b.textContent = open ? '⤡' : '⤢'; b.setAttribute('aria-expanded', String(open)); b.setAttribute('aria-label', open ? 'Réduire le graphique' : 'Agrandir le graphique'); }
+            if (b) { b.innerHTML = icon(open ? 'collapse' : 'expand', 14); b.setAttribute('aria-expanded', String(open)); b.setAttribute('aria-label', open ? 'Réduire le graphique' : 'Agrandir le graphique'); }
             if (app.chart) {
                 app.chart.options.layout.padding.left = open ? 0 : 26;
                 app.chart.options.scales.x.ticks = this._chartTicks('x', open);
@@ -958,7 +968,7 @@
             const list = this._viewList();
             document.getElementById('grid')?.classList.toggle('list', list);
             const b = document.getElementById('view-btn');
-            if (b) { b.textContent = list ? '⊞' : '☰'; b.setAttribute('aria-label', list ? 'Affichage en cartes' : 'Affichage en liste'); }
+            if (b) { b.innerHTML = icon(list ? 'grid' : 'list'); b.setAttribute('aria-label', list ? 'Affichage en cartes' : 'Affichage en liste'); }
             this._fitCards();
         },
         toggleView() {

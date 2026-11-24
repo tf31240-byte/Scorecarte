@@ -109,14 +109,14 @@
                 <button onclick="UI.closeSettings()" class="btn-icon" >✕</button>
             </div>
 
-            <div class="settings-section" id="cloud-section" style="display:none;">
-                <div class="settings-section-title">☁️ Mon profil &amp; sauvegarde</div>
+            <details class="settings-section settings-fold" data-fold="0" id="cloud-section" style="display:none;">
+                <summary class="settings-section-title"><span>☁️ Mon profil &amp; sauvegarde</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div id="cloud-status" class="settings-desc" style="margin-bottom:10px;"></div>
                 <div id="cloud-actions"></div>
-            </div>
+            </details>
 
-            <div class="settings-section">
-                <div class="settings-section-title">Apparence</div>
+            <details class="settings-section settings-fold" data-fold="1" open>
+                <summary class="settings-section-title"><span>Apparence</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="seg" id="theme-mode" role="group" aria-label="Mode">
                     <button data-mode="auto" onclick="app.setThemeMode('auto')">🌓 Auto</button>
                     <button data-mode="light" onclick="app.setThemeMode('light')">☀️ Clair</button>
@@ -129,10 +129,10 @@
                     <label>Teinter le fond <input type="checkbox" id="cp-tint"></label>
                     <p class="hint">Les couleurs trop claires ou trop sombres sont ajustées automatiquement pour rester lisibles.</p>
                 </div>
-            </div>
+            </details>
 
-            <div class="settings-section">
-                <div class="settings-section-title">🔔 Notifications &amp; Alertes</div>
+            <details class="settings-section settings-fold" data-fold="2">
+                <summary class="settings-section-title"><span>🔔 Notifications &amp; Alertes</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">📳 Vibration</div>
@@ -160,10 +160,10 @@
                         <span class="toggle-slider"></span>
                     </button>
                 </div>
-            </div>
+            </details>
 
-            <div class="settings-section">
-                <div class="settings-section-title">🔊 Sons</div>
+            <details class="settings-section settings-fold" data-fold="3">
+                <summary class="settings-section-title"><span>🔊 Sons</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">🔊 Effets sonores</div>
@@ -173,10 +173,10 @@
                         <span class="toggle-slider"></span>
                     </button>
                 </div>
-            </div>
+            </details>
 
-            <div class="settings-section">
-                <div class="settings-section-title">🎨 Affichage</div>
+            <details class="settings-section settings-fold" data-fold="4" open>
+                <summary class="settings-section-title"><span>🎨 Affichage</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">📊 Graphique</div>
@@ -211,7 +211,7 @@
                     </div>
                     <select id="settings-quickGame" class="settings-select" aria-label="Jeu du démarrage rapide" onchange="app.setQuickGame(this.value)"></select>
                 </div>
-            </div>
+            </details>
 
             <div class="settings-section">
                 <div class="settings-row" id="install-row" style="cursor:pointer;" onclick="UI._close('settings-modal'); Install.open()">
@@ -502,8 +502,8 @@
         <div class="header-controls">
             <h1 class="welcome-title" style="margin:0; flex:1;">ScoreMaster</h1>
             <div class="flex-gap10">
-                <button class="btn-stats"     onclick="app.showStats()"    title="Statistiques">📊</button>
-                <button class="theme-toggle btn-backup" onclick="UI.showSettings()" title="Paramètres">⚙️<span id="backup-dot" class="backup-dot"></span></button>
+                <button class="btn-stats" data-icon="stats" onclick="app.showStats()" title="Statistiques" aria-label="Statistiques">📊</button>
+                <button class="theme-toggle btn-backup" data-icon="settings" onclick="UI.showSettings()" title="Paramètres" aria-label="Paramètres">⚙️<span id="backup-dot" class="backup-dot"></span></button>
             </div>
         </div>
 
@@ -558,19 +558,19 @@
          =================================================================== -->
     <div id="game" class="container hidden">
         <header class="modal-header">
-            <button class="btn-back" onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px; color:var(--text); cursor:pointer;">⬅️</button>
+            <button class="btn-back" data-icon="back" aria-label="Retour à l'accueil" onclick="app.showSetup()" style="background:var(--card); border:1px solid var(--border); width:40px; height:40px; border-radius:12px; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center;">⬅️</button>
             <div style="flex:1; text-align:center;">
                 <h1 id="mode-title" style="margin:0; font-size:22px; font-weight:900;">SCORE</h1>
                 <div id="game-info" style="font-size:10px; color:var(--text-sec); font-weight:700; margin-top:3px;"></div>
             </div>
             <div class="hdr-actions">
-                <button id="view-btn" class="btn-focus" onclick="UI.toggleView()" title="Changer l'affichage des joueurs" aria-label="Affichage en liste">☰</button>
-                <button class="btn-focus" onclick="app.toggleFocusMode()" title="Mode Zen">👁️</button>
+                <button id="view-btn" class="btn-focus" data-icon="list" onclick="UI.toggleView()" title="Changer l'affichage des joueurs" aria-label="Affichage en liste">☰</button>
+                <button class="btn-focus" data-icon="eye" onclick="app.toggleFocusMode()" title="Mode Zen" aria-label="Mode Zen">👁️</button>
             </div>
         </header>
 
         <div class="chart-box" id="chart-box" onclick="UI.chartTap(event)">
-            <button id="chart-expand" class="chart-expand" onclick="UI.toggleChart(event)" aria-label="Agrandir le graphique" aria-expanded="false">⤢</button>
+            <button id="chart-expand" class="chart-expand" onclick="UI.toggleChart(event)" aria-label="Agrandir le graphique" aria-expanded="false" data-icon="expand" data-size="14">⤢</button>
             <canvas id="chart"></canvas>
         </div>
         <div id="grid" class="players-grid"></div>

@@ -245,8 +245,8 @@
                 </ul>` });
             S.push({ ic: '👀', t: "Garde l'œil sur la partie", html: `
                 <ul class="ob-list">
-                    <li>☰ Bouton en haut : bascule entre <b>cartes</b> et <b>liste</b> pour voir plus de joueurs sans défiler</li>
-                    <li>📈 Le <b>graphique</b> est réduit pour gagner de la place : <b>touche-le</b> pour l'agrandir (⤢), re-touche pour le réduire</li>
+                    <li>${icon('list', 16)} Bouton en haut : bascule entre <b>cartes</b> et <b>liste</b> pour voir plus de joueurs sans défiler</li>
+                    <li>📈 Le <b>graphique</b> est réduit pour gagner de la place : <b>touche-le</b> pour l'agrandir (${icon('expand', 14)}), re-touche pour le réduire</li>
                     <li>🥇 Le <b>rang</b> de chaque joueur est dans le coin de sa carte</li>
                     <li>🧘 <b>Mode Zen</b> : scores en grand, écran allumé</li>
                 </ul>` });

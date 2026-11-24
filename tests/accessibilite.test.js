@@ -11,7 +11,7 @@ ok('champs ≥ 16 px (pas de zoom iOS)',await p.evaluate(()=>[...document.queryS
 await p.evaluate(()=>UI.showSettings());await p.waitForTimeout(500);
 const sw=await p.evaluate(()=>[...document.querySelectorAll('.settings-toggle')].map(b=>[b.getAttribute('role'),b.getAttribute('aria-checked'),b.getAttribute('aria-label')]));
 ok('interrupteurs : role=switch + état + nom',sw.length>=6&&sw.every(x=>x[0]==='switch'&&/^(true|false)$/.test(x[1])&&x[2]));
-await p.click('#settings-sound-btn');await p.waitForTimeout(150);
+await p.evaluate(()=>document.querySelector('details.settings-fold:has(#settings-sound-btn)').open=true);await p.click('#settings-sound-btn');await p.waitForTimeout(150);
 ok('aria-checked suit le clic',await p.evaluate(()=>document.getElementById('settings-sound-btn').getAttribute('aria-checked')===String(document.getElementById('settings-sound-btn').classList.contains('active'))));
 ok('fenêtre : role=dialog + aria-modal',await p.evaluate(()=>{const b=document.querySelector('#settings-modal .modal-box');return b.getAttribute('role')==='dialog'&&b.getAttribute('aria-modal')==='true'&&!!b.getAttribute('aria-label')}));
 ok('focus dans la fenêtre',await p.evaluate(()=>document.getElementById('settings-modal').contains(document.activeElement)));

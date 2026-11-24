@@ -23,6 +23,24 @@
     // Journal de debug : silencieux par défaut. Pour l'activer : localStorage.setItem('sm_debug','1') puis recharger.
     const log = (...args) => { try { if (localStorage.getItem('sm_debug') === '1') console.log(...args); } catch (e) {} };
 
+    // ==================== ICÔNES (dessinées : identiques sur tous les téléphones) ====================
+    const ICONS = {
+        stats:    '<path d="M3 3v18h18"/><path d="M8 16v-5M12.5 16V8M17 16v-8"/>',
+        settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+        back:     '<path d="M15 18l-6-6 6-6"/>',
+        eye:      '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+        list:     '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/>',
+        grid:     '<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>',
+        expand:   '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
+        collapse: '<path d="M14 10h6V4M10 14H4v6M20 4l-6 6M4 20l6-6"/>'
+    };
+    const icon = (name, size = 22) => `<svg class="ico" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
+    /** Remplace le contenu texte des éléments [data-icon] par l'icône (les enfants, comme la pastille rouge, sont conservés). */
+    const applyIcons = (root = document) => root.querySelectorAll('[data-icon]').forEach(el => {
+        [...el.childNodes].forEach(n => { if (n.nodeType === 3 || (n.nodeType === 1 && n.classList.contains('ico'))) n.remove(); });
+        el.insertAdjacentHTML('afterbegin', icon(el.dataset.icon, Number(el.dataset.size) || 22));
+    });
+
     // ==================== CONSTANTS ====================
 
     /** Nombre minimum de manches pour qualifier une partie de "Marathon" */
