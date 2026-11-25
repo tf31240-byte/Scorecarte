@@ -1937,3 +1937,7 @@ body { font-variant-numeric: tabular-nums; }
 .game-item-collapsed .expand-icon { display:inline-flex; opacity:.5; font-size:0; }
 .btn-with-ico { display:inline-flex; align-items:center; gap:7px; }
 .btn-ghost-danger { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:40px; }
+
+/* Pastille vainqueur : texte lisible quelle que soit la couleur du joueur (la couleur reste sur le fond et le trophée) */
+.game-item-collapsed .collapsed-winner { color:var(--text); }
+.game-item-collapsed .collapsed-winner .ico { color:var(--pc); }

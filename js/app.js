@@ -1688,7 +1688,7 @@
                         </div>
                     </div>
                     <div class="flex-ai-gap10">
-                        <div class="collapsed-winner" style="color:${winner.color}; background:${winner.color}18; --pc:${winner.color};">${icon_('trophy', 14)}<span class="cw-name">${winnerName}</span><b>${winner.total}</b></div>
+                        <div class="collapsed-winner" style="background:${winner.color}1f; --pc:${winner.color};">${icon_('trophy', 14)}<span class="cw-name">${winnerName}</span><b>${winner.total}</b></div>
                         <span class="expand-icon">${icon_('chevd', 18)}</span>
                     </div>
                 </div>
