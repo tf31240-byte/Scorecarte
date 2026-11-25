@@ -1534,26 +1534,42 @@
 
 
         /** Template HTML d'une carte de partie EN COURS dans l'accueil. */
-        _currentItemHtml(icon, name, dateStr, timeStr, rounds, playersHtml) {
+        /** Date lisible : « Aujourd'hui », « Hier », sinon « 12 nov. ». */
+        _relDate(d) {
+            const x = new Date(d), n = new Date(); const day = t => new Date(t.getFullYear(), t.getMonth(), t.getDate());
+            const diff = Math.round((day(n) - day(x)) / 86400000);
+            if (diff === 0) return "Aujourd'hui"; if (diff === 1) return 'Hier';
+            return x.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        },
+
+        /** Barre de progression vers la limite / l'objectif (null si la partie n'en a pas). */
+        _progressHtml(game, sortedPlayers) {
+            const ec = game.endCondition; if (!ec || ec.type !== END_SCORE || !ec.value || !sortedPlayers.length) return '';
+            const max = Math.max(...sortedPlayers.map(p => p.total || 0)), pct = Math.max(0, Math.min(100, Math.round(max / ec.value * 100)));
+            const lowest = game.victoryCondition === VC_LOWEST;
+            const lvl = pct >= 85 ? (lowest ? 'danger' : 'near') : pct >= 60 ? (lowest ? 'warn' : '') : '';
+            return `<div class="cg-prog ${lvl}"><div class="cg-bar"><i style="width:${pct}%"></i></div><span>${lowest ? 'Limite' : 'Objectif'} ${ec.value}</span></div>`;
+        },
+
+        _currentItemHtml(icon, name, dateStr, timeStr, rounds, playersHtml, progressHtml = '') {
             return `
                 <div class="current-header">
                     <span class="current-icon">${gameIcon(icon)}</span>
                     <div class="current-info">
                         <div class="current-title-row">
                             <span class="current-title">${name}</span>
-                            <span class="current-badge">En cours</span>
                         </div>
-                        <div class="current-meta">${dateStr} • ${timeStr} • ${rounds} manche${rounds > 1 ? 's' : ''}</div>
+                        <div class="current-meta">${dateStr} · ${timeStr} · ${rounds} manche${rounds > 1 ? 's' : ''}</div>
                     </div>
-                    <span class="current-arrow">›</span>
+                    <span class="current-arrow">${icon_('chevd', 18)}</span>
                 </div>
-                <div class="current-scores">${playersHtml}</div>`;
+                <div class="current-scores">${playersHtml}</div>${progressHtml}`;
         },
 
 
         /** Génère le HTML d'une puce joueur (nom + couleur + score). */
-        _playerChipHtml(p) {
-            return `<div class="player-chip" style="background:${p.color}18; color:${p.color};">
+        _playerChipHtml(p, lead = false) {
+            return `<div class="player-chip${lead ? ' lead' : ''}" style="background:${p.color}18; color:${p.color}; --pc:${p.color};">
                 <span class="player-chip-dot" style="background:${p.color};"></span>
                 <span class="player-chip-name">${escapeHtml(p.name)}</span>
                 <span class="player-chip-score">${p.total}</span>
@@ -1584,14 +1600,14 @@
             const { sortedPlayers, icon, safeId } = this._getGameMeta(game);
             const safeGameName = escapeHtml(game.name) + suffix;
             const gameDate = new Date(game.lastModified || game.date);
-            const dateStr = gameDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+            const dateStr = this._relDate(gameDate);
             const timeStr = gameDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             const rounds = game.state.history.length;
 
             // Toutes les pastilles sont créées ; _fitChips en garde autant qu'il en tient sur UNE ligne et résume le reste en « +N »
-            const playersHtml = sortedPlayers.map(p => this._playerChipHtml(p)).join('') + '<div class="player-chip player-chip-more" style="display:none"></div>';
+            const playersHtml = sortedPlayers.map((p, i) => this._playerChipHtml(p, i === 0 && rounds > 0)).join('') + '<div class="player-chip player-chip-more" style="display:none"></div>';
 
-            const item = UI._makeEl('div', 'current-game-item', this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml));
+            const item = UI._makeEl('div', 'current-game-item', this._currentItemHtml(icon, safeGameName, dateStr, timeStr, rounds, playersHtml, this._progressHtml(game, sortedPlayers)));
             return this._makeSwipeRow(item, safeId, game.name);
         },
 
@@ -1668,19 +1684,19 @@
                         <span class="collapsed-icon">${gameIcon(icon)}</span>
                         <div>
                             <div class="collapsed-title">${name}</div>
-                            <div class="collapsed-date">${date} • ${rounds} manche${rounds !== 1 ? 's' : ''}</div>
+                            <div class="collapsed-date">${date} · ${rounds} manche${rounds !== 1 ? 's' : ''}</div>
                         </div>
                     </div>
                     <div class="flex-ai-gap10">
-                        <div class="collapsed-winner" style="color:${winner.color};">🏆 ${winnerName} (${winner.total})</div>
-                        <span class="expand-icon">▼</span>
+                        <div class="collapsed-winner" style="color:${winner.color}; background:${winner.color}18; --pc:${winner.color};">${icon_('trophy', 14)}<span class="cw-name">${winnerName}</span><b>${winner.total}</b></div>
+                        <span class="expand-icon">${icon_('chevd', 18)}</span>
                     </div>
                 </div>
                 <div class="game-item-details">
                     <div class="game-item-players">${playersHtml}</div>
                     <div class="game-item-actions">
-                        <button onclick="app.loadGame('${safeId}')" class="btn-action-primary">▶️ Voir</button>
-                        <button onclick="event.stopPropagation(); app.deleteGame('${safeId}')" class="btn-ghost-danger">🗑️</button>
+                        <button onclick="app.loadGame('${safeId}')" class="btn-action-primary btn-with-ico">${icon_('play', 14)} Voir la partie</button>
+                        <button onclick="event.stopPropagation(); app.deleteGame('${safeId}')" class="btn-ghost-danger" aria-label="Supprimer la partie">${icon_('trash', 18)}</button>
                     </div>
                 </div>`;
         },
@@ -1688,7 +1704,7 @@
         _buildFinishedGameItem(game) {
             const { sortedPlayers, icon, safeId } = this._getGameMeta(game);
             const winner = sortedPlayers[0];
-            const date = new Date(game.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+            const date = this._relDate(game.date);
             const safeGameName = escapeHtml(game.name);
             const safeWinnerName = escapeHtml(winner.name);
             const rounds = game.state.history.length;
@@ -1727,7 +1743,7 @@
                 return;
             }
 
-            games = games.slice().reverse();
+            games = games.slice().sort((x, y) => new Date(y.lastModified || y.date || 0) - new Date(x.lastModified || x.date || 0));
             if (filter === 'recent') games = games.slice(0, 10);
 
             historyList.innerHTML = '';

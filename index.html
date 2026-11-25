@@ -533,7 +533,7 @@
         </div>
 
         <div class="mode-btn mode-btn-main" onclick="app.openPresets()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();app.openPresets()}">
-            <span class="mode-btn-icon">🎮</span>
+            <span class="mode-btn-icon" data-icon="gamepad" data-size="34"></span>
             <div>
                 <h2 style="margin:0">Nouvelle partie</h2>
                 <p class="mode-btn-sub">Uno, Skyjo, Flip 7, Rami...</p>
@@ -543,7 +543,7 @@
         <!-- Parties en cours -->
         <div id="current-games-section" style="margin-top: 30px; display:none;">
             <div class="row-between" style="margin-bottom:12px;">
-                <h3 class="section-title">▶️ Parties en cours</h3>
+                <h3 class="section-title ti-row"><span data-icon="play" data-size="18"></span>Parties en cours</h3>
             </div>
             <div id="current-games-list"></div>
         </div>
@@ -551,7 +551,7 @@
         <!-- Historique des parties -->
         <div id="history-section" style="margin-top: 30px;">
             <div class="row-between" style="margin-bottom:8px;">
-                <h3 class="section-title">📚 Historique</h3>
+                <h3 class="section-title ti-row"><span data-icon="history" data-size="18"></span>Historique</h3>
             </div>
             <div id="history-filters" class="history-filters"></div>
             <div id="games-list"></div>

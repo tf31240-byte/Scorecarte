@@ -35,6 +35,11 @@
         collapse: '<path d="M14 10h6V4M10 14H4v6M20 4l-6 6M4 20l6-6"/>',
         flame:    '<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.2 1 2 2 2 0-3-1-5 1-8z"/>',
         clock:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        play:     '<path d="M7 4.5v15l12-7.5z"/>',
+        trash:    '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/>',
+        chevd:    '<path d="M6 9l6 6 6-6"/>',
+        history:  '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+        gamepad:  '<path d="M6 8h12a4 4 0 0 1 4 4.2l-.5 3.2a2.6 2.6 0 0 1-4.6 1.2L15.5 15h-7l-1.4 1.6a2.6 2.6 0 0 1-4.6-1.2L2 12.200A4 4 0 0 1 6 8z"/><path d="M7 10.500v3M5.500 12h3"/><circle cx="15.500" cy="11" r=".8" fill="currentColor"/><circle cx="17.800" cy="13" r=".8" fill="currentColor"/>',
         trophy:   '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
         star:     '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1-4.5-4.3 6.1-.8z"/>',
         cloud:    '<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 9.5 4 4 0 0 1 17.5 18H7z"/>',
@@ -47,6 +52,7 @@
         share:    '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>'
     };
     const icon = (name, size = 22) => `<svg class="ico" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
+    const icon_ = icon; // alias pour les gabarits où « icon » est déjà un paramètre (icône du jeu)
     /** Remplace le contenu texte des éléments [data-icon] par l'icône (les enfants, comme la pastille rouge, sont conservés). */
     const applyIcons = (root = document) => root.querySelectorAll('[data-icon]').forEach(el => {
         [...el.childNodes].forEach(n => { if (n.nodeType === 3 || (n.nodeType === 1 && n.classList.contains('ico'))) n.remove(); });
