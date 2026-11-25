@@ -15,6 +15,8 @@ const { chromium } = require('playwright');
   ok('filtres : SVG', await p.evaluate(() => document.querySelectorAll('.filter-icon svg').length >= 1));
   await p.evaluate(() => app.openPresets()); await p.waitForTimeout(300);
   ok('liste Nouvelle partie : 5 SVG', await p.evaluate(() => document.querySelectorAll('.preset-icon svg').length >= 5));
+  await p.evaluate(() => app.closePresets && app.closePresets()); await p.evaluate(() => { UI._close('preset-modal'); app.filterHistory('recent'); }); await p.waitForTimeout(400);
+  ok('historique : icône en SVG, pas de texte « img: »', await p.evaluate(() => document.querySelectorAll('.collapsed-icon svg').length >= 1 && !document.body.innerText.includes('img:')));
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
   ok('aucune erreur JS', errs.length === 0);
   await b.close(); process.exit(r.every(Boolean) ? 0 : 1);

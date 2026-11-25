@@ -1665,7 +1665,7 @@
             return `
                 <div class="collapsed-header" onclick="app.toggleGameItem('${safeId}')">
                     <div class="collapsed-info">
-                        <span class="collapsed-icon">${icon}</span>
+                        <span class="collapsed-icon">${gameIcon(icon)}</span>
                         <div>
                             <div class="collapsed-title">${name}</div>
                             <div class="collapsed-date">${date} • ${rounds} manche${rounds !== 1 ? 's' : ''}</div>
