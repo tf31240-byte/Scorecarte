@@ -41,7 +41,7 @@
             return this.getSortedPresets()[0]?.[0] || 'belote';
         },
         _quickInfo(key) {
-            if (key === 'belote') return { icon: '🃏', name: 'Belote / Coinche', sub: 'Démarrage rapide • 2 équipes' };
+            if (key === 'belote') return { icon: 'img:belote', name: 'Belote / Coinche', sub: 'Démarrage rapide • 2 équipes' };
             const p = this.getAllPresets()[key] || {};
             return { icon: p.icon || '🎮', name: p.name || 'Jeu favori', sub: 'Démarrage rapide' };
         },
@@ -50,7 +50,7 @@
             btn.style.display = this.settings.quickStart ? '' : 'none';
             if (!this.settings.quickStart) return;
             const i = this._quickInfo(this._quickKey());
-            document.getElementById('quick-icon').textContent = i.icon;
+            document.getElementById('quick-icon').innerHTML = gameIcon(i.icon);
             document.getElementById('quick-name').textContent = i.name;
             document.getElementById('quick-sub').textContent = i.sub;
         },
@@ -856,7 +856,7 @@
                     return `
                         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card); border-radius:12px; margin-bottom:8px;">
                             <div class="flex-ai-gap10">
-                                <span style="font-size:24px;">${escapeHtml(g.icon)}</span>
+                                <span style="font-size:24px;">${gameIcon(g.icon)}</span>
                                 <span style="font-weight:700;">${escapeHtml(g.name)}</span>
                             </div>
                             <button onclick="app.restorePreset('${key}')" class="btn-action-success">Restaurer</button>
@@ -931,7 +931,7 @@
         _buildPresetCardContent(game) {
             const div = document.createElement('div');
             div.innerHTML = `
-                <span class="preset-icon">${escapeHtml(game.icon)}</span>
+                <span class="preset-icon">${gameIcon(game.icon)}</span>
                 <span class="preset-name">${escapeHtml(game.name)}</span>
                 <span class="preset-tag">${escapeHtml(game.tag)}</span>
             `;
@@ -1527,7 +1527,7 @@
             const isLowest = game.state.victoryCondition === VC_LOWEST;
             const sortedPlayers = GameState.getSortedPlayers(game.state);
             const preset = this.getAllPresets()[game.preset] || null;
-            const icon = preset?.icon || (game.mode === 'belote' ? '🃏' : '🎲');
+            const icon = preset?.icon || (game.mode === 'belote' ? 'img:belote' : '🎲');
             const safeId = String(game.id).replace(/[^a-zA-Z0-9_-]/g, '');
             return { isLowest, sortedPlayers, preset, icon, safeId };
         },
@@ -1537,7 +1537,7 @@
         _currentItemHtml(icon, name, dateStr, timeStr, rounds, playersHtml) {
             return `
                 <div class="current-header">
-                    <span class="current-icon">${icon}</span>
+                    <span class="current-icon">${gameIcon(icon)}</span>
                     <div class="current-info">
                         <div class="current-title-row">
                             <span class="current-title">${name}</span>
@@ -1822,7 +1822,7 @@
          * @returns {{ icon: string, label: string }}
          */
         _getFilterMeta(key, preset) {
-            if (key === 'belote')   return { icon: '🃏', label: 'Belote' };
+            if (key === 'belote')   return { icon: 'img:belote', label: 'Belote' };
             if (key === 'standard') return { icon: '🎲', label: 'Standard' };
             const name = preset?.name || key;
             const label = name.length > 8 ? name.substring(0, 7) + '.' : name;
@@ -1841,7 +1841,7 @@
                 const active = activeFilter === filter ? ' active' : '';
                 const f = escapeHtml(filter);
                 return `<button class="history-filter-btn${active}" data-filter="${f}" onclick="app.filterHistory('${f}')">
-                    <span class="filter-icon">${icon}</span><span class="filter-label">${escapeHtml(label)}</span>
+                    <span class="filter-icon">${gameIcon(icon)}</span><span class="filter-label">${escapeHtml(label)}</span>
                 </button>`;
             };
 

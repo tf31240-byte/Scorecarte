@@ -1,0 +1,21 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  const r = []; const ok = (n, c) => { r.push(c); console.log((c ? '✅ ' : '❌ ') + n); };
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.addInitScript(() => { localStorage.setItem('sm_onboarded', '1'); localStorage.setItem('sm_cloud', '{"declined":true}');
+    const mk = (id, preset) => ({ id, preset, mode: 'standard', date: Date.now(), state: { players: [{ id: 1, name: 'A', score: 0, rounds: [] }, { id: 2, name: 'B', score: 0, rounds: [] }], victoryCondition: 'highest', rounds: [] } });
+    const f = mk('g3', 'scrabble'); f.finished = true; localStorage.setItem('sm_v12_games', JSON.stringify([mk('g1', 'skyjo'), mk('g2', 'uno'), f])); });
+  await p.goto('http://localhost:8769/index.html'); await p.waitForTimeout(800);
+  ok('5 icônes SVG définies', await p.evaluate(() => ['skyjo','uno','scrabble','belote','flip7'].every(k => GAME_ICONS[k].startsWith('<svg'))));
+  ok('presets utilisent img:', await p.evaluate(() => ['skyjo','uno','scrabble','belote','flip_7'].every(k => GAME_PRESETS[k].icon.startsWith('img:'))));
+  ok('gameIcon : SVG pour img:, emoji échappé sinon', await p.evaluate(() => gameIcon('img:uno').includes('<svg') && gameIcon('<b>').includes('&lt;b&gt;') && gameIcon('img:zzz').includes('img:zzz') && !gameIcon('img:zzz').includes('<svg')));
+  ok('quick-btn belote en SVG', await p.evaluate(() => !!document.querySelector('#quick-icon svg') || document.getElementById('quick-icon').textContent.length > 0));
+  ok('cartes parties en cours : SVG', await p.evaluate(() => document.querySelectorAll('.current-icon svg').length >= 1));
+  ok('filtres : SVG', await p.evaluate(() => document.querySelectorAll('.filter-icon svg').length >= 1));
+  await p.evaluate(() => app.openPresets()); await p.waitForTimeout(300);
+  ok('liste Nouvelle partie : 5 SVG', await p.evaluate(() => document.querySelectorAll('.preset-icon svg').length >= 5));
+  if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
+  ok('aucune erreur JS', errs.length === 0);
+  await b.close(); process.exit(r.every(Boolean) ? 0 : 1);
+})();

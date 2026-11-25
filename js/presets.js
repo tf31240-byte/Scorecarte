@@ -6,7 +6,7 @@
             victory: "highest",
             endType: "score",
             endValue: 1000,
-            icon: "🃏",
+            icon: "img:belote",
             tag: "2 équipes • 1000 pts",
             players: 2
         },
@@ -40,7 +40,7 @@
             victory: "highest", 
             endType: "score", 
             endValue: 200, 
-            icon: "🔄", 
+            icon: "img:flip7",
             tag: "Objectif 200" 
         },
         skyjo: { 
@@ -48,7 +48,7 @@
             victory: "lowest", 
             endType: "score", 
             endValue: 100, 
-            icon: "🔢", 
+            icon: "img:skyjo",
             tag: "Limite 100" 
         },
         scrabble: { 
@@ -56,7 +56,7 @@
             victory: "highest", 
             endType: "free", 
             endValue: null, 
-            icon: "🅰️", 
+            icon: "img:scrabble",
             tag: "Partie libre" 
         },
         molkky: { 
@@ -88,7 +88,7 @@
             victory: "lowest", 
             endType: "score", 
             endValue: 500, 
-            icon: "🌈", 
+            icon: "img:uno",
             tag: "Limite 500" 
         }
     };

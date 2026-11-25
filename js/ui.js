@@ -259,7 +259,7 @@
                 if (row && sel) {
                     row.style.display = s.quickStart ? '' : 'none';
                     const opts = [['auto', '⭐ Mon jeu favori'], ['belote', '🃏 Belote / Coinche'],
-                        ...Object.entries(app.getAllPresets()).filter(([k]) => k !== 'belote').map(([k, g]) => [k, `${g.icon || '🎮'} ${g.name}`])];
+                        ...Object.entries(app.getAllPresets()).filter(([k]) => k !== 'belote').map(([k, g]) => [k, `${gameIconText(g.icon || '🎮')} ${g.name}`])];
                     sel.innerHTML = '';
                     opts.forEach(([v, label]) => { const o = document.createElement('option'); o.value = v; o.textContent = label; sel.appendChild(o); });
                     sel.value = opts.some(o => o[0] === s.quickGame) ? s.quickGame : 'auto';
