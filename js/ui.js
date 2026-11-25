@@ -325,7 +325,9 @@
             const box = document.getElementById('stats-game-chips');
             if (box) {
                 const total = an.gameNames.reduce((a, g) => a + g.count, 0);
-                const chip = (key, label, n) => `<button class="chip ${this.statsFilter.game === key ? 'active' : ''}" data-key="${escapeHtml(key)}" onclick="UI.setStatsGame(this.dataset.key)">${escapeHtml(label)} <b>${n}</b></button>`;
+                const presets = (typeof app !== 'undefined' && app.getAllPresets) ? app.getAllPresets() : {};
+                const ico = key => { try { const ic = app._getFilterMeta(key, presets[key]).icon; return ic && String(ic).startsWith('img:') ? gameIcon(ic) + ' ' : ''; } catch (e) { return ''; } };
+                const chip = (key, label, n) => `<button class="chip ${this.statsFilter.game === key ? 'active' : ''}" data-key="${escapeHtml(key)}" onclick="UI.setStatsGame(this.dataset.key)">${key === 'all' ? '' : ico(key)}${escapeHtml(label)} <b>${n}</b></button>`;
                 box.innerHTML = chip('all', 'Tous', total) + an.gameNames.map(g => chip(g.key, g.label, g.count)).join('');
             }
             const sel = document.getElementById('stats-period');
@@ -355,8 +357,8 @@
             const s = an.summary;
             const tile = (v, l) => `<div class="s-tile"><div class="s-val">${v}</div><div class="s-lab">${l}</div></div>`;
             let extra = '';
-            if (s.hot) extra += `<div class="s-line">🔥 <b>En forme :</b> ${escapeHtml(s.hot.name)} — ${s.hot.last5Wins} victoire${s.hot.last5Wins > 1 ? 's' : ''} sur ses ${s.hot.last5.length} dernières parties</div>`;
-            if (s.last) extra += `<div class="s-line">🕒 <b>Dernière partie :</b> ${escapeHtml(s.last.name)} — ${s.last.draw ? 'égalité' : 'gagnée par ' + escapeHtml(s.last.winners.join(' & '))} <span class="muted">· ${this._sd(s.last.t)}</span></div>`;
+            if (s.hot) extra += `<div class="s-note s-hot"><span class="s-note-ico">${icon('flame', 20)}</span><div><div class="s-note-lab">En forme</div><div class="s-note-txt"><b>${escapeHtml(s.hot.name)}</b> · ${s.hot.last5Wins} victoire${s.hot.last5Wins > 1 ? 's' : ''} sur ses ${s.hot.last5.length} dernières parties</div></div></div>`;
+            if (s.last) extra += `<div class="s-note"><span class="s-note-ico">${icon('clock', 20)}</span><div><div class="s-note-lab">Dernière partie · ${this._sd(s.last.t)}</div><div class="s-note-txt"><b>${escapeHtml(s.last.name)}</b> · ${s.last.draw ? 'égalité' : 'gagnée par ' + escapeHtml(s.last.winners.join(' & '))}</div></div></div>`;
             el.innerHTML = `<div class="s-tiles">${tile(s.games, 'parties')}${tile(s.rounds, 'manches')}${tile(s.people, 'joueurs')}</div>${extra}`;
         },
 
@@ -881,8 +883,8 @@
                         items.push({ x: pt.x, y: pt.y, label: String(v), color: d.borderColor });
                     });
                     items.sort((a, b) => a.y - b.y);
-                    const gap = 10;
-                    ctx.save(); ctx.font = '800 10px -apple-system, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+                    const gap = 13;
+                    ctx.save(); ctx.font = '800 11px -apple-system, system-ui, sans-serif'; ctx.textBaseline = 'middle';
                     let prev = -1e9;
                     items.forEach(it => {
                         let y = it.y; if (y - prev < gap) y = prev + gap; prev = y;

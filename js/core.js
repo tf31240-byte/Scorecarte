@@ -32,7 +32,9 @@
         list:     '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/>',
         grid:     '<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>',
         expand:   '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
-        collapse: '<path d="M14 10h6V4M10 14H4v6M20 4l-6 6M4 20l6-6"/>'
+        collapse: '<path d="M14 10h6V4M10 14H4v6M20 4l-6 6M4 20l6-6"/>',
+        flame:    '<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.2 1 2 2 2 0-3-1-5 1-8z"/>',
+        clock:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
     };
     const icon = (name, size = 22) => `<svg class="ico" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
     /** Remplace le contenu texte des éléments [data-icon] par l'icône (les enfants, comme la pastille rouge, sont conservés). */
