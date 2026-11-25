@@ -10,7 +10,7 @@ let fails = 0; const ok = (n, c) => { console.log((c ? '✅ ' : '❌ ') + n); if
   ok('bouton Belote absent de l\'accueil par défaut', !(await vis()) && !(await p.evaluate(() => document.body.innerText.includes('Belote / Coinche') && getComputedStyle(document.getElementById('quick-btn')).display !== 'none')));
   await p.evaluate(() => UI.showSettings()); await p.waitForTimeout(300);
   ok('réglage présent, jeu du raccourci masqué', await p.evaluate(() => !!document.getElementById('settings-quickStart-btn') && getComputedStyle(document.getElementById('quick-game-row')).display === 'none'));
-  await p.click('#settings-quickStart-btn'); await p.waitForTimeout(200);
+  await p.evaluate(() => { document.querySelector('.settings-fold[data-fold="4"]').open = true; }); await p.click('#settings-quickStart-btn'); await p.waitForTimeout(200);
   ok('activation : le choix du jeu apparaît', await p.evaluate(() => getComputedStyle(document.getElementById('quick-game-row')).display !== 'none'));
   ok('liste : favori, belote et les jeux', await p.evaluate(() => { const o = [...document.querySelectorAll('#settings-quickGame option')].map(x => x.value); return o[0] === 'auto' && o[1] === 'belote' && o.length > 5; }));
   await p.evaluate(() => UI._close('settings-modal')); await p.waitForTimeout(300);

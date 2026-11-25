@@ -127,17 +127,17 @@
             </div>
 
             <details class="settings-section settings-fold" data-fold="0" id="cloud-section" style="display:none;">
-                <summary class="settings-section-title"><span>☁️ Mon profil &amp; sauvegarde</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
+                <summary class="settings-section-title"><span class="ti-row"><span data-icon="cloud" data-size="18"></span>Mon profil &amp; sauvegarde</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div id="cloud-status" class="settings-desc" style="margin-bottom:10px;"></div>
                 <div id="cloud-actions"></div>
             </details>
 
             <details class="settings-section settings-fold" data-fold="1" open>
-                <summary class="settings-section-title"><span>🎨 Apparence</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
+                <summary class="settings-section-title"><span class="ti-row"><span data-icon="palette" data-size="18"></span>Apparence</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="seg" id="theme-mode" role="group" aria-label="Mode">
-                    <button data-mode="auto" onclick="app.setThemeMode('auto')">🌓 Auto</button>
-                    <button data-mode="light" onclick="app.setThemeMode('light')">☀️ Clair</button>
-                    <button data-mode="dark" onclick="app.setThemeMode('dark')">🌙 Sombre</button>
+                    <button data-mode="auto" onclick="app.setThemeMode('auto')"><span data-icon="auto" data-size="16"></span> Auto</button>
+                    <button data-mode="light" onclick="app.setThemeMode('light')"><span data-icon="sun" data-size="16"></span> Clair</button>
+                    <button data-mode="dark" onclick="app.setThemeMode('dark')"><span data-icon="moon" data-size="16"></span> Sombre</button>
                 </div>
                 <div class="palette-grid" id="palette-grid" role="group" aria-label="Palette"></div>
                 <div id="custom-editor" class="custom-editor hidden">
@@ -149,7 +149,7 @@
             </details>
 
             <details class="settings-section settings-fold" data-fold="2">
-                <summary class="settings-section-title"><span>🔔 Notifications &amp; Alertes</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
+                <summary class="settings-section-title"><span class="ti-row"><span data-icon="bell" data-size="18"></span>Notifications &amp; Alertes</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">📳 Vibration</div>
@@ -180,7 +180,7 @@
             </details>
 
             <details class="settings-section settings-fold" data-fold="3">
-                <summary class="settings-section-title"><span>🔊 Sons</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
+                <summary class="settings-section-title"><span class="ti-row"><span data-icon="volume" data-size="18"></span>Sons</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">🔊 Effets sonores</div>
@@ -192,8 +192,8 @@
                 </div>
             </details>
 
-            <details class="settings-section settings-fold" data-fold="4" open>
-                <summary class="settings-section-title"><span>👁️ Affichage</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
+            <details class="settings-section settings-fold" data-fold="4">
+                <summary class="settings-section-title"><span class="ti-row"><span data-icon="eye" data-size="18"></span>Affichage</span><span class="fold-chev" aria-hidden="true">▾</span></summary>
                 <div class="settings-row">
                     <div class="settings-label">
                         <div class="settings-name">📊 Graphique</div>
@@ -678,9 +678,9 @@
             <div id="victory-series" class="hidden" style="text-align:center; font-weight:800; font-size:13px; color:var(--text-sec); margin:-2px 0 10px;"></div>
 
             <div class="victory-tabs">
-                <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')">🏆 Podium</div>
-                <div class="victory-tab"        onclick="UI.switchVictoryTab('stats')">📊 Stats</div>
-                <div class="victory-tab"        onclick="UI.switchVictoryTab('highlights')">⭐ Highlights</div>
+                <div class="victory-tab active" onclick="UI.switchVictoryTab('podium')"><span data-icon="trophy" data-size="16"></span><span>Podium</span></div>
+                <div class="victory-tab"        onclick="UI.switchVictoryTab('stats')"><span data-icon="stats" data-size="16"></span><span>Stats</span></div>
+                <div class="victory-tab"        onclick="UI.switchVictoryTab('highlights')"><span data-icon="star" data-size="16"></span><span>Highlights</span></div>
             </div>
 
             <div id="victory-tab-podium">
