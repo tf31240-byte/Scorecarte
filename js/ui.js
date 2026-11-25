@@ -770,7 +770,7 @@
         _calcYBounds(allValues) {
             const minValue = Math.min(...allValues);
             const maxValue = Math.max(...allValues);
-            const range = Math.max(maxValue - minValue, 1);
+            const range = Math.max(maxValue - minValue, 4);
             // pas « rond » (1, 2, 2.5, 5 × 10ⁿ) pour ~4 graduations : l'échelle colle aux données
             const raw = range / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
             const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(v => v >= raw) || 10 * mag;
@@ -941,7 +941,7 @@
         },
 
         // --- Graphique compact / agrandi (tap) ---
-        _chartOpen() { try { return localStorage.getItem('sm_chart_open') === '1'; } catch (e) { return false; } },
+        _chartOpen() { return false; }, // le graphique intégré reste compact ; l'agrandissement ouvre le plein écran (ChartFull)
         _applyChartState() {
             const open = this._chartOpen();
             document.getElementById('chart-box')?.classList.toggle('open', open);
@@ -956,12 +956,8 @@
                 setTimeout(() => { try { app.chart.resize(); } catch (e) {} }, 380);
             }
         },
-        toggleChart(e) {
-            e?.stopPropagation();
-            try { localStorage.setItem('sm_chart_open', this._chartOpen() ? '0' : '1'); } catch (err) {}
-            SoundFX.click(); this._applyChartState();
-        },
-        chartTap(e) { if (!this._chartOpen()) this.toggleChart(e); },
+        toggleChart(e) { e?.stopPropagation(); SoundFX.click(); ChartFull.open(); },
+        chartTap(e) { this.toggleChart(e); },
 
         // --- Vue joueurs : cartes / liste ---
         _viewList() { try { return localStorage.getItem('sm_view') === 'list'; } catch (e) { return false; } },

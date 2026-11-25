@@ -7,17 +7,16 @@ const seed=()=>p.evaluate(()=>{const P=[1,2,3,4,5].map(i=>({id:i,name:'J'+i,tota
 await p.goto(URL);await p.waitForTimeout(800);await p.evaluate(()=>{localStorage.removeItem('sm_view');localStorage.removeItem('sm_chart_open')});await seed();await p.waitForTimeout(500);
 const h=sel=>p.evaluate(s=>Math.round(document.querySelector(s).getBoundingClientRect().height),sel);
 ok('graphique compact par défaut (≈140 px)',(await h('#chart-box'))<=150);
-await p.click('#chart-box');await p.waitForTimeout(600);
-ok('tap sur le graphique : agrandi (≥ 190 px)',(await h('#chart-box'))>=190&&await p.getAttribute('#chart-expand','aria-expanded')==='true');
-await p.click('#chart-expand');await p.waitForTimeout(600);
-ok('bouton ⤡ : réduit',(await h('#chart-box'))<=150&&await p.getAttribute('#chart-expand','aria-expanded')==='false');
 await p.click('#chart-box');await p.waitForTimeout(500);
+ok('tap sur le graphique : plein écran',await p.evaluate(()=>document.getElementById('chart-full').classList.contains('active')));
+await p.click('.cf-close');await p.waitForTimeout(400);
+ok('bouton ✕ : retour, graphique compact',await p.evaluate(()=>!document.getElementById('chart-full').classList.contains('active'))&&(await h('#chart-box'))<=150);
 await p.click('#view-btn');await p.waitForTimeout(300);
 ok('vue liste active (1 colonne)',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')&&getComputedStyle(document.getElementById('grid')).gridTemplateColumns.split(' ').length===1));
 const hl=await h('.p-card');ok('carte en liste plus basse (≤ 70 px)',hl<=70);
 ok('bouton annonce « cartes »',(await p.getAttribute('#view-btn','aria-label')).includes('cartes'));
 await p.reload();await p.waitForTimeout(800);await p.evaluate(()=>{app.loadGame('9')});await p.waitForTimeout(500);
-ok('choix mémorisés après rechargement',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')&&document.getElementById('chart-box').classList.contains('open')));
+ok('vue mémorisée après rechargement',await p.evaluate(()=>document.getElementById('grid').classList.contains('list')));
 await p.click('#view-btn');await p.waitForTimeout(300);
 ok('retour aux cartes',await p.evaluate(()=>!document.getElementById('grid').classList.contains('list')));
 // saisie toujours possible depuis la liste
